@@ -11,7 +11,9 @@ type CompanyRepository interface {
 	Create(company *domain.Company) error
 	CreateAndLink(company *domain.Company, userID int64) error
 	GetAll() ([]domain.Company, error)
+	GetAllByUserID(userID int64) ([]domain.Company, error)
 	GetByID(id int64) (*domain.Company, error)
+	GetByIDForUser(userID, companyID int64) (*domain.Company, error)
 	Update(company *domain.Company) error
 	Delete(id int64) error
 }
@@ -97,6 +99,51 @@ func (r *companyRepo) GetByID(id int64) (*domain.Company, error) {
 		return nil, err
 	}
 	return &comp, nil
+}
+
+// GetByIDForUser возвращает компанию по её идентификатору,
+// если она связана с указанным пользователем.
+func (r *companyRepo) GetByIDForUser(userID, companyID int64) (*domain.Company, error) {
+	query := `
+		SELECT c.id, c.name, c.created_at, c.updated_at
+		FROM companies c
+		INNER JOIN user_companies uc ON c.id = uc.company_id
+		WHERE uc.user_id = $1 AND c.id = $2
+	`
+	var comp domain.Company
+	err := r.db.QueryRow(query, userID, companyID).Scan(&comp.ID, &comp.Name, &comp.CreatedAt, &comp.UpdatedAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("company not found or access denied")
+		}
+		return nil, err
+	}
+	return &comp, nil
+}
+
+// GetAllByUserID возвращает список компаний, связанных с указанным пользователем.
+func (r *companyRepo) GetAllByUserID(userID int64) ([]domain.Company, error) {
+	query := `
+		SELECT c.id, c.name, c.created_at, c.updated_at
+		FROM companies c
+		INNER JOIN user_companies uc ON c.id = uc.company_id
+		WHERE uc.user_id = $1
+	`
+	rows, err := r.db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var companies []domain.Company
+	for rows.Next() {
+		var comp domain.Company
+		if err := rows.Scan(&comp.ID, &comp.Name, &comp.CreatedAt, &comp.UpdatedAt); err != nil {
+			return nil, err
+		}
+		companies = append(companies, comp)
+	}
+	return companies, nil
 }
 
 func (r *companyRepo) Update(company *domain.Company) error {
