@@ -12,16 +12,31 @@ import (
 
 // CompanyHandler обрабатывает HTTP-запросы для компаний.
 type CompanyHandler struct {
-	service     service.CompanyService
-	userService service.UserService
+	service            service.CompanyService
+	userService        service.UserService
+	userCompanyService service.UserCompanyService
 }
 
 // NewCompanyHandler создаёт новый CompanyHandler с зависимостями.
-func NewCompanyHandler(companyService service.CompanyService, userService service.UserService) *CompanyHandler {
+func NewCompanyHandler(companyService service.CompanyService, userService service.UserService, userCompanyService service.UserCompanyService) *CompanyHandler {
 	return &CompanyHandler{
-		service:     companyService,
-		userService: userService,
+		service:            companyService,
+		userService:        userService,
+		userCompanyService: userCompanyService,
 	}
+}
+
+// helper: извлечение userID из контекста
+func getUserIDFromContext(c *gin.Context) (int64, bool) {
+	userIDInterface, exists := c.Get("user_id")
+	if !exists {
+		return 0, false
+	}
+	uidFloat, ok := userIDInterface.(float64)
+	if !ok {
+		return 0, false
+	}
+	return int64(uidFloat), true
 }
 
 // CreateCompany обрабатывает POST /api/v1/companies
@@ -32,45 +47,27 @@ func (h *CompanyHandler) CreateCompany(c *gin.Context) {
 		return
 	}
 
-	// Проверяем наличие user_id в контексте (устанавливается JWT-миддлварой)
-	userIDInterface, exists := c.Get("user_id")
-	if exists {
-		uidFloat, ok := userIDInterface.(float64)
-		if !ok {
-			response.SendResponse(c, http.StatusInternalServerError, nil, "Invalid user id type")
-			return
-		}
-		userID := int64(uidFloat)
-		if err := h.service.CreateCompanyAndLink(&company, userID); err != nil {
-			response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
-			return
-		}
-		response.SendResponse(c, http.StatusCreated, company, "Company created and linked successfully")
+	userID, ok := getUserIDFromContext(c)
+	if !ok {
+		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
 		return
 	}
 
-	// Если user_id не найден в контексте, создаем компанию без связи.
-	if err := h.service.CreateCompany(&company); err != nil {
+	if err := h.service.CreateCompanyAndLink(&company, userID); err != nil {
 		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	response.SendResponse(c, http.StatusCreated, company, "Company created successfully")
+	response.SendResponse(c, http.StatusCreated, company, "Company created and linked successfully")
+
 }
 
 // GetCompanies обрабатывает GET /api/v1/companies и возвращает компании, связанные с пользователем.
 func (h *CompanyHandler) GetCompanies(c *gin.Context) {
-	// Извлекаем user_id из контекста, который устанавливает JWT-миддлвара.
-	userIDInterface, exists := c.Get("user_id")
-	if !exists {
+	userID, ok := getUserIDFromContext(c)
+	if !ok {
 		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
 		return
 	}
-	uidFloat, ok := userIDInterface.(float64)
-	if !ok {
-		response.SendResponse(c, http.StatusInternalServerError, nil, "Invalid user id type")
-		return
-	}
-	userID := int64(uidFloat)
 
 	companies, err := h.service.GetAllByUserID(userID)
 	if err != nil {
@@ -86,18 +83,11 @@ func (h *CompanyHandler) GetCompanies(c *gin.Context) {
 
 // GetCompany обрабатывает GET /api/v1/companies/:id и возвращает компанию, если она связана с пользователем.
 func (h *CompanyHandler) GetCompany(c *gin.Context) {
-	// Извлекаем user_id из контекста (устанавливается JWT-миддлварой).
-	userIDInterface, exists := c.Get("user_id")
-	if !exists {
+	userID, ok := getUserIDFromContext(c)
+	if !ok {
 		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
 		return
 	}
-	uidFloat, ok := userIDInterface.(float64)
-	if !ok {
-		response.SendResponse(c, http.StatusInternalServerError, nil, "Invalid user id type")
-		return
-	}
-	userID := int64(uidFloat)
 
 	// Извлекаем company_id из URL.
 	idStr := c.Param("id")
@@ -118,18 +108,11 @@ func (h *CompanyHandler) GetCompany(c *gin.Context) {
 
 // GetUsersInCompany обрабатывает GET /api/v1/companies/:id/users и возвращает список пользователей, связанных с этой компанией.
 func (h *CompanyHandler) GetUsersInCompany(c *gin.Context) {
-	// Извлекаем user_id из контекста.
-	userIDInterface, exists := c.Get("user_id")
-	if !exists {
+	userID, ok := getUserIDFromContext(c)
+	if !ok {
 		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
 		return
 	}
-	uidFloat, ok := userIDInterface.(float64)
-	if !ok {
-		response.SendResponse(c, http.StatusInternalServerError, nil, "Invalid user id type")
-		return
-	}
-	userID := int64(uidFloat)
 
 	// Извлекаем company_id из параметров URL.
 	companyIDStr := c.Param("id")
@@ -158,12 +141,60 @@ func (h *CompanyHandler) GetUsersInCompany(c *gin.Context) {
 	response.SendResponse(c, http.StatusOK, users, "Users retrieved successfully")
 }
 
-// UpdateCompany обрабатывает PUT /api/v1/companies/:id
-func (h *CompanyHandler) UpdateCompany(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+// DeleteCompany обрабатывает DELETE /companies/:id.
+// Компания удаляется, если текущий пользователь имеет роль "admin" в ней.
+func (h *CompanyHandler) DeleteCompany(c *gin.Context) {
+	userID, ok := getUserIDFromContext(c)
+	if !ok {
+		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
+		return
+	}
+	companyIDStr := c.Param("id")
+	companyID, err := strconv.ParseInt(companyIDStr, 10, 64)
 	if err != nil {
-		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid id")
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid company id")
+		return
+	}
+
+	isAdmin, err := h.userCompanyService.IsAdmin(userID, companyID)
+	if err != nil {
+		response.SendResponse(c, http.StatusNotFound, nil, "Company not found or access denied")
+		return
+	}
+	if !isAdmin {
+		response.SendResponse(c, http.StatusForbidden, nil, "Access denied: insufficient permissions")
+		return
+	}
+
+	if err := h.service.DeleteCompany(companyID); err != nil {
+		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
+		return
+	}
+	response.SendResponse(c, http.StatusOK, nil, "Company deleted successfully")
+}
+
+// UpdateCompany обрабатывает PUT /companies/:id.
+// Обновление разрешено только, если пользователь является администратором компании.
+func (h *CompanyHandler) UpdateCompany(c *gin.Context) {
+	userID, ok := getUserIDFromContext(c)
+	if !ok {
+		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
+		return
+	}
+	companyIDStr := c.Param("id")
+	companyID, err := strconv.ParseInt(companyIDStr, 10, 64)
+	if err != nil {
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid company id")
+		return
+	}
+
+	isAdmin, err := h.userCompanyService.IsAdmin(userID, companyID)
+	if err != nil {
+		response.SendResponse(c, http.StatusNotFound, nil, "Company not found or access denied")
+		return
+	}
+	if !isAdmin {
+		response.SendResponse(c, http.StatusForbidden, nil, "Access denied: insufficient permissions")
 		return
 	}
 
@@ -172,28 +203,11 @@ func (h *CompanyHandler) UpdateCompany(c *gin.Context) {
 		response.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
-	company.ID = id
+	company.ID = companyID
 
 	if err := h.service.UpdateCompany(&company); err != nil {
 		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-
 	response.SendResponse(c, http.StatusOK, company, "Company updated successfully")
-}
-
-// DeleteCompany обрабатывает DELETE /api/v1/companies/:id
-func (h *CompanyHandler) DeleteCompany(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid id")
-		return
-	}
-	if err := h.service.DeleteCompany(id); err != nil {
-		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
-		return
-	}
-
-	response.SendResponse(c, http.StatusOK, nil, "Company deleted successfully")
 }

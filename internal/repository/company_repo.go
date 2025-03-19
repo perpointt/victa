@@ -38,6 +38,7 @@ func (r *companyRepo) Create(company *domain.Company) error {
 }
 
 // CreateAndLink создает компанию и связывает её с пользователем в рамках транзакции.
+// Для создателя компании роль устанавливается как "admin".
 func (r *companyRepo) CreateAndLink(company *domain.Company, userID int64) error {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -56,9 +57,10 @@ func (r *companyRepo) CreateAndLink(company *domain.Company, userID int64) error
 		return err
 	}
 
+	// Устанавливаем связь с ролью "admin"
 	linkQuery := `
-		INSERT INTO user_companies (user_id, company_id, created_at, updated_at)
-		VALUES ($1, $2, NOW(), NOW())
+		INSERT INTO user_companies (user_id, company_id, role)
+		VALUES ($1, $2, 'admin')
 	`
 	_, err = tx.Exec(linkQuery, userID, company.ID)
 	if err != nil {

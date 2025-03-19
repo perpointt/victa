@@ -30,7 +30,6 @@ func SetupRouter(
 		protected := api.Group("/")
 		protected.Use(middleware.JWTAuthMiddleware(jwtSecret))
 		{
-			// В группе защищённых маршрутов:
 			companies := protected.Group("/companies")
 			{
 				companies.POST("", companyHandler.CreateCompany)
@@ -43,21 +42,19 @@ func SetupRouter(
 
 			users := protected.Group("/users")
 			{
-				users.POST("", userHandler.CreateUser)
-				users.GET("", userHandler.GetUsers)
 				users.GET("/:id", userHandler.GetUser)
 				users.PUT("/:id", userHandler.UpdateUser)
 				users.DELETE("/:id", userHandler.DeleteUser)
 			}
 
-			apps := protected.Group("/apps")
-			{
-				apps.POST("", appHandler.CreateApp)
-				apps.GET("", appHandler.GetApps)
-				apps.GET("/:id", appHandler.GetApp)
-				apps.PUT("/:id", appHandler.UpdateApp)
-				apps.DELETE("/:id", appHandler.DeleteApp)
-			}
+			//apps := protected.Group("/apps")
+			//{
+			//	apps.POST("", appHandler.CreateApp)
+			//	apps.GET("", appHandler.GetApps)
+			//	apps.GET("/:id", appHandler.GetApp)
+			//	apps.PUT("/:id", appHandler.UpdateApp)
+			//	apps.DELETE("/:id", appHandler.DeleteApp)
+			//}
 		}
 	}
 

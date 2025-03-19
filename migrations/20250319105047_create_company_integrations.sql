@@ -5,7 +5,7 @@ CREATE TABLE company_integrations
     company_id BIGINT NOT NULL REFERENCES companies (id) ON DELETE CASCADE,
     codemagic_token    TEXT,
     telegram_bot_token TEXT,
-    telegram_chat_id   TEXT,
+    telegram_chat_id TEXT
 );
 -- +goose StatementEnd
 

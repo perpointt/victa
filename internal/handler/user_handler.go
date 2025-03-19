@@ -20,33 +20,6 @@ func NewUserHandler(service service.UserService) *UserHandler {
 	return &UserHandler{service: service}
 }
 
-// CreateUser обрабатывает POST /api/v1/users
-func (h *UserHandler) CreateUser(c *gin.Context) {
-	var user domain.User
-	if err := c.ShouldBindJSON(&user); err != nil {
-		response.SendResponse(c, http.StatusBadRequest, nil, err.Error())
-		return
-	}
-	if err := h.service.CreateUser(&user); err != nil {
-		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
-		return
-	}
-	response.SendResponse(c, http.StatusCreated, user, "User created successfully")
-}
-
-// GetUsers обрабатывает GET /api/v1/users
-func (h *UserHandler) GetUsers(c *gin.Context) {
-	users, err := h.service.GetAllUsers()
-	if err != nil {
-		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
-		return
-	}
-	if users == nil {
-		users = []domain.User{}
-	}
-	response.SendResponse(c, http.StatusOK, users, "Users retrieved successfully")
-}
-
 // GetUser обрабатывает GET /api/v1/users/:id
 func (h *UserHandler) GetUser(c *gin.Context) {
 	idStr := c.Param("id")

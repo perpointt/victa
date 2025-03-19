@@ -32,21 +32,25 @@ func main() {
 	// Инициализация для компаний
 	companyRepo := repository.NewCompanyRepository(db)
 	companyService := service.NewCompanyService(companyRepo)
-	// Передаем companyService и userService в NewCompanyHandler
-	userRepo := repository.NewUserRepository(db)
-	userService := service.NewUserService(userRepo)
-	companyHandler := handler.NewCompanyHandler(companyService, userService)
 
 	// Инициализация для пользователей
+	userRepo := repository.NewUserRepository(db)
+	userService := service.NewUserService(userRepo)
+
+	// Инициализация для связи пользователей и компаний
+	userCompanyRepo := repository.NewUserCompanyRepository(db)
+	userCompanyService := service.NewUserCompanyService(userCompanyRepo)
+
+	// Инициализация CompanyHandler с передачей всех зависимостей
+	companyHandler := handler.NewCompanyHandler(companyService, userService, userCompanyService)
+
+	// Инициализация для пользователей (UserHandler)
 	userHandler := handler.NewUserHandler(userService)
 
 	// Инициализация для приложений
 	appRepo := repository.NewAppRepository(db)
 	appService := service.NewAppService(appRepo)
 	appHandler := handler.NewAppHandler(appService)
-
-	// Инициализация для связи пользователей и компаний
-	userCompanyRepo := repository.NewUserCompanyRepository(db)
 
 	// Инициализация для аутентификации
 	authService := service.NewAuthService(userRepo, companyRepo, userCompanyRepo, cfg.JWTSecret)
