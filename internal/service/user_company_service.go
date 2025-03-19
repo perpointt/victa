@@ -5,6 +5,9 @@ import "victa/internal/repository"
 type UserCompanyService interface {
 	// IsAdmin возвращает true, если пользователь имеет роль "admin" в компании.
 	IsAdmin(userID, companyID int64) (bool, error)
+	RemoveUserFromCompany(userID, companyID int64) error
+
+	GetUserRole(userID, companyID int64) (string, error)
 }
 
 type userCompanyService struct {
@@ -21,4 +24,12 @@ func (s *userCompanyService) IsAdmin(userID, companyID int64) (bool, error) {
 		return false, err
 	}
 	return role == "admin", nil
+}
+
+func (s *userCompanyService) RemoveUserFromCompany(userID, companyID int64) error {
+	return s.repo.RemoveUserFromCompany(userID, companyID)
+}
+
+func (s *userCompanyService) GetUserRole(userID, companyID int64) (string, error) {
+	return s.repo.GetUserRole(userID, companyID)
 }

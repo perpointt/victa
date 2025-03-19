@@ -37,24 +37,31 @@ func SetupRouter(
 				companies.GET("/:id", companyHandler.GetCompany)
 				companies.PUT("/:id", companyHandler.UpdateCompany)
 				companies.DELETE("/:id", companyHandler.DeleteCompany)
-				companies.GET("/:id/users", companyHandler.GetUsersInCompany)
 			}
 
-			users := protected.Group("/users")
+			// Эндпоинт для удаления пользователя из компании, вынесен в отдельную группу чтобы избежать конфликта с /companies/:id
+			companyUsers := api.Group("/company-users")
 			{
-				users.GET("/:id", userHandler.GetUser)
-				users.PUT("/:id", userHandler.UpdateUser)
-				users.DELETE("/:id", userHandler.DeleteUser)
+				companyUsers.GET("/:company_id", companyHandler.GetUsersInCompany)
+				companyUsers.GET("/:company_id/:user_id", companyHandler.GetUserInCompany)
+				companyUsers.DELETE("/:company_id/:user_id", companyHandler.DeleteUserFromCompany)
 			}
 
-			//apps := protected.Group("/apps")
-			//{
-			//	apps.POST("", appHandler.CreateApp)
-			//	apps.GET("", appHandler.GetApps)
-			//	apps.GET("/:id", appHandler.GetApp)
-			//	apps.PUT("/:id", appHandler.UpdateApp)
-			//	apps.DELETE("/:id", appHandler.DeleteApp)
-			//}
+			// Для эндпоинтов пользователя:
+			users := api.Group("/user")
+			{
+				users.GET("/current", userHandler.GetCurrentUser)
+				users.DELETE("/current", userHandler.DeleteAccount)
+			}
+
+			apps := protected.Group("/apps")
+			{
+				apps.POST("", appHandler.CreateApp)
+				apps.GET("", appHandler.GetApps)
+				apps.GET("/:id", appHandler.GetApp)
+				apps.PUT("/:id", appHandler.UpdateApp)
+				apps.DELETE("/:id", appHandler.DeleteApp)
+			}
 		}
 	}
 

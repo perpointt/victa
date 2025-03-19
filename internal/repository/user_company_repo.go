@@ -8,6 +8,7 @@ import (
 type UserCompanyRepository interface {
 	LinkUserCompanyWithRole(userID, companyID int64, role string) error
 	GetUserRole(userID, companyID int64) (string, error)
+	RemoveUserFromCompany(userID, companyID int64) error
 }
 
 type userCompanyRepo struct {
@@ -40,4 +41,11 @@ func (r *userCompanyRepo) GetUserRole(userID, companyID int64) (string, error) {
 		return "", err
 	}
 	return role, nil
+}
+
+// RemoveUserFromCompany удаляет связь между пользователем и компанией.
+func (r *userCompanyRepo) RemoveUserFromCompany(userID, companyID int64) error {
+	query := `DELETE FROM user_companies WHERE user_id = $1 AND company_id = $2`
+	_, err := r.db.Exec(query, userID, companyID)
+	return err
 }

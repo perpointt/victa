@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"victa/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"victa/internal/domain"
@@ -57,17 +58,33 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	response.SendResponse(c, http.StatusOK, user, "User updated successfully")
 }
 
-// DeleteUser обрабатывает DELETE /api/v1/users/:id
-func (h *UserHandler) DeleteUser(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid id")
+// GetCurrentUser возвращает данные текущего пользователя.
+// Эндпоинт: GET /user/current
+func (h *UserHandler) GetCurrentUser(c *gin.Context) {
+	userID, ok := utils.GetUserIDFromContext(c)
+	if !ok {
+		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
 		return
 	}
-	if err := h.service.DeleteUser(id); err != nil {
+	user, err := h.service.GetUserByID(userID)
+	if err != nil {
+		response.SendResponse(c, http.StatusNotFound, nil, err.Error())
+		return
+	}
+	response.SendResponse(c, http.StatusOK, user, "User retrieved successfully")
+}
+
+// DeleteAccount удаляет аккаунт текущего пользователя.
+// Эндпоинт: DELETE /user/current
+func (h *UserHandler) DeleteAccount(c *gin.Context) {
+	userID, ok := utils.GetUserIDFromContext(c)
+	if !ok {
+		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
+		return
+	}
+	if err := h.service.DeleteUser(userID); err != nil {
 		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	response.SendResponse(c, http.StatusOK, nil, "User deleted successfully")
+	response.SendResponse(c, http.StatusOK, nil, "User account deleted successfully")
 }

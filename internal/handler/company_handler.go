@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"victa/internal/response"
+	"victa/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"victa/internal/domain"
@@ -26,19 +27,6 @@ func NewCompanyHandler(companyService service.CompanyService, userService servic
 	}
 }
 
-// helper: извлечение userID из контекста
-func getUserIDFromContext(c *gin.Context) (int64, bool) {
-	userIDInterface, exists := c.Get("user_id")
-	if !exists {
-		return 0, false
-	}
-	uidFloat, ok := userIDInterface.(float64)
-	if !ok {
-		return 0, false
-	}
-	return int64(uidFloat), true
-}
-
 // CreateCompany обрабатывает POST /api/v1/companies
 func (h *CompanyHandler) CreateCompany(c *gin.Context) {
 	var company domain.Company
@@ -47,7 +35,7 @@ func (h *CompanyHandler) CreateCompany(c *gin.Context) {
 		return
 	}
 
-	userID, ok := getUserIDFromContext(c)
+	userID, ok := utils.GetUserIDFromContext(c)
 	if !ok {
 		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
 		return
@@ -63,7 +51,7 @@ func (h *CompanyHandler) CreateCompany(c *gin.Context) {
 
 // GetCompanies обрабатывает GET /api/v1/companies и возвращает компании, связанные с пользователем.
 func (h *CompanyHandler) GetCompanies(c *gin.Context) {
-	userID, ok := getUserIDFromContext(c)
+	userID, ok := utils.GetUserIDFromContext(c)
 	if !ok {
 		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
 		return
@@ -83,7 +71,7 @@ func (h *CompanyHandler) GetCompanies(c *gin.Context) {
 
 // GetCompany обрабатывает GET /api/v1/companies/:id и возвращает компанию, если она связана с пользователем.
 func (h *CompanyHandler) GetCompany(c *gin.Context) {
-	userID, ok := getUserIDFromContext(c)
+	userID, ok := utils.GetUserIDFromContext(c)
 	if !ok {
 		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
 		return
@@ -108,14 +96,14 @@ func (h *CompanyHandler) GetCompany(c *gin.Context) {
 
 // GetUsersInCompany обрабатывает GET /api/v1/companies/:id/users и возвращает список пользователей, связанных с этой компанией.
 func (h *CompanyHandler) GetUsersInCompany(c *gin.Context) {
-	userID, ok := getUserIDFromContext(c)
+	userID, ok := utils.GetUserIDFromContext(c)
 	if !ok {
 		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
 		return
 	}
 
 	// Извлекаем company_id из параметров URL.
-	companyIDStr := c.Param("id")
+	companyIDStr := c.Param("company_id")
 	companyID, err := strconv.ParseInt(companyIDStr, 10, 64)
 	if err != nil {
 		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid company id")
@@ -144,7 +132,7 @@ func (h *CompanyHandler) GetUsersInCompany(c *gin.Context) {
 // DeleteCompany обрабатывает DELETE /companies/:id.
 // Компания удаляется, если текущий пользователь имеет роль "admin" в ней.
 func (h *CompanyHandler) DeleteCompany(c *gin.Context) {
-	userID, ok := getUserIDFromContext(c)
+	userID, ok := utils.GetUserIDFromContext(c)
 	if !ok {
 		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
 		return
@@ -176,7 +164,7 @@ func (h *CompanyHandler) DeleteCompany(c *gin.Context) {
 // UpdateCompany обрабатывает PUT /companies/:id.
 // Обновление разрешено только, если пользователь является администратором компании.
 func (h *CompanyHandler) UpdateCompany(c *gin.Context) {
-	userID, ok := getUserIDFromContext(c)
+	userID, ok := utils.GetUserIDFromContext(c)
 	if !ok {
 		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
 		return
@@ -210,4 +198,91 @@ func (h *CompanyHandler) UpdateCompany(c *gin.Context) {
 		return
 	}
 	response.SendResponse(c, http.StatusOK, company, "Company updated successfully")
+}
+
+// DeleteUserFromCompany удаляет пользователя из компании, если вызывающий пользователь является администратором.
+// Эндпоинт: DELETE /company-users/:company_id/:user_id
+func (h *CompanyHandler) DeleteUserFromCompany(c *gin.Context) {
+	adminID, ok := utils.GetUserIDFromContext(c)
+	if !ok {
+		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
+		return
+	}
+
+	companyIDStr := c.Param("company_id")
+	companyID, err := strconv.ParseInt(companyIDStr, 10, 64)
+	if err != nil {
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid company id")
+		return
+	}
+	targetUserIDStr := c.Param("user_id")
+	targetUserID, err := strconv.ParseInt(targetUserIDStr, 10, 64)
+	if err != nil {
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid user id")
+		return
+	}
+
+	// Проверяем, что вызывающий пользователь является администратором компании.
+	isAdmin, err := h.userCompanyService.IsAdmin(adminID, companyID)
+	if err != nil {
+		response.SendResponse(c, http.StatusNotFound, nil, "Company not found or access denied")
+		return
+	}
+	if !isAdmin {
+		response.SendResponse(c, http.StatusForbidden, nil, "Access denied: insufficient permissions")
+		return
+	}
+
+	// Удаляем связь пользователя с компанией.
+	err = h.userCompanyService.RemoveUserFromCompany(targetUserID, companyID)
+	if err != nil {
+		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
+		return
+	}
+	response.SendResponse(c, http.StatusOK, nil, "User removed from company successfully")
+}
+
+func (h *CompanyHandler) GetUserInCompany(c *gin.Context) {
+	// Извлекаем ID вызывающего пользователя из контекста.
+	requesterID, ok := utils.GetUserIDFromContext(c)
+	if !ok {
+		response.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
+		return
+	}
+
+	// Извлекаем company_id и user_id из URL.
+	companyIDStr := c.Param("company_id")
+	companyID, err := strconv.ParseInt(companyIDStr, 10, 64)
+	if err != nil {
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid company id")
+		return
+	}
+	targetUserIDStr := c.Param("user_id")
+	targetUserID, err := strconv.ParseInt(targetUserIDStr, 10, 64)
+	if err != nil {
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid user id")
+		return
+	}
+
+	// Проверяем, что вызывающий пользователь является участником компании.
+	_, err = h.userCompanyService.GetUserRole(requesterID, companyID)
+	if err != nil {
+		response.SendResponse(c, http.StatusForbidden, nil, "Access denied: you are not a member of this company")
+		return
+	}
+
+	// Проверяем, что целевой пользователь состоит в компании.
+	_, err = h.userCompanyService.GetUserRole(targetUserID, companyID)
+	if err != nil {
+		response.SendResponse(c, http.StatusNotFound, nil, "Target user not found in company")
+		return
+	}
+
+	// Получаем полную информацию о целевом пользователе.
+	user, err := h.userService.GetUserByID(targetUserID)
+	if err != nil {
+		response.SendResponse(c, http.StatusNotFound, nil, "User not found")
+		return
+	}
+	response.SendResponse(c, http.StatusOK, user, "User retrieved successfully")
 }
