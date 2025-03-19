@@ -15,7 +15,7 @@ fi
 DB_DSN="host=${DB_HOST} port=${DB_PORT} user=${DB_USER} dbname=${DB_NAME} password=${DB_PASSWORD} sslmode=disable"
 
 # Указываем директорию миграций
-MIGRATIONS_DIR="internal/migrations"
+MIGRATIONS_DIR="./migrations"
 
 echo "Running goose migrations with DSN: ${DB_DSN}"
 goose -dir "${MIGRATIONS_DIR}" postgres "${DB_DSN}" up
