@@ -10,6 +10,7 @@ import (
 type UserRepository interface {
 	Create(user *domain.User) error
 	GetAll() ([]domain.User, error)
+	GetAllByCompanyID(companyID int64) ([]domain.User, error)
 	GetByID(id int64) (*domain.User, error)
 	Update(user *domain.User) error
 	Delete(id int64) error
@@ -38,6 +39,31 @@ func (r *userRepo) Create(user *domain.User) error {
 func (r *userRepo) GetAll() ([]domain.User, error) {
 	query := `SELECT id, email, password, created_at, updated_at FROM users`
 	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []domain.User
+	for rows.Next() {
+		var user domain.User
+		if err := rows.Scan(&user.ID, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+// GetAllByCompanyID возвращает список пользователей, связанных с заданной компанией.
+func (r *userRepo) GetAllByCompanyID(companyID int64) ([]domain.User, error) {
+	query := `
+		SELECT u.id, u.email, u.password, u.created_at, u.updated_at
+		FROM users u
+		INNER JOIN user_companies uc ON u.id = uc.user_id
+		WHERE uc.company_id = $1
+	`
+	rows, err := r.db.Query(query, companyID)
 	if err != nil {
 		return nil, err
 	}

@@ -9,6 +9,7 @@ import (
 type UserService interface {
 	CreateUser(user *domain.User) error
 	GetAllUsers() ([]domain.User, error)
+	GetAllUsersByCompany(companyID int64) ([]domain.User, error)
 	GetUserByID(id int64) (*domain.User, error)
 	UpdateUser(user *domain.User) error
 	DeleteUser(id int64) error
@@ -29,6 +30,10 @@ func (s *userService) CreateUser(user *domain.User) error {
 
 func (s *userService) GetAllUsers() ([]domain.User, error) {
 	return s.repo.GetAll()
+}
+
+func (s *userService) GetAllUsersByCompany(companyID int64) ([]domain.User, error) {
+	return s.repo.GetAllByCompanyID(companyID)
 }
 
 func (s *userService) GetUserByID(id int64) (*domain.User, error) {

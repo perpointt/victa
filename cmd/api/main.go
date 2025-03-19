@@ -32,11 +32,12 @@ func main() {
 	// Инициализация для компаний
 	companyRepo := repository.NewCompanyRepository(db)
 	companyService := service.NewCompanyService(companyRepo)
-	companyHandler := handler.NewCompanyHandler(companyService)
-
-	// Инициализация для пользователей
+	// Передаем companyService и userService в NewCompanyHandler
 	userRepo := repository.NewUserRepository(db)
 	userService := service.NewUserService(userRepo)
+	companyHandler := handler.NewCompanyHandler(companyService, userService)
+
+	// Инициализация для пользователей
 	userHandler := handler.NewUserHandler(userService)
 
 	// Инициализация для приложений

@@ -30,6 +30,7 @@ func SetupRouter(
 		protected := api.Group("/")
 		protected.Use(middleware.JWTAuthMiddleware(jwtSecret))
 		{
+			// В группе защищённых маршрутов:
 			companies := protected.Group("/companies")
 			{
 				companies.POST("", companyHandler.CreateCompany)
@@ -37,6 +38,7 @@ func SetupRouter(
 				companies.GET("/:id", companyHandler.GetCompany)
 				companies.PUT("/:id", companyHandler.UpdateCompany)
 				companies.DELETE("/:id", companyHandler.DeleteCompany)
+				companies.GET("/:id/users", companyHandler.GetUsersInCompany)
 			}
 
 			users := protected.Group("/users")
