@@ -13,6 +13,7 @@ type UserRepository interface {
 	GetByID(id int64) (*domain.User, error)
 	Update(user *domain.User) error
 	Delete(id int64) error
+	GetByEmail(email string) (*domain.User, error)
 }
 
 type userRepo struct {
@@ -82,4 +83,16 @@ func (r *userRepo) Delete(id int64) error {
 	query := `DELETE FROM users WHERE id = $1`
 	_, err := r.db.Exec(query, id)
 	return err
+}
+
+// GetByEmail ищет пользователя по email.
+func (r *userRepo) GetByEmail(email string) (*domain.User, error) {
+	query := `SELECT id, company_id, email, password, created_at, updated_at FROM users WHERE email = $1`
+	var user domain.User
+	err := r.db.QueryRow(query, email).
+		Scan(&user.ID, &user.CompanyID, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

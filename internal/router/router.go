@@ -6,11 +6,24 @@ import (
 )
 
 // SetupRouter настраивает маршруты API версии v1.
-func SetupRouter(companyHandler *handler.CompanyHandler, userHandler *handler.UserHandler, appHandler *handler.AppHandler) *gin.Engine {
+func SetupRouter(
+	companyHandler *handler.CompanyHandler,
+	userHandler *handler.UserHandler,
+	appHandler *handler.AppHandler,
+	authHandler *handler.AuthHandler,
+) *gin.Engine {
 	r := gin.Default()
 
 	api := r.Group("/api/v1")
 	{
+		// Маршруты для аутентификации
+		auth := api.Group("/auth")
+		{
+			auth.POST("/register", authHandler.Register)
+			auth.POST("/login", authHandler.Login)
+		}
+
+		// Маршруты для компаний
 		companies := api.Group("/companies")
 		{
 			companies.POST("", companyHandler.CreateCompany)
@@ -20,6 +33,7 @@ func SetupRouter(companyHandler *handler.CompanyHandler, userHandler *handler.Us
 			companies.DELETE("/:id", companyHandler.DeleteCompany)
 		}
 
+		// Маршруты для пользователей
 		users := api.Group("/users")
 		{
 			users.POST("", userHandler.CreateUser)
@@ -29,6 +43,7 @@ func SetupRouter(companyHandler *handler.CompanyHandler, userHandler *handler.Us
 			users.DELETE("/:id", userHandler.DeleteUser)
 		}
 
+		// Маршруты для приложений
 		apps := api.Group("/apps")
 		{
 			apps.POST("", appHandler.CreateApp)
@@ -37,7 +52,6 @@ func SetupRouter(companyHandler *handler.CompanyHandler, userHandler *handler.Us
 			apps.PUT("/:id", appHandler.UpdateApp)
 			apps.DELETE("/:id", appHandler.DeleteApp)
 		}
-		// Добавьте другие маршруты, если потребуется
 	}
 
 	return r
