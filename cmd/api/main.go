@@ -39,8 +39,13 @@ func main() {
 	userService := service.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
 
+	// Инициализация для приложений
+	appRepo := repository.NewAppRepository(db)
+	appService := service.NewAppService(appRepo)
+	appHandler := handler.NewAppHandler(appService)
+
 	// Настройка маршрутов с передачей хендлеров
-	r := router.SetupRouter(companyHandler, userHandler)
+	r := router.SetupRouter(companyHandler, userHandler, appHandler)
 
 	if err := r.Run(":" + cfg.Port); err != nil {
 		log.Fatalf("Ошибка запуска сервера: %v", err)
