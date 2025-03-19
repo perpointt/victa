@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"victa/internal/domain"
@@ -46,9 +47,22 @@ func (s *authService) Register(email, password string, companyID *int64) (*domai
 		return nil, err
 	}
 
-	// Если companyID == nil, пользователь создаётся без компании
+	// Если companyID не указан, создаём новую компанию
+	var finalCompanyID int64
+	if companyID == nil {
+		newCompany := &domain.Company{
+			Name: fmt.Sprintf("%s's Company", email),
+		}
+		if err := s.companyRepo.Create(newCompany); err != nil {
+			return nil, err
+		}
+		finalCompanyID = newCompany.ID
+	} else {
+		finalCompanyID = *companyID
+	}
+
 	newUser := &domain.User{
-		CompanyID: companyID, // если nil, то привязки к компании нет
+		CompanyID: &finalCompanyID, // Используем указатель на finalCompanyID
 		Email:     email,
 		Password:  string(hashedPassword),
 	}
