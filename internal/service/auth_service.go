@@ -13,25 +13,28 @@ import (
 
 // AuthService описывает методы аутентификации.
 type AuthService interface {
-	Register(email, password string, companyID int64) (*domain.User, error)
+	Register(email, password string, companyID *int64) (*domain.User, error)
 	Login(email, password string) (string, error)
 }
 
 type authService struct {
-	userRepo  repository.UserRepository
-	jwtSecret string
+	userRepo    repository.UserRepository
+	companyRepo repository.CompanyRepository
+	jwtSecret   string
 }
 
 // NewAuthService создаёт новый экземпляр AuthService.
-func NewAuthService(userRepo repository.UserRepository, jwtSecret string) AuthService {
+func NewAuthService(userRepo repository.UserRepository, companyRepo repository.CompanyRepository, jwtSecret string) AuthService {
 	return &authService{
-		userRepo:  userRepo,
-		jwtSecret: jwtSecret,
+		userRepo:    userRepo,
+		companyRepo: companyRepo,
+		jwtSecret:   jwtSecret,
 	}
 }
 
-// Register регистрирует нового пользователя, хэшируя пароль перед сохранением.
-func (s *authService) Register(email, password string, companyID int64) (*domain.User, error) {
+// Register регистрирует нового пользователя.
+// Если companyID не указан, создаётся новая компания и её ID используется для нового пользователя.
+func (s *authService) Register(email, password string, companyID *int64) (*domain.User, error) {
 	// Проверяем, существует ли уже пользователь с таким email
 	if user, err := s.userRepo.GetByEmail(email); err == nil && user != nil {
 		return nil, errors.New("user already exists")
@@ -43,8 +46,9 @@ func (s *authService) Register(email, password string, companyID int64) (*domain
 		return nil, err
 	}
 
+	// Если companyID == nil, пользователь создаётся без компании
 	newUser := &domain.User{
-		CompanyID: companyID,
+		CompanyID: companyID, // если nil, то привязки к компании нет
 		Email:     email,
 		Password:  string(hashedPassword),
 	}
@@ -56,19 +60,17 @@ func (s *authService) Register(email, password string, companyID int64) (*domain
 	return newUser, nil
 }
 
-// Login выполняет аутентификацию и возвращает JWT, если email и пароль верны.
+// Login выполняет аутентификацию и возвращает JWT-токен при успешной проверке.
 func (s *authService) Login(email, password string) (string, error) {
 	user, err := s.userRepo.GetByEmail(email)
 	if err != nil {
 		return "", errors.New("invalid credentials")
 	}
 
-	// Сравниваем хэшированный пароль с предоставленным паролем
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		return "", errors.New("invalid credentials")
 	}
 
-	// Создаем токен с полезными данными (claims)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":    user.ID,
 		"company_id": user.CompanyID,

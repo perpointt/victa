@@ -45,7 +45,7 @@ func main() {
 	appHandler := handler.NewAppHandler(appService)
 
 	// Инициализация для аутентификации
-	authService := service.NewAuthService(userRepo, cfg.JWTSecret)
+	authService := service.NewAuthService(userRepo, companyRepo, cfg.JWTSecret)
 	authHandler := handler.NewAuthHandler(authService)
 
 	// Настройка маршрутов с подключенной JWT-миддлварой

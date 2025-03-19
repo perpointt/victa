@@ -7,7 +7,7 @@ import (
 	"victa/internal/service"
 )
 
-// AuthHandler обрабатывает HTTP-запросы для аутентификации.
+// AuthHandler обрабатывает запросы для аутентификации.
 type AuthHandler struct {
 	authService service.AuthService
 }
@@ -17,12 +17,13 @@ func NewAuthHandler(authService service.AuthService) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
 
-// Register обрабатывает POST /api/v1/auth/register
+// Register обрабатывает POST /api/v1/auth/register.
+// Поле company_id теперь опциональное.
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req struct {
 		Email     string `json:"email" binding:"required,email"`
 		Password  string `json:"password" binding:"required"`
-		CompanyID int64  `json:"company_id" binding:"required"`
+		CompanyID *int64 `json:"company_id"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -39,7 +40,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, user)
 }
 
-// Login обрабатывает POST /api/v1/auth/login
+// Login обрабатывает POST /api/v1/auth/login.
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req struct {
 		Email    string `json:"email" binding:"required,email"`
