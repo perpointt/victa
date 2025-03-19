@@ -14,32 +14,34 @@ import (
 )
 
 func main() {
-	// Загружаем конфигурацию
 	cfg := config.LoadConfig()
 
-	// Устанавливаем режим Gin в зависимости от переменной ENV
+	// Устанавливаем режим Gin в зависимости от ENV
 	if cfg.Env == "prod" {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
 		gin.SetMode(gin.DebugMode)
 	}
 
-	// Подключаемся к базе данных
 	db, err := sql.Open("postgres", cfg.GetDbDSN())
 	if err != nil {
 		log.Fatalf("Ошибка подключения к БД: %v", err)
 	}
 	defer db.Close()
 
-	// Инициализируем репозиторий, сервис и обработчик для компаний
+	// Инициализация для компаний
 	companyRepo := repository.NewCompanyRepository(db)
 	companyService := service.NewCompanyService(companyRepo)
 	companyHandler := handler.NewCompanyHandler(companyService)
 
-	// Настраиваем маршрутизацию
-	r := router.SetupRouter(companyHandler)
+	// Инициализация для пользователей
+	userRepo := repository.NewUserRepository(db)
+	userService := service.NewUserService(userRepo)
+	userHandler := handler.NewUserHandler(userService)
 
-	// Запускаем сервер
+	// Настройка маршрутов с передачей хендлеров
+	r := router.SetupRouter(companyHandler, userHandler)
+
 	if err := r.Run(":" + cfg.Port); err != nil {
 		log.Fatalf("Ошибка запуска сервера: %v", err)
 	}
