@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"victa/internal/response"
 
 	"github.com/gin-gonic/gin"
 	"victa/internal/domain"
@@ -23,48 +24,28 @@ func NewCompanyHandler(service service.CompanyService) *CompanyHandler {
 func (h *CompanyHandler) CreateCompany(c *gin.Context) {
 	var company domain.Company
 	if err := c.ShouldBindJSON(&company); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 	if err := h.service.CreateCompany(&company); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusInternalServerError,
-		})
+		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{
-		"data":    company,
-		"message": "Company created successfully",
-		"status":  http.StatusCreated,
-	})
+
+	response.SendResponse(c, http.StatusCreated, company, "Company created successfully")
 }
 
 // GetCompanies обрабатывает GET /api/v1/companies
 func (h *CompanyHandler) GetCompanies(c *gin.Context) {
 	companies, err := h.service.GetAllCompanies()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusInternalServerError,
-		})
+		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	// Если список равен nil, заменяем его на пустой срез
 	if companies == nil {
 		companies = []domain.Company{}
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data":    companies,
-		"message": "Companies retrieved successfully",
-		"status":  http.StatusOK,
-	})
+	response.SendResponse(c, http.StatusOK, companies, "Companies retrieved successfully")
 }
 
 // GetCompany обрабатывает GET /api/v1/companies/:id
@@ -72,27 +53,16 @@ func (h *CompanyHandler) GetCompany(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": "Invalid id",
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid id")
 		return
 	}
 	company, err := h.service.GetCompanyByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusNotFound,
-		})
+		response.SendResponse(c, http.StatusNotFound, nil, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data":    company,
-		"message": "Company retrieved successfully",
-		"status":  http.StatusOK,
-	})
+
+	response.SendResponse(c, http.StatusOK, company, "Company retrieved successfully")
 }
 
 // UpdateCompany обрабатывает PUT /api/v1/companies/:id
@@ -100,38 +70,23 @@ func (h *CompanyHandler) UpdateCompany(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": "Invalid id",
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid id")
 		return
 	}
 
 	var company domain.Company
 	if err := c.ShouldBindJSON(&company); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 	company.ID = id
 
 	if err := h.service.UpdateCompany(&company); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusInternalServerError,
-		})
+		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data":    company,
-		"message": "Company updated successfully",
-		"status":  http.StatusOK,
-	})
+
+	response.SendResponse(c, http.StatusOK, company, "Company updated successfully")
 }
 
 // DeleteCompany обрабатывает DELETE /api/v1/companies/:id
@@ -139,24 +94,13 @@ func (h *CompanyHandler) DeleteCompany(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": "Invalid id",
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid id")
 		return
 	}
 	if err := h.service.DeleteCompany(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusInternalServerError,
-		})
+		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data":    nil,
-		"message": "Company deleted successfully",
-		"status":  http.StatusOK,
-	})
+
+	response.SendResponse(c, http.StatusOK, nil, "Company deleted successfully")
 }

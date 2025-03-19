@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"victa/internal/response"
 
 	"github.com/gin-gonic/gin"
 	"victa/internal/service"
@@ -26,29 +27,17 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
 	user, err := h.authService.Register(req.Email, req.Password, req.CompanyID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"data":    user,
-		"message": "User registered successfully",
-		"status":  http.StatusCreated,
-	})
+	response.SendResponse(c, http.StatusCreated, user, "User registered successfully")
 }
 
 // Login обрабатывает POST /api/v1/auth/login
@@ -59,27 +48,15 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
 	token, err := h.authService.Login(req.Email, req.Password)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusUnauthorized,
-		})
+		response.SendResponse(c, http.StatusUnauthorized, nil, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data":    gin.H{"token": token},
-		"message": "Login successful",
-		"status":  http.StatusOK,
-	})
+	response.SendResponse(c, http.StatusOK, gin.H{"token": token}, "Login successful")
 }

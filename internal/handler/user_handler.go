@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"victa/internal/domain"
+	"victa/internal/response"
 	"victa/internal/service"
 )
 
@@ -23,49 +24,27 @@ func NewUserHandler(service service.UserService) *UserHandler {
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var user domain.User
 	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
-
 	if err := h.service.CreateUser(&user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusInternalServerError,
-		})
+		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{
-		"data":    user,
-		"message": "User created successfully",
-		"status":  http.StatusCreated,
-	})
+	response.SendResponse(c, http.StatusCreated, user, "User created successfully")
 }
 
 // GetUsers обрабатывает GET /api/v1/users
 func (h *UserHandler) GetUsers(c *gin.Context) {
 	users, err := h.service.GetAllUsers()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusInternalServerError,
-		})
+		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	// Если список равен nil, заменяем его на пустой срез
 	if users == nil {
 		users = []domain.User{}
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data":    users,
-		"message": "Users retrieved successfully",
-		"status":  http.StatusOK,
-	})
+	response.SendResponse(c, http.StatusOK, users, "Users retrieved successfully")
 }
 
 // GetUser обрабатывает GET /api/v1/users/:id
@@ -73,27 +52,15 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": "Invalid id",
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid id")
 		return
 	}
 	user, err := h.service.GetUserByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusNotFound,
-		})
+		response.SendResponse(c, http.StatusNotFound, nil, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data":    user,
-		"message": "User retrieved successfully",
-		"status":  http.StatusOK,
-	})
+	response.SendResponse(c, http.StatusOK, user, "User retrieved successfully")
 }
 
 // UpdateUser обрабатывает PUT /api/v1/users/:id
@@ -101,38 +68,20 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": "Invalid id",
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid id")
 		return
 	}
-
 	var user domain.User
 	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 	user.ID = id
-
 	if err := h.service.UpdateUser(&user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusInternalServerError,
-		})
+		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data":    user,
-		"message": "User updated successfully",
-		"status":  http.StatusOK,
-	})
+	response.SendResponse(c, http.StatusOK, user, "User updated successfully")
 }
 
 // DeleteUser обрабатывает DELETE /api/v1/users/:id
@@ -140,24 +89,12 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": "Invalid id",
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid id")
 		return
 	}
 	if err := h.service.DeleteUser(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusInternalServerError,
-		})
+		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data":    nil,
-		"message": "User deleted successfully",
-		"status":  http.StatusOK,
-	})
+	response.SendResponse(c, http.StatusOK, nil, "User deleted successfully")
 }

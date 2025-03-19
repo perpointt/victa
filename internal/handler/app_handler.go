@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"victa/internal/domain"
+	"victa/internal/response"
 	"victa/internal/service"
 )
 
@@ -23,48 +24,27 @@ func NewAppHandler(service service.AppService) *AppHandler {
 func (h *AppHandler) CreateApp(c *gin.Context) {
 	var app domain.App
 	if err := c.ShouldBindJSON(&app); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 	if err := h.service.CreateApp(&app); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusInternalServerError,
-		})
+		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{
-		"data":    app,
-		"message": "App created successfully",
-		"status":  http.StatusCreated,
-	})
+	response.SendResponse(c, http.StatusCreated, app, "App created successfully")
 }
 
 // GetApps обрабатывает GET /api/v1/apps
 func (h *AppHandler) GetApps(c *gin.Context) {
 	apps, err := h.service.GetAllApps()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusInternalServerError,
-		})
+		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	// Если список равен nil, заменяем его на пустой срез
 	if apps == nil {
 		apps = []domain.App{}
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data":    apps,
-		"message": "Apps retrieved successfully",
-		"status":  http.StatusOK,
-	})
+	response.SendResponse(c, http.StatusOK, apps, "Apps retrieved successfully")
 }
 
 // GetApp обрабатывает GET /api/v1/apps/:id
@@ -72,27 +52,15 @@ func (h *AppHandler) GetApp(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": "Invalid id",
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid id")
 		return
 	}
 	app, err := h.service.GetAppByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusNotFound,
-		})
+		response.SendResponse(c, http.StatusNotFound, nil, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data":    app,
-		"message": "App retrieved successfully",
-		"status":  http.StatusOK,
-	})
+	response.SendResponse(c, http.StatusOK, app, "App retrieved successfully")
 }
 
 // UpdateApp обрабатывает PUT /api/v1/apps/:id
@@ -100,38 +68,20 @@ func (h *AppHandler) UpdateApp(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": "Invalid id",
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid id")
 		return
 	}
-
 	var app domain.App
 	if err := c.ShouldBindJSON(&app); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 	app.ID = id
-
 	if err := h.service.UpdateApp(&app); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusInternalServerError,
-		})
+		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data":    app,
-		"message": "App updated successfully",
-		"status":  http.StatusOK,
-	})
+	response.SendResponse(c, http.StatusOK, app, "App updated successfully")
 }
 
 // DeleteApp обрабатывает DELETE /api/v1/apps/:id
@@ -139,24 +89,12 @@ func (h *AppHandler) DeleteApp(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"message": "Invalid id",
-			"status":  http.StatusBadRequest,
-		})
+		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid id")
 		return
 	}
 	if err := h.service.DeleteApp(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"data":    nil,
-			"message": err.Error(),
-			"status":  http.StatusInternalServerError,
-		})
+		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data":    nil,
-		"message": "App deleted successfully",
-		"status":  http.StatusOK,
-	})
+	response.SendResponse(c, http.StatusOK, nil, "App deleted successfully")
 }
