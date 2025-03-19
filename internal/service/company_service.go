@@ -8,6 +8,7 @@ import (
 // CompanyService описывает бизнес-логику для компаний.
 type CompanyService interface {
 	CreateCompany(company *domain.Company) error
+	CreateCompanyAndLink(company *domain.Company, userID int64) error
 	GetAllCompanies() ([]domain.Company, error)
 	GetCompanyByID(id int64) (*domain.Company, error)
 	UpdateCompany(company *domain.Company) error
@@ -25,6 +26,11 @@ func NewCompanyService(repo repository.CompanyRepository) CompanyService {
 
 func (s *companyService) CreateCompany(company *domain.Company) error {
 	return s.repo.Create(company)
+}
+
+// CreateCompanyAndLink создает компанию и связывает её с пользователем, вызывая метод репозитория.
+func (s *companyService) CreateCompanyAndLink(company *domain.Company, userID int64) error {
+	return s.repo.CreateAndLink(company, userID)
 }
 
 func (s *companyService) GetAllCompanies() ([]domain.Company, error) {

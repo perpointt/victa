@@ -9,6 +9,7 @@ import (
 // CompanyRepository описывает методы для работы с компаниями.
 type CompanyRepository interface {
 	Create(company *domain.Company) error
+	CreateAndLink(company *domain.Company, userID int64) error
 	GetAll() ([]domain.Company, error)
 	GetByID(id int64) (*domain.Company, error)
 	Update(company *domain.Company) error
@@ -32,6 +33,38 @@ func (r *companyRepo) Create(company *domain.Company) error {
 	`
 	return r.db.QueryRow(query, company.Name).
 		Scan(&company.ID, &company.CreatedAt, &company.UpdatedAt)
+}
+
+// CreateAndLink создает компанию и связывает её с пользователем в рамках транзакции.
+func (r *companyRepo) CreateAndLink(company *domain.Company, userID int64) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	createQuery := `
+		INSERT INTO companies (name, created_at, updated_at)
+		VALUES ($1, NOW(), NOW())
+		RETURNING id, created_at, updated_at
+	`
+	err = tx.QueryRow(createQuery, company.Name).
+		Scan(&company.ID, &company.CreatedAt, &company.UpdatedAt)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	linkQuery := `
+		INSERT INTO user_companies (user_id, company_id, created_at, updated_at)
+		VALUES ($1, $2, NOW(), NOW())
+	`
+	_, err = tx.Exec(linkQuery, userID, company.ID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (r *companyRepo) GetAll() ([]domain.Company, error) {

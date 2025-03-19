@@ -27,11 +27,29 @@ func (h *CompanyHandler) CreateCompany(c *gin.Context) {
 		response.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
+
+	// Проверяем наличие user_id в контексте (устанавливается JWT-миддлварой)
+	userIDInterface, exists := c.Get("user_id")
+	if exists {
+		uidFloat, ok := userIDInterface.(float64)
+		if !ok {
+			response.SendResponse(c, http.StatusInternalServerError, nil, "Invalid user id type")
+			return
+		}
+		userID := int64(uidFloat)
+		if err := h.service.CreateCompanyAndLink(&company, userID); err != nil {
+			response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
+			return
+		}
+		response.SendResponse(c, http.StatusCreated, company, "Company created and linked successfully")
+		return
+	}
+
+	// Если user_id не найден в контексте, создаем компанию без связи.
 	if err := h.service.CreateCompany(&company); err != nil {
 		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-
 	response.SendResponse(c, http.StatusCreated, company, "Company created successfully")
 }
 
