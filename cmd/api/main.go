@@ -31,33 +31,19 @@ func main() {
 
 	// Инициализация для компаний
 	companyRepo := repository.NewCompanyRepository(db)
-	companyService := service.NewCompanyService(companyRepo)
 
 	// Инициализация для пользователей
 	userRepo := repository.NewUserRepository(db)
-	userService := service.NewUserService(userRepo)
 
 	// Инициализация для связи пользователей и компаний
 	userCompanyRepo := repository.NewUserCompanyRepository(db)
-	userCompanyService := service.NewUserCompanyService(userCompanyRepo)
-
-	// Инициализация CompanyHandler с передачей всех зависимостей
-	companyHandler := handler.NewCompanyHandler(companyService, userService, userCompanyService)
-
-	// Инициализация для пользователей (UserHandler)
-	userHandler := handler.NewUserHandler(userService)
-
-	// Инициализация для приложений
-	appRepo := repository.NewAppRepository(db)
-	appService := service.NewAppService(appRepo)
-	appHandler := handler.NewAppHandler(appService)
 
 	// Инициализация для аутентификации
 	authService := service.NewAuthService(userRepo, companyRepo, userCompanyRepo, cfg.JWTSecret)
 	authHandler := handler.NewAuthHandler(authService)
 
 	// Настройка маршрутов с подключенной JWT-миддлварой
-	r := router.SetupRouter(companyHandler, userHandler, appHandler, authHandler, cfg.JWTSecret)
+	r := router.SetupRouter(authHandler, cfg.JWTSecret)
 
 	if err := r.Run(":" + cfg.Port); err != nil {
 		log.Fatalf("Ошибка запуска сервера: %v", err)

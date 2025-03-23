@@ -1,0 +1,15 @@
+type: object
+properties:
+  data:
+    type: object
+    description: Результат запроса. Может быть объектом, массивом и т.п.
+  message:
+    type: string
+    description: Сообщение о результате операции
+  status:
+    type: integer
+    description: HTTP статус ответа
+required:
+  - data
+  - message
+  - status
