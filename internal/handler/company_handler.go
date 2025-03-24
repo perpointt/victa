@@ -1,33 +1,83 @@
 package handler
 
-//
-//import (
-//	"net/http"
-//	"strconv"
-//	"victa/internal/response"
-//	"victa/internal/utils"
-//
-//	"github.com/gin-gonic/gin"
-//	"victa/internal/domain"
-//	"victa/internal/service"
-//)
-//
-//// CompanyHandler обрабатывает HTTP-запросы для компаний.
-//type CompanyHandler struct {
-//	service            service.CompanyService
-//	userService        service.UserService
-//	userCompanyService service.UserCompanyService
-//}
-//
-//// NewCompanyHandler создаёт новый CompanyHandler с зависимостями.
-//func NewCompanyHandler(companyService service.CompanyService, userService service.UserService, userCompanyService service.UserCompanyService) *CompanyHandler {
-//	return &CompanyHandler{
-//		service:            companyService,
-//		userService:        userService,
-//		userCompanyService: userCompanyService,
-//	}
-//}
-//
+import (
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"victa/internal/domain"
+	"victa/internal/service"
+	"victa/internal/utils"
+)
+
+type CompanyHandler struct {
+	service            service.CompanyService
+	userService        service.UserService
+	userCompanyService service.UserCompanyService
+}
+
+func NewCompanyHandler(companyService service.CompanyService, userService service.UserService, userCompanyService service.UserCompanyService) *CompanyHandler {
+	return &CompanyHandler{
+		service:            companyService,
+		userService:        userService,
+		userCompanyService: userCompanyService,
+	}
+}
+
+// GetCompanies извлекает user_id из JWT и возвращает список компаний для данного пользователя.
+func (h CompanyHandler) GetCompanies(c *gin.Context) {
+	userID, ok := utils.GetUserIDFromContext(c)
+	if !ok {
+		utils.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
+		return
+	}
+
+	companies, err := h.service.GetCompanies(userID)
+	if err != nil {
+		utils.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
+		return
+	}
+	if companies == nil {
+		companies = []domain.Company{}
+	}
+
+	utils.SendResponse(c, http.StatusOK, companies, "Companies retrieved successfully")
+}
+
+func (h CompanyHandler) CreateCompany(c *gin.Context) {
+	var company domain.Company
+	if err := c.ShouldBindJSON(&company); err != nil {
+		utils.SendResponse(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
+
+	userID, ok := utils.GetUserIDFromContext(c)
+	if !ok {
+		utils.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
+		return
+	}
+
+	if err := h.service.CreateCompany(&company, userID); err != nil {
+		utils.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
+		return
+	}
+
+	utils.SendResponse(c, http.StatusCreated, company, "Company created successfully")
+}
+
+func (h CompanyHandler) DeleteCompany(c *gin.Context, id string) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (h CompanyHandler) GetCompany(c *gin.Context, id string) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (h CompanyHandler) UpdateCompany(c *gin.Context, id string) {
+	//TODO implement me
+	panic("implement me")
+}
+
 //// CreateCompany обрабатывает POST /api/v1/companies
 //func (h *CompanyHandler) CreateCompany(c *gin.Context) {
 //	var company domain.Company

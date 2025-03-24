@@ -7,12 +7,9 @@ import (
 
 // CompanyService описывает бизнес-логику для компаний.
 type CompanyService interface {
-	CreateCompany(company *domain.Company) error
-	CreateCompanyAndLink(company *domain.Company, userID int64) error
-	GetAllCompanies() ([]domain.Company, error)
-	GetAllByUserID(userID int64) ([]domain.Company, error)
+	CreateCompany(company *domain.Company, userID int64) error
+	GetCompanies(userID int64) ([]domain.Company, error)
 	GetCompanyByID(id int64) (*domain.Company, error)
-	GetCompanyByIDForUser(userID, companyID int64) (*domain.Company, error)
 	UpdateCompany(company *domain.Company) error
 	DeleteCompany(id int64) error
 }
@@ -26,21 +23,11 @@ func NewCompanyService(repo repository.CompanyRepository) CompanyService {
 	return &companyService{repo: repo}
 }
 
-func (s *companyService) CreateCompany(company *domain.Company) error {
-	return s.repo.Create(company)
+func (s *companyService) CreateCompany(company *domain.Company, userID int64) error {
+	return s.repo.CreateCompanyWithUser(company, userID)
 }
 
-// CreateCompanyAndLink создает компанию и связывает её с пользователем, вызывая метод репозитория.
-func (s *companyService) CreateCompanyAndLink(company *domain.Company, userID int64) error {
-	return s.repo.CreateAndLink(company, userID)
-}
-
-func (s *companyService) GetAllCompanies() ([]domain.Company, error) {
-	return s.repo.GetAll()
-}
-
-// GetAllByUserID возвращает компании, связанные с указанным пользователем.
-func (s *companyService) GetAllByUserID(userID int64) ([]domain.Company, error) {
+func (s *companyService) GetCompanies(userID int64) ([]domain.Company, error) {
 	return s.repo.GetAllByUserID(userID)
 }
 

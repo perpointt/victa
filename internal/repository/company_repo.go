@@ -8,8 +8,7 @@ import (
 
 // CompanyRepository описывает методы для работы с компаниями.
 type CompanyRepository interface {
-	Create(company *domain.Company) error
-	CreateAndLink(company *domain.Company, userID int64) error
+	CreateCompanyWithUser(company *domain.Company, userID int64) error
 	GetAll() ([]domain.Company, error)
 	GetAllByUserID(userID int64) ([]domain.Company, error)
 	GetByID(id int64) (*domain.Company, error)
@@ -27,19 +26,9 @@ func NewCompanyRepository(db *sql.DB) CompanyRepository {
 	return &companyRepo{db: db}
 }
 
-func (r *companyRepo) Create(company *domain.Company) error {
-	query := `
-		INSERT INTO companies (name, created_at, updated_at)
-		VALUES ($1, NOW(), NOW())
-		RETURNING id, created_at, updated_at
-	`
-	return r.db.QueryRow(query, company.Name).
-		Scan(&company.ID, &company.CreatedAt, &company.UpdatedAt)
-}
-
-// CreateAndLink создает компанию и связывает её с пользователем в рамках транзакции.
+// CreateCompanyWithUser создает компанию и связывает её с пользователем в рамках транзакции.
 // Для создателя компании роль устанавливается как "admin".
-func (r *companyRepo) CreateAndLink(company *domain.Company, userID int64) error {
+func (r *companyRepo) CreateCompanyWithUser(company *domain.Company, userID int64) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return err

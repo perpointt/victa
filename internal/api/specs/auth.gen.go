@@ -7,6 +7,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// LoginJSONBody defines parameters for Login.
+type LoginJSONBody struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// RegisterJSONBody defines parameters for Register.
+type RegisterJSONBody struct {
+	CompanyId *int   `json:"company_id"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+}
+
+// LoginJSONRequestBody defines body for Login for application/json ContentType.
+type LoginJSONRequestBody LoginJSONBody
+
+// RegisterJSONRequestBody defines body for Register for application/json ContentType.
+type RegisterJSONRequestBody RegisterJSONBody
+
 // AuthServerInterface represents all server handlers.
 type AuthServerInterface interface {
 	// Вход в систему

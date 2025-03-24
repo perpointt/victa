@@ -18,19 +18,15 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepo        repository.UserRepository
-	companyRepo     repository.CompanyRepository
-	userCompanyRepo repository.UserCompanyRepository
-	jwtSecret       string
+	userRepo  repository.UserRepository
+	jwtSecret string
 }
 
 // NewAuthService создаёт новый экземпляр AuthService.
-func NewAuthService(userRepo repository.UserRepository, companyRepo repository.CompanyRepository, userCompanyRepo repository.UserCompanyRepository, jwtSecret string) AuthService {
+func NewAuthService(userRepo repository.UserRepository, jwtSecret string) AuthService {
 	return &authService{
-		userRepo:        userRepo,
-		companyRepo:     companyRepo,
-		userCompanyRepo: userCompanyRepo,
-		jwtSecret:       jwtSecret,
+		userRepo:  userRepo,
+		jwtSecret: jwtSecret,
 	}
 }
 
@@ -54,19 +50,8 @@ func (s *authService) Register(email, password string, companyID *int64) (*domai
 		Password: string(hashedPassword),
 	}
 
-	if err := s.userRepo.Create(newUser); err != nil {
+	if err := s.userRepo.CreateWithCompany(newUser, companyID); err != nil {
 		return nil, err
-	}
-
-	// Если передан companyID, связываем пользователя с этой компанией как "developer".
-	if companyID != nil {
-		_, err := s.companyRepo.GetByID(*companyID)
-		if err != nil {
-			return nil, errors.New("company not found")
-		}
-		if err := s.userCompanyRepo.LinkUserCompanyWithRole(newUser.ID, *companyID, "developer"); err != nil {
-			return nil, err
-		}
 	}
 
 	return newUser, nil

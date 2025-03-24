@@ -3,12 +3,13 @@ package repository
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"victa/internal/domain"
 )
 
 // UserRepository описывает методы работы с пользователями.
 type UserRepository interface {
-	Create(user *domain.User) error
+	CreateWithCompany(user *domain.User, companyID *int64) error
 	GetAll() ([]domain.User, error)
 	GetAllByCompanyID(companyID int64) ([]domain.User, error)
 	GetByID(id int64) (*domain.User, error)
@@ -26,14 +27,70 @@ func NewUserRepository(db *sql.DB) UserRepository {
 	return &userRepo{db: db}
 }
 
-func (r *userRepo) Create(user *domain.User) error {
-	query := `
+func (r *userRepo) CreateWithCompany(user *domain.User, companyID *int64) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	// Helper для отката транзакции в случае ошибки.
+	rollback := func(err error) error {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return fmt.Errorf("rollback error: %v; original error: %w", rbErr, err)
+		}
+		return err
+	}
+
+	// 1. Проверяем, существует ли пользователь с таким email.
+	var userExists bool
+	checkUserQuery := `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`
+	if err = tx.QueryRow(checkUserQuery, user.Email).Scan(&userExists); err != nil {
+		return rollback(fmt.Errorf("failed to check user existence: %w", err))
+	}
+	if userExists {
+		return rollback(fmt.Errorf("user with email %s already exists", user.Email))
+	}
+
+	// 2. Если companyID передан, проверяем, существует ли такая компания.
+	if companyID != nil {
+		var companyExists bool
+		checkCompanyQuery := `SELECT EXISTS(SELECT 1 FROM companies WHERE id = $1)`
+		if err = tx.QueryRow(checkCompanyQuery, *companyID).Scan(&companyExists); err != nil {
+			return rollback(fmt.Errorf("failed to check company existence: %w", err))
+		}
+		if !companyExists {
+			return rollback(fmt.Errorf("company with id %d does not exist", *companyID))
+		}
+	}
+
+	// 3. Создаем пользователя.
+	createQuery := `
 		INSERT INTO users (email, password, created_at, updated_at)
 		VALUES ($1, $2, NOW(), NOW())
 		RETURNING id, created_at, updated_at
 	`
-	return r.db.QueryRow(query, user.Email, user.Password).
-		Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
+	if err = tx.QueryRow(createQuery, user.Email, user.Password).
+		Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt); err != nil {
+		return rollback(fmt.Errorf("failed to create user: %w", err))
+	}
+
+	// 4. Если companyID передан, связываем пользователя с компанией с ролью "developer".
+	if companyID != nil {
+		linkQuery := `
+			INSERT INTO user_companies (user_id, company_id, role)
+			VALUES ($1, $2, $3)
+			ON CONFLICT (user_id, company_id) DO UPDATE SET role = EXCLUDED.role
+		`
+		if _, err = tx.Exec(linkQuery, user.ID, *companyID, "developer"); err != nil {
+			return rollback(fmt.Errorf("failed to link user with company: %w", err))
+		}
+	}
+
+	// Фиксируем транзакцию.
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
+	}
+
+	return nil
 }
 
 func (r *userRepo) GetAll() ([]domain.User, error) {

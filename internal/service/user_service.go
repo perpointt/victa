@@ -7,7 +7,7 @@ import (
 
 // UserService описывает бизнес-логику для пользователей.
 type UserService interface {
-	CreateUser(user *domain.User) error
+	//CreateUser(user *domain.User) error
 	GetAllUsers() ([]domain.User, error)
 	GetAllUsersByCompany(companyID int64) ([]domain.User, error)
 	GetUserByID(id int64) (*domain.User, error)
@@ -24,9 +24,9 @@ func NewUserService(repo repository.UserRepository) UserService {
 	return &userService{repo: repo}
 }
 
-func (s *userService) CreateUser(user *domain.User) error {
-	return s.repo.Create(user)
-}
+//func (s *userService) CreateUser(user *domain.User) error {
+//	return s.repo.CreateWithCompany(user, 0)
+//}
 
 func (s *userService) GetAllUsers() ([]domain.User, error) {
 	return s.repo.GetAll()
