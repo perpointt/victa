@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"victa/internal/domain"
 )
 
@@ -10,9 +11,8 @@ import (
 type CompanyRepository interface {
 	CreateCompanyWithUser(company *domain.Company, userID int64) error
 	GetAll() ([]domain.Company, error)
-	GetAllByUserID(userID int64) ([]domain.Company, error)
-	GetByID(id int64) (*domain.Company, error)
-	GetByIDForUser(userID, companyID int64) (*domain.Company, error)
+	GetAllWithUser(userID int64) ([]domain.Company, error)
+	GetByIdWithUser(userID, companyID int64) (*domain.Company, error)
 	Update(company *domain.Company) error
 	Delete(id int64) error
 }
@@ -27,32 +27,51 @@ func NewCompanyRepository(db *sql.DB) CompanyRepository {
 }
 
 // CreateCompanyWithUser создает компанию и связывает её с пользователем в рамках транзакции.
-// Для создателя компании роль устанавливается как "admin".
+// Для создателя компании роль устанавливается как "admin". Перед созданием проверяется, что
+// среди компаний пользователя нет компании с таким же именем.
 func (r *companyRepo) CreateCompanyWithUser(company *domain.Company, userID int64) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return err
 	}
 
+	// Проверяем, существует ли уже компания с таким именем у пользователя.
+	checkQuery := `
+		SELECT EXISTS(
+			SELECT 1 
+			FROM companies c
+			INNER JOIN user_companies uc ON c.id = uc.company_id
+			WHERE uc.user_id = $1 AND c.name = $2
+		)
+	`
+	var exists bool
+	if err := tx.QueryRow(checkQuery, userID, company.Name).Scan(&exists); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if exists {
+		tx.Rollback()
+		return fmt.Errorf("company with name %q already exists for user %d", company.Name, userID)
+	}
+
+	// Создаем новую компанию.
 	createQuery := `
 		INSERT INTO companies (name, created_at, updated_at)
 		VALUES ($1, NOW(), NOW())
 		RETURNING id, created_at, updated_at
 	`
-	err = tx.QueryRow(createQuery, company.Name).
-		Scan(&company.ID, &company.CreatedAt, &company.UpdatedAt)
-	if err != nil {
+	if err := tx.QueryRow(createQuery, company.Name).
+		Scan(&company.ID, &company.CreatedAt, &company.UpdatedAt); err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	// Устанавливаем связь с ролью "admin"
+	// Устанавливаем связь с ролью "admin" для создателя.
 	linkQuery := `
 		INSERT INTO user_companies (user_id, company_id, role)
 		VALUES ($1, $2, 'admin')
 	`
-	_, err = tx.Exec(linkQuery, userID, company.ID)
-	if err != nil {
+	if _, err := tx.Exec(linkQuery, userID, company.ID); err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -92,9 +111,9 @@ func (r *companyRepo) GetByID(id int64) (*domain.Company, error) {
 	return &comp, nil
 }
 
-// GetByIDForUser возвращает компанию по её идентификатору,
+// GetByIdWithUser возвращает компанию по её идентификатору,
 // если она связана с указанным пользователем.
-func (r *companyRepo) GetByIDForUser(userID, companyID int64) (*domain.Company, error) {
+func (r *companyRepo) GetByIdWithUser(userID, companyID int64) (*domain.Company, error) {
 	query := `
 		SELECT c.id, c.name, c.created_at, c.updated_at
 		FROM companies c
@@ -112,8 +131,8 @@ func (r *companyRepo) GetByIDForUser(userID, companyID int64) (*domain.Company, 
 	return &comp, nil
 }
 
-// GetAllByUserID возвращает список компаний, связанных с указанным пользователем.
-func (r *companyRepo) GetAllByUserID(userID int64) ([]domain.Company, error) {
+// GetAllWithUser возвращает список компаний, связанных с указанным пользователем.
+func (r *companyRepo) GetAllWithUser(userID int64) ([]domain.Company, error) {
 	query := `
 		SELECT c.id, c.name, c.created_at, c.updated_at
 		FROM companies c
