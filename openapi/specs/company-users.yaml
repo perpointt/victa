@@ -1,0 +1,82 @@
+openapi: 3.0.0
+info:
+  title: VICTA API - Company Users
+  version: "1.0.0"
+servers:
+  - url: /api/v1
+paths:
+  /company-users/{id}:
+    get:
+      summary: Получение информации о пользователе компании
+      operationId: getCompanyUser
+      parameters:
+        - name: id
+          in: path
+          description: ID компании
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Информация о пользователе компании
+          content:
+            application/json:
+              schema:
+                $ref: "../components/api_response.yaml"
+    post:
+      summary: Добавление пользователей в компанию
+      operationId: addCompanyUsers
+      parameters:
+        - name: id
+          in: path
+          description: ID компании
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: Массив идентификаторов пользователей для добавления
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+      responses:
+        "200":
+          description: Пользователи успешно добавлены
+          content:
+            application/json:
+              schema:
+                $ref: "../components/api_response.yaml"
+    delete:
+      summary: Удаление пользователей из компании
+      operationId: removeCompanyUsers
+      parameters:
+        - name: id
+          in: path
+          description: ID компании
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: Массив идентификаторов пользователей для удаления
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+      responses:
+        "200":
+          description: Пользователи успешно удалены
+          content:
+            application/json:
+              schema:
+                $ref: "../components/api_response.yaml"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
