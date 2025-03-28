@@ -11,29 +11,33 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// RemoveCompanyUsersJSONBody defines parameters for RemoveCompanyUsers.
-type RemoveCompanyUsersJSONBody = []int
+// RemoveUsersFromCompanyJSONBody defines parameters for RemoveUsersFromCompany.
+type RemoveUsersFromCompanyJSONBody struct {
+	UserIds []int `json:"user_ids"`
+}
 
-// AddCompanyUsersJSONBody defines parameters for AddCompanyUsers.
-type AddCompanyUsersJSONBody = []int
+// AddUsersToCompanyJSONBody defines parameters for AddUsersToCompany.
+type AddUsersToCompanyJSONBody struct {
+	UserIds []int `json:"user_ids"`
+}
 
-// RemoveCompanyUsersJSONRequestBody defines body for RemoveCompanyUsers for application/json ContentType.
-type RemoveCompanyUsersJSONRequestBody = RemoveCompanyUsersJSONBody
+// RemoveUsersFromCompanyJSONRequestBody defines body for RemoveUsersFromCompany for application/json ContentType.
+type RemoveUsersFromCompanyJSONRequestBody RemoveUsersFromCompanyJSONBody
 
-// AddCompanyUsersJSONRequestBody defines body for AddCompanyUsers for application/json ContentType.
-type AddCompanyUsersJSONRequestBody = AddCompanyUsersJSONBody
+// AddUsersToCompanyJSONRequestBody defines body for AddUsersToCompany for application/json ContentType.
+type AddUsersToCompanyJSONRequestBody AddUsersToCompanyJSONBody
 
 // CompanyUsersServerInterface represents all server handlers.
 type CompanyUsersServerInterface interface {
 	// Удаление пользователей из компании
 	// (DELETE /company-users/{id})
-	RemoveCompanyUsers(c *gin.Context, id int)
+	RemoveUsersFromCompany(c *gin.Context, id int)
 	// Получение информации о пользователе компании
 	// (GET /company-users/{id})
-	GetCompanyUsers(c *gin.Context, id int)
+	GetUsersInCompany(c *gin.Context, id int)
 	// Добавление пользователей в компанию
 	// (POST /company-users/{id})
-	AddCompanyUsers(c *gin.Context, id int)
+	AddUsersToCompany(c *gin.Context, id int)
 }
 
 // CompanyUsersServerInterfaceWrapper converts contexts to parameters.
@@ -45,8 +49,8 @@ type CompanyUsersServerInterfaceWrapper struct {
 
 type CompanyUsersMiddlewareFunc func(c *gin.Context)
 
-// RemoveCompanyUsers operation middleware
-func (siw *CompanyUsersServerInterfaceWrapper) RemoveCompanyUsers(c *gin.Context) {
+// RemoveUsersFromCompany operation middleware
+func (siw *CompanyUsersServerInterfaceWrapper) RemoveUsersFromCompany(c *gin.Context) {
 
 	var err error
 
@@ -66,11 +70,11 @@ func (siw *CompanyUsersServerInterfaceWrapper) RemoveCompanyUsers(c *gin.Context
 		}
 	}
 
-	siw.Handler.RemoveCompanyUsers(c, id)
+	siw.Handler.RemoveUsersFromCompany(c, id)
 }
 
-// GetCompanyUsers operation middleware
-func (siw *CompanyUsersServerInterfaceWrapper) GetCompanyUsers(c *gin.Context) {
+// GetUsersInCompany operation middleware
+func (siw *CompanyUsersServerInterfaceWrapper) GetUsersInCompany(c *gin.Context) {
 
 	var err error
 
@@ -90,11 +94,11 @@ func (siw *CompanyUsersServerInterfaceWrapper) GetCompanyUsers(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetCompanyUsers(c, id)
+	siw.Handler.GetUsersInCompany(c, id)
 }
 
-// AddCompanyUsers operation middleware
-func (siw *CompanyUsersServerInterfaceWrapper) AddCompanyUsers(c *gin.Context) {
+// AddUsersToCompany operation middleware
+func (siw *CompanyUsersServerInterfaceWrapper) AddUsersToCompany(c *gin.Context) {
 
 	var err error
 
@@ -114,7 +118,7 @@ func (siw *CompanyUsersServerInterfaceWrapper) AddCompanyUsers(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.AddCompanyUsers(c, id)
+	siw.Handler.AddUsersToCompany(c, id)
 }
 
 // CompanyUsersGinServerOptions provides options for the Gin server.
@@ -144,7 +148,7 @@ func RegisterCompanyUsersHandlersWithOptions(router gin.IRouter, si CompanyUsers
 		ErrorHandler:       errorHandler,
 	}
 
-	router.DELETE(options.BaseURL+"/company-users/:id", wrapper.RemoveCompanyUsers)
-	router.GET(options.BaseURL+"/company-users/:id", wrapper.GetCompanyUsers)
-	router.POST(options.BaseURL+"/company-users/:id", wrapper.AddCompanyUsers)
+	router.DELETE(options.BaseURL+"/company-users/:id", wrapper.RemoveUsersFromCompany)
+	router.GET(options.BaseURL+"/company-users/:id", wrapper.GetUsersInCompany)
+	router.POST(options.BaseURL+"/company-users/:id", wrapper.AddUsersToCompany)
 }
