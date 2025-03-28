@@ -3,7 +3,6 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"strconv"
 	"victa/internal/domain"
 	"victa/internal/service"
 	"victa/internal/utils"
@@ -12,10 +11,10 @@ import (
 type CompanyHandler struct {
 	service            service.CompanyService
 	userService        service.UserService
-	userCompanyService service.CompanyUsersService
+	userCompanyService service.CompanyUserService
 }
 
-func NewCompanyHandler(companyService service.CompanyService, userService service.UserService, userCompanyService service.CompanyUsersService) *CompanyHandler {
+func NewCompanyHandler(companyService service.CompanyService, userService service.UserService, userCompanyService service.CompanyUserService) *CompanyHandler {
 	return &CompanyHandler{
 		service:            companyService,
 		userService:        userService,
@@ -64,23 +63,15 @@ func (h CompanyHandler) CreateCompany(c *gin.Context) {
 	utils.SendResponse(c, http.StatusCreated, company, "Company created successfully")
 }
 
-func (h CompanyHandler) GetCompany(c *gin.Context, id string) {
+func (h CompanyHandler) GetCompany(c *gin.Context, id int) {
 	userID, ok := utils.GetUserIDFromContext(c)
 	if !ok {
 		utils.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
 		return
 	}
 
-	// Извлекаем company_id из URL.
-	idStr := c.Param("id")
-	companyID, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		utils.SendResponse(c, http.StatusBadRequest, nil, "Invalid company id")
-		return
-	}
-
 	// Проверяем, что текущий пользователь имеет доступ к этой компании.
-	company, err := h.service.GetCompanyByID(userID, companyID)
+	company, err := h.service.GetCompanyByID(userID, int64(id))
 	if err != nil {
 		utils.SendResponse(c, http.StatusNotFound, nil, err.Error())
 		return
@@ -88,20 +79,14 @@ func (h CompanyHandler) GetCompany(c *gin.Context, id string) {
 	utils.SendResponse(c, http.StatusOK, company, "Company retrieved successfully")
 }
 
-func (h CompanyHandler) UpdateCompany(c *gin.Context, id string) {
+func (h CompanyHandler) UpdateCompany(c *gin.Context, id int) {
 	userID, ok := utils.GetUserIDFromContext(c)
 	if !ok {
 		utils.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
 		return
 	}
-	companyIDStr := c.Param("id")
-	companyID, err := strconv.ParseInt(companyIDStr, 10, 64)
-	if err != nil {
-		utils.SendResponse(c, http.StatusBadRequest, nil, "Invalid company id")
-		return
-	}
 
-	isAdmin, err := h.userCompanyService.IsAdmin(userID, companyID)
+	isAdmin, err := h.userCompanyService.IsUserAdminInCompany(userID, int64(id))
 	if err != nil {
 		utils.SendResponse(c, http.StatusNotFound, nil, "Company not found or access denied")
 		return
@@ -116,7 +101,7 @@ func (h CompanyHandler) UpdateCompany(c *gin.Context, id string) {
 		utils.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
-	company.ID = companyID
+	company.ID = int64(id)
 
 	if err := h.service.UpdateCompany(&company); err != nil {
 		utils.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
@@ -125,20 +110,14 @@ func (h CompanyHandler) UpdateCompany(c *gin.Context, id string) {
 	utils.SendResponse(c, http.StatusOK, company, "Company updated successfully")
 }
 
-func (h CompanyHandler) DeleteCompany(c *gin.Context, id string) {
+func (h CompanyHandler) DeleteCompany(c *gin.Context, id int) {
 	userID, ok := utils.GetUserIDFromContext(c)
 	if !ok {
 		utils.SendResponse(c, http.StatusUnauthorized, nil, "User not authenticated")
 		return
 	}
-	companyIDStr := c.Param("id")
-	companyID, err := strconv.ParseInt(companyIDStr, 10, 64)
-	if err != nil {
-		utils.SendResponse(c, http.StatusBadRequest, nil, "Invalid company id")
-		return
-	}
 
-	isAdmin, err := h.userCompanyService.IsAdmin(userID, companyID)
+	isAdmin, err := h.userCompanyService.IsUserAdminInCompany(userID, int64(id))
 	if err != nil {
 		utils.SendResponse(c, http.StatusNotFound, nil, "Company not found or access denied")
 		return
@@ -148,7 +127,7 @@ func (h CompanyHandler) DeleteCompany(c *gin.Context, id string) {
 		return
 	}
 
-	if err := h.service.DeleteCompany(companyID); err != nil {
+	if err := h.service.DeleteCompany(int64(id)); err != nil {
 		utils.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}

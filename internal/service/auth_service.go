@@ -50,7 +50,7 @@ func (s *authService) Register(email, password string, companyID *int64) (*domai
 		Password: string(hashedPassword),
 	}
 
-	if err := s.userRepo.CreateWithCompany(newUser, companyID); err != nil {
+	if err := s.userRepo.CreateUserWithCompany(newUser, companyID); err != nil {
 		return nil, err
 	}
 

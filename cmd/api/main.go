@@ -46,7 +46,7 @@ func main() {
 
 	companyHandler := handler.NewCompanyHandler(companyService, userService, userCompanyService)
 
-	userCompanyHandler := handler.NewCompanyUsersHandler(userCompanyService)
+	userCompanyHandler := handler.NewCompanyUsersHandler(userCompanyService, userService)
 
 	// Настройка маршрутов с подключенной JWT-миддлварой
 	r := router.SetupRouter(authHandler, companyHandler, userCompanyHandler, cfg.JWTSecret)

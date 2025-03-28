@@ -25,13 +25,13 @@ type CompaniesServerInterface interface {
 	CreateCompany(c *gin.Context)
 	// Удаление компании
 	// (DELETE /companies/{id})
-	DeleteCompany(c *gin.Context, id string)
+	DeleteCompany(c *gin.Context, id int)
 	// Получение компании по id
 	// (GET /companies/{id})
-	GetCompany(c *gin.Context, id string)
+	GetCompany(c *gin.Context, id int)
 	// Обновление компании
 	// (PUT /companies/{id})
-	UpdateCompany(c *gin.Context, id string)
+	UpdateCompany(c *gin.Context, id int)
 }
 
 // CompaniesServerInterfaceWrapper converts contexts to parameters.
@@ -79,7 +79,7 @@ func (siw *CompaniesServerInterfaceWrapper) DeleteCompany(c *gin.Context) {
 	var err error
 
 	// ------------- Path parameter "id" -------------
-	var id string
+	var id int
 
 	err = runtime.BindStyledParameter("simple", false, "id", c.Param("id"), &id)
 	if err != nil {
@@ -105,7 +105,7 @@ func (siw *CompaniesServerInterfaceWrapper) GetCompany(c *gin.Context) {
 	var err error
 
 	// ------------- Path parameter "id" -------------
-	var id string
+	var id int
 
 	err = runtime.BindStyledParameter("simple", false, "id", c.Param("id"), &id)
 	if err != nil {
@@ -131,7 +131,7 @@ func (siw *CompaniesServerInterfaceWrapper) UpdateCompany(c *gin.Context) {
 	var err error
 
 	// ------------- Path parameter "id" -------------
-	var id string
+	var id int
 
 	err = runtime.BindStyledParameter("simple", false, "id", c.Param("id"), &id)
 	if err != nil {

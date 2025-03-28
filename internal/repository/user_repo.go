@@ -9,9 +9,9 @@ import (
 
 // UserRepository описывает методы работы с пользователями.
 type UserRepository interface {
-	CreateWithCompany(user *domain.User, companyID *int64) error
+	CreateUserWithCompany(user *domain.User, companyID *int64) error
 	GetAll() ([]domain.User, error)
-	GetAllByCompanyID(companyID int64) ([]domain.User, error)
+	GetUsersByCompanyID(companyID int64) ([]domain.User, error)
 	GetByID(id int64) (*domain.User, error)
 	Update(user *domain.User) error
 	Delete(id int64) error
@@ -27,7 +27,7 @@ func NewUserRepository(db *sql.DB) UserRepository {
 	return &userRepo{db: db}
 }
 
-func (r *userRepo) CreateWithCompany(user *domain.User, companyID *int64) error {
+func (r *userRepo) CreateUserWithCompany(user *domain.User, companyID *int64) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
@@ -113,7 +113,7 @@ func (r *userRepo) GetAll() ([]domain.User, error) {
 }
 
 // GetAllByCompanyID возвращает список пользователей, связанных с заданной компанией.
-func (r *userRepo) GetAllByCompanyID(companyID int64) ([]domain.User, error) {
+func (r *userRepo) GetUsersByCompanyID(companyID int64) ([]domain.User, error) {
 	query := `
 		SELECT u.id, u.email, u.password, u.created_at, u.updated_at
 		FROM users u

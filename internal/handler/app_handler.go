@@ -8,17 +8,17 @@ package handler
 //	"github.com/gin-gonic/gin"
 //	"victa/internal/domain"
 //	"victa/internal/response"
-//	"victa/internal/service"
+//	"victa/internal/companyUserService"
 //)
 //
 //// AppHandler обрабатывает HTTP-запросы для приложений.
 //type AppHandler struct {
-//	service service.AppService
+//	companyUserService companyUserService.AppService
 //}
 //
 //// NewAppHandler создаёт новый AppHandler.
-//func NewAppHandler(service service.AppService) *AppHandler {
-//	return &AppHandler{service: service}
+//func NewAppHandler(companyUserService companyUserService.AppService) *AppHandler {
+//	return &AppHandler{companyUserService: companyUserService}
 //}
 //
 //// CreateApp обрабатывает POST /api/v1/apps
@@ -28,7 +28,7 @@ package handler
 //		response.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 //		return
 //	}
-//	if err := h.service.CreateApp(&app); err != nil {
+//	if err := h.companyUserService.CreateApp(&app); err != nil {
 //		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 //		return
 //	}
@@ -37,7 +37,7 @@ package handler
 //
 //// GetApps обрабатывает GET /api/v1/apps
 //func (h *AppHandler) GetApps(c *gin.Context) {
-//	apps, err := h.service.GetAllApps()
+//	apps, err := h.companyUserService.GetAllApps()
 //	if err != nil {
 //		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 //		return
@@ -56,7 +56,7 @@ package handler
 //		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid id")
 //		return
 //	}
-//	app, err := h.service.GetAppByID(id)
+//	app, err := h.companyUserService.GetAppByID(id)
 //	if err != nil {
 //		response.SendResponse(c, http.StatusNotFound, nil, err.Error())
 //		return
@@ -78,7 +78,7 @@ package handler
 //		return
 //	}
 //	app.ID = id
-//	if err := h.service.UpdateApp(&app); err != nil {
+//	if err := h.companyUserService.UpdateApp(&app); err != nil {
 //		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 //		return
 //	}
@@ -93,7 +93,7 @@ package handler
 //		response.SendResponse(c, http.StatusBadRequest, nil, "Invalid id")
 //		return
 //	}
-//	if err := h.service.DeleteApp(id); err != nil {
+//	if err := h.companyUserService.DeleteApp(id); err != nil {
 //		response.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 //		return
 //	}

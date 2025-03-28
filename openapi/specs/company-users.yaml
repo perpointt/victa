@@ -8,7 +8,7 @@ paths:
   /company-users/{id}:
     get:
       summary: Получение информации о пользователе компании
-      operationId: GetCompanyUsers
+      operationId: getUsersInCompany
       parameters:
         - name: id
           in: path
@@ -25,7 +25,7 @@ paths:
                 $ref: "../components/api_response.yaml"
     post:
       summary: Добавление пользователей в компанию
-      operationId: addCompanyUsers
+      operationId: addUsersToCompany
       parameters:
         - name: id
           in: path
@@ -34,14 +34,19 @@ paths:
           schema:
             type: integer
       requestBody:
-        description: Массив идентификаторов пользователей для добавления
+        description: Объект с массивом идентификаторов пользователей для добавления
         required: true
         content:
           application/json:
             schema:
-              type: array
-              items:
-                type: integer
+              type: object
+              properties:
+                user_ids:
+                  type: array
+                  items:
+                    type: integer
+              required:
+                - user_ids
       responses:
         "200":
           description: Пользователи успешно добавлены
@@ -51,7 +56,7 @@ paths:
                 $ref: "../components/api_response.yaml"
     delete:
       summary: Удаление пользователей из компании
-      operationId: removeCompanyUsers
+      operationId: removeUsersFromCompany
       parameters:
         - name: id
           in: path
@@ -60,14 +65,19 @@ paths:
           schema:
             type: integer
       requestBody:
-        description: Массив идентификаторов пользователей для удаления
+        description: Объект с массивом идентификаторов пользователей для удаления
         required: true
         content:
           application/json:
             schema:
-              type: array
-              items:
-                type: integer
+              type: object
+              properties:
+                user_ids:
+                  type: array
+                  items:
+                    type: integer
+              required:
+                - user_ids
       responses:
         "200":
           description: Пользователи успешно удалены

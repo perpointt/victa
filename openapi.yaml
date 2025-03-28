@@ -155,7 +155,7 @@ components:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
     responses:
       '200':
         description: Данные компании
@@ -187,7 +187,7 @@ components:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
     responses:
       '200':
         description: Компания обновлена
@@ -219,7 +219,7 @@ components:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
     responses:
       '200':
         description: Компания удалена
@@ -244,7 +244,7 @@ components:
 '/company-users/{id}':
   get:
     summary: Получение информации о пользователе компании
-    operationId: GetCompanyUsers
+    operationId: getUsersInCompany
     parameters:
       - name: id
         in: path
@@ -275,7 +275,7 @@ components:
                 - status
   post:
     summary: Добавление пользователей в компанию
-    operationId: addCompanyUsers
+    operationId: addUsersToCompany
     parameters:
       - name: id
         in: path
@@ -284,14 +284,19 @@ components:
         schema:
           type: integer
     requestBody:
-      description: Массив идентификаторов пользователей для добавления
+      description: Объект с массивом идентификаторов пользователей для добавления
       required: true
       content:
         application/json:
           schema:
-            type: array
-            items:
-              type: integer
+            type: object
+            properties:
+              user_ids:
+                type: array
+                items:
+                  type: integer
+            required:
+              - user_ids
     responses:
       '200':
         description: Пользователи успешно добавлены
@@ -315,7 +320,7 @@ components:
                 - status
   delete:
     summary: Удаление пользователей из компании
-    operationId: removeCompanyUsers
+    operationId: removeUsersFromCompany
     parameters:
       - name: id
         in: path
@@ -324,14 +329,19 @@ components:
         schema:
           type: integer
     requestBody:
-      description: Массив идентификаторов пользователей для удаления
+      description: Объект с массивом идентификаторов пользователей для удаления
       required: true
       content:
         application/json:
           schema:
-            type: array
-            items:
-              type: integer
+            type: object
+            properties:
+              user_ids:
+                type: array
+                items:
+                  type: integer
+            required:
+              - user_ids
     responses:
       '200':
         description: Пользователи успешно удалены
