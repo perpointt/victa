@@ -8,7 +8,7 @@ paths:
   /company-users/{id}:
     get:
       summary: Получение информации о пользователе компании
-      operationId: getCompanyUser
+      operationId: GetCompanyUsers
       parameters:
         - name: id
           in: path

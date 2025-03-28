@@ -30,7 +30,7 @@ type CompanyUsersServerInterface interface {
 	RemoveCompanyUsers(c *gin.Context, id int)
 	// Получение информации о пользователе компании
 	// (GET /company-users/{id})
-	GetCompanyUser(c *gin.Context, id int)
+	GetCompanyUsers(c *gin.Context, id int)
 	// Добавление пользователей в компанию
 	// (POST /company-users/{id})
 	AddCompanyUsers(c *gin.Context, id int)
@@ -69,8 +69,8 @@ func (siw *CompanyUsersServerInterfaceWrapper) RemoveCompanyUsers(c *gin.Context
 	siw.Handler.RemoveCompanyUsers(c, id)
 }
 
-// GetCompanyUser operation middleware
-func (siw *CompanyUsersServerInterfaceWrapper) GetCompanyUser(c *gin.Context) {
+// GetCompanyUsers operation middleware
+func (siw *CompanyUsersServerInterfaceWrapper) GetCompanyUsers(c *gin.Context) {
 
 	var err error
 
@@ -90,7 +90,7 @@ func (siw *CompanyUsersServerInterfaceWrapper) GetCompanyUser(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetCompanyUser(c, id)
+	siw.Handler.GetCompanyUsers(c, id)
 }
 
 // AddCompanyUsers operation middleware
@@ -145,6 +145,6 @@ func RegisterCompanyUsersHandlersWithOptions(router gin.IRouter, si CompanyUsers
 	}
 
 	router.DELETE(options.BaseURL+"/company-users/:id", wrapper.RemoveCompanyUsers)
-	router.GET(options.BaseURL+"/company-users/:id", wrapper.GetCompanyUser)
+	router.GET(options.BaseURL+"/company-users/:id", wrapper.GetCompanyUsers)
 	router.POST(options.BaseURL+"/company-users/:id", wrapper.AddCompanyUsers)
 }

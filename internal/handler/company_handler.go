@@ -12,10 +12,10 @@ import (
 type CompanyHandler struct {
 	service            service.CompanyService
 	userService        service.UserService
-	userCompanyService service.UserCompanyService
+	userCompanyService service.CompanyUsersService
 }
 
-func NewCompanyHandler(companyService service.CompanyService, userService service.UserService, userCompanyService service.UserCompanyService) *CompanyHandler {
+func NewCompanyHandler(companyService service.CompanyService, userService service.UserService, userCompanyService service.CompanyUsersService) *CompanyHandler {
 	return &CompanyHandler{
 		service:            companyService,
 		userService:        userService,

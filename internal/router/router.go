@@ -12,6 +12,7 @@ import (
 func SetupRouter(
 	authHandler api.AuthServerInterface,
 	companyHandler api.CompaniesServerInterface,
+	companyUsersHandler api.CompanyUsersServerInterface,
 	jwtSecret string,
 ) *gin.Engine {
 	r := gin.Default()
@@ -24,6 +25,11 @@ func SetupRouter(
 	api.RegisterAuthHandlers(group, authHandler)
 	api.RegisterCompaniesHandlersWithOptions(group, companyHandler, api.CompaniesGinServerOptions{
 		Middlewares: []api.CompaniesMiddlewareFunc{
+			middleware.JWTAuthMiddleware(jwtSecret),
+		},
+	})
+	api.RegisterCompanyUsersHandlersWithOptions(group, companyUsersHandler, api.CompanyUsersGinServerOptions{
+		Middlewares: []api.CompanyUsersMiddlewareFunc{
 			middleware.JWTAuthMiddleware(jwtSecret),
 		},
 	})

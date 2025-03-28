@@ -2,7 +2,7 @@ package service
 
 import "victa/internal/repository"
 
-type UserCompanyService interface {
+type CompanyUsersService interface {
 	// IsAdmin возвращает true, если пользователь имеет роль "admin" в компании.
 	IsAdmin(userID, companyID int64) (bool, error)
 	RemoveUserFromCompany(userID, companyID int64) error
@@ -14,7 +14,7 @@ type userCompanyService struct {
 	repo repository.UserCompanyRepository
 }
 
-func NewUserCompanyService(repo repository.UserCompanyRepository) UserCompanyService {
+func NewUserCompanyService(repo repository.UserCompanyRepository) CompanyUsersService {
 	return &userCompanyService{repo: repo}
 }
 
