@@ -1,12 +1,10 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE apps
+CREATE TABLE applications
 (
     id         BIGSERIAL PRIMARY KEY,
     company_id BIGINT NOT NULL REFERENCES companies (id) ON DELETE CASCADE,
     name       TEXT   NOT NULL,
-    platform   TEXT   NOT NULL,
-    store_url  TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -14,5 +12,5 @@ CREATE TABLE apps
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE IF EXISTS apps;
+DROP TABLE IF EXISTS applications;
 -- +goose StatementEnd
