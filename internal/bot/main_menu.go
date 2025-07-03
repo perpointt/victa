@@ -9,7 +9,7 @@ import (
 func (b *Bot) BuildMainMenu(chatID int64, user *domain.User) *tgbotapi.MessageConfig {
 
 	text := fmt.Sprintf(
-		"Привет, *%s*!",
+		"Привет, *%s*!\n\n*Список компаний:*",
 		user.Name,
 	)
 

@@ -8,11 +8,10 @@ import (
 
 // Bot хранит API и ссылку на БД
 type Bot struct {
-	api             *tgbotapi.BotAPI
-	config          config.Config
-	UserSvc         *service.UserService
-	UserSettingsSvc *service.UserSettingsService
-	CompanySvc      *service.CompanyService
+	api        *tgbotapi.BotAPI
+	config     config.Config
+	UserSvc    *service.UserService
+	CompanySvc *service.CompanyService
 }
 
 var (
@@ -21,12 +20,12 @@ var (
 )
 
 // NewBot создаёт нового бота
-func NewBot(config config.Config, us *service.UserService, uss *service.UserSettingsService, cs *service.CompanyService) (*Bot, error) {
+func NewBot(config config.Config, us *service.UserService, cs *service.CompanyService) (*Bot, error) {
 	api, err := tgbotapi.NewBotAPI(config.TelegramToken)
 	if err != nil {
 		return nil, err
 	}
-	return &Bot{api: api, config: config, UserSvc: us, UserSettingsSvc: uss, CompanySvc: cs}, nil
+	return &Bot{api: api, config: config, UserSvc: us, CompanySvc: cs}, nil
 }
 
 func (b *Bot) Run() {

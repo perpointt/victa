@@ -25,5 +25,6 @@ func (b *Bot) HandleMainMenuCallback(callback *tgbotapi.CallbackQuery) {
 		return
 	}
 
+	b.ClearChatState(chatID)
 	b.EditMessage(messageID, *config)
 }

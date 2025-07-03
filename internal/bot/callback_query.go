@@ -13,14 +13,21 @@ func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 	data := callback.Data
 
 	switch {
-	case b.isCallbackWithPrefix(data, "main_menu"):
+	case b.isCallbackWithPrefix(data, CallbackMainMenu):
 		b.HandleMainMenuCallback(callback)
-	case b.isCallbackWithPrefix(data, "company_list"):
+
+	case b.isCallbackWithPrefix(data, CallbackClearState):
+		b.HandleClearStateCallback(callback)
+
+	case b.isCallbackWithPrefix(data, CallbackDeleteMessage):
+		b.HandleDeleteMessageCallback(callback)
+
+	case b.isCallbackWithPrefix(data, CallbackListCompany):
 		b.HandleListCompaniesCallback(callback)
-	case b.isCallbackWithPrefix(data, "create_company"):
+	case b.isCallbackWithPrefix(data, CallbackDetailCompany):
+		b.HandleDetailCompanyCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackCreateCompany):
 		b.HandleCreateCompanyCallback(callback)
-	case b.isCallbackWithPrefix(data, "cancel_create_company"):
-		b.HandleCancelCreateCompanyCallback(callback)
 	default:
 		b.AnswerCallback(callback, "Неизвестное действие.")
 	}

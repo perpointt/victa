@@ -6,13 +6,14 @@ const (
 )
 
 const (
-	CallbackMainMenu = "main_menu"
+	CallbackMainMenu      = "main_menu"
+	CallbackDeleteMessage = "delete_message"
+	CallbackClearState    = "clear_state"
 )
 
 const (
-	CallbackCreateCompany       = "create_company"
-	CallbackCancelCreateCompany = "cancel_create_company"
-	CallbackRemoveCompany       = "remove_company"
-	CallbackListCompany         = "list_company"
-	CallbackDetailCompany       = "detail_company"
+	CallbackCreateCompany = "create_company"
+	CallbackRemoveCompany = "remove_company"
+	CallbackListCompany   = "list_company"
+	CallbackDetailCompany = "detail_company"
 )

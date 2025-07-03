@@ -8,11 +8,11 @@ import (
 func (b *Bot) HandleCreateCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 
-	b.CancelAllOperation(chatID)
+	b.ClearChatState(chatID)
 	b.AddChatState(chatID, StateWaitingCreateCompany)
 
 	msgText := "Отправьте название компании"
-	cancelButton := b.BuildCancelButton(CallbackCancelCreateCompany)
+	cancelButton := b.BuildCancelButton(CallbackClearState)
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(tgbotapi.NewInlineKeyboardRow(cancelButton))
 
 	b.SendPendingMessage(b.NewKeyboardMessage(chatID, msgText, keyboard))
@@ -38,22 +38,12 @@ func (b *Bot) HandleCreateCompany(message *tgbotapi.Message) {
 		log.Fatalf(err.Error())
 		return
 	}
-	b.CancelAllOperation(chatID)
+	b.ClearChatState(chatID)
 
-	config := b.BuildCompanyList(chatID, user)
+	config := b.BuildMainMenu(chatID, user)
 	if config == nil {
 		return
 	}
 
 	b.SendMessage(*config)
-}
-
-func (b *Bot) CancelCreateCompany(chatID int64) {
-	b.DeletePendingMessage(chatID)
-	b.DeleteChatState(chatID)
-}
-
-func (b *Bot) HandleCancelCreateCompanyCallback(callback *tgbotapi.CallbackQuery) {
-	b.CancelCreateCompany(callback.Message.Chat.ID)
-	b.AnswerCallback(callback, "Добавление сервера отменено.")
 }

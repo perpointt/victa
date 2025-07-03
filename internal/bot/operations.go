@@ -4,7 +4,21 @@ import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
+	"strconv"
+	"strings"
 )
+
+func (b *Bot) GetIdFromCallback(data string) (id *int64, err error) {
+	parts := strings.SplitN(data, ":", 2)
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid callback data format: %q", data)
+	}
+	idVal, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid id in callback data %q: %w", data, err)
+	}
+	return &idVal, nil
+}
 
 func (b *Bot) AddChatState(chatID int64, state ChatState) {
 	states[chatID] = state
@@ -12,6 +26,11 @@ func (b *Bot) AddChatState(chatID int64, state ChatState) {
 
 func (b *Bot) DeleteChatState(chatID int64) {
 	delete(states, chatID)
+}
+
+func (b *Bot) ClearChatState(chatID int64) {
+	b.DeletePendingMessage(chatID)
+	b.DeleteChatState(chatID)
 }
 
 func (b *Bot) SendPendingMessage(config tgbotapi.MessageConfig) {
@@ -28,10 +47,6 @@ func (b *Bot) DeletePendingMessage(chatID int64) {
 			delete(pendingMessages, chatID)
 		}
 	}
-}
-
-func (b *Bot) CancelAllOperation(chatID int64) {
-	b.CancelCreateCompany(chatID)
 }
 
 func (b *Bot) AnswerCallback(callback *tgbotapi.CallbackQuery, text string) error {

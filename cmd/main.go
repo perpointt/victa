@@ -21,15 +21,13 @@ func main() {
 	defer conn.Close()
 
 	userRepo := repository.NewPostgresUserRepo(conn)
-	userSettingsRepo := repository.NewPostgresUserSettingsRepo(conn)
 	companyRepo := repository.NewPostgresCompanyRepo(conn)
 
 	userSvc := service.NewUserService(userRepo)
-	userSettingsSvc := service.NewUserSettingsService(userSettingsRepo)
 	companySvc := service.NewCompanyService(companyRepo)
 
 	// Инициализируем Telegram-бота
-	b, err := bot.NewBot(*cfg, userSvc, userSettingsSvc, companySvc)
+	b, err := bot.NewBot(*cfg, userSvc, companySvc)
 	if err != nil {
 		log.Fatalf("Ошибка при инициализации бота: %v", err)
 	}
