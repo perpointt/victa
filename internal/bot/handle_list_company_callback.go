@@ -1,45 +1,35 @@
 package bot
 
 import (
+	"fmt"
 	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-// HandleListCompaniesCallback обрабатывает нажатие кнопки «Компании»
-// и редактирует текущее сообщение, выводя каждую компанию отдельной inline-кнопкой
 func (b *Bot) HandleListCompaniesCallback(cb *tgbotapi.CallbackQuery) {
 	chatID := cb.Message.Chat.ID
 	messageID := cb.Message.MessageID
 	tgID := cb.From.ID
 
-	// Закрываем «часики» в кнопке
 	if _, err := b.api.Request(tgbotapi.NewCallback(cb.ID, "")); err != nil {
 		log.Printf("answer callback error: %v", err)
 	}
 
-	// Проверяем пользователя
 	user, err := b.UserSvc.FindByTgID(tgID)
 	if err != nil {
-		b.send(b.newMessage(chatID, "Ошибка при поиске пользователя."))
+		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске пользователя."))
 		return
 	}
 	if user == nil {
-		b.send(b.newMessage(chatID, "Сначала зарегистрируйтесь через /start."))
+		b.SendMessage(b.NewMessage(chatID, fmt.Sprintf("Сначала зарегистрируйтесь через /%v.", CommandStart)))
 		return
 	}
 
-	msgCfg := b.BuildCompanyList(chatID, user)
-	if msgCfg == nil {
+	config := b.BuildCompanyList(chatID, user)
+	if config == nil {
 		return
 	}
 
-	// Извлекаем текст и клавиатуру
-	text := msgCfg.Text
-	kb, ok := msgCfg.ReplyMarkup.(tgbotapi.InlineKeyboardMarkup)
-	if !ok {
-		return
-	}
-
-	b.editMessage(chatID, messageID, text, kb)
+	b.EditMessage(messageID, *config)
 }

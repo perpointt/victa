@@ -4,24 +4,26 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func (b *Bot) HandleMainMenuCallback(cb *tgbotapi.CallbackQuery) {
-	chatID := cb.Message.Chat.ID
-	messageID := cb.Message.MessageID
-	// … проверяем пользователя …
+func (b *Bot) HandleMainMenuCallback(callback *tgbotapi.CallbackQuery) {
+	chatID := callback.Message.Chat.ID
+	messageID := callback.Message.MessageID
 
-	// Строим основное меню
-	user, _ := b.UserSvc.FindByTgID(cb.From.ID)
-	msgCfg := b.BuildMainMenu(chatID, user)
-	if msgCfg == nil {
+	user, err := b.UserSvc.FindByTgID(callback.From.ID)
+
+	if err != nil {
+		b.SendMessage(b.NewMessage(chatID, "Ошибка при проверке пользователя."))
 		return
 	}
 
-	// Извлекаем текст и клавиатуру
-	text := msgCfg.Text
-	kb, ok := msgCfg.ReplyMarkup.(tgbotapi.InlineKeyboardMarkup)
-	if !ok {
+	if user == nil {
+		b.SendMessage(b.NewMessage(chatID, "Сначала зарегистрируйтесь через /start."))
 		return
 	}
 
-	b.editMessage(chatID, messageID, text, kb)
+	config := b.BuildMainMenu(chatID, user)
+	if config == nil {
+		return
+	}
+
+	b.EditMessage(messageID, *config)
 }

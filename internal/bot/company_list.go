@@ -7,24 +7,15 @@ import (
 )
 
 func (b *Bot) BuildCompanyList(chatID int64, user *domain.User) *tgbotapi.MessageConfig {
-	// Загружаем компании пользователя
 	companies, err := b.CompanySvc.GetAllByUserId(user.ID)
 	if err != nil {
-		b.send(b.newMessage(chatID, "Ошибка при получении списка компаний."))
+		b.SendMessage(b.NewMessage(chatID, "Ошибка при получении списка компаний."))
 		return nil
 	}
 
-	// Текст сообщения
-	text := "Ваши компании:"
-	if len(companies) == 0 {
-		text = "У вас ещё нет компаний."
-	}
-
-	// Формируем клавиатуру: по одной кнопке на компанию
 	var rows [][]tgbotapi.InlineKeyboardButton
 	for _, c := range companies {
-		// callbackData можно настроить как нужно, например "company_<id>"
-		cbData := fmt.Sprintf("select_company_%d", c.ID)
+		cbData := fmt.Sprintf("%v:%d", CallbackDetailCompany, c.ID)
 		rows = append(rows,
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(c.Name, cbData),
@@ -32,17 +23,12 @@ func (b *Bot) BuildCompanyList(chatID int64, user *domain.User) *tgbotapi.Messag
 		)
 	}
 
-	// Добавляем кнопку создания компании
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("➕ Создать компанию", "create_company"),
-	))
-	// И кнопку «Назад»
-	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("◀️ Назад", "main_menu"),
+		tgbotapi.NewInlineKeyboardButtonData("➕ Создать компанию", CallbackCreateCompany),
 	))
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(rows...)
 
-	msg := b.newKeyboardMessage(chatID, text, keyboard)
+	msg := b.NewKeyboardMessage(chatID, "", keyboard)
 	return &msg
 }

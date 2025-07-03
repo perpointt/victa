@@ -4,7 +4,6 @@ import (
 	"fmt"
 	_ "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"log"
 	"victa/internal/domain"
 )
 
@@ -16,8 +15,7 @@ func (b *Bot) HandleStart(message *tgbotapi.Message) {
 
 	existing, err := b.UserSvc.FindByTgID(tgID)
 	if err != nil {
-		b.send(b.newMessage(chatID, "Ошибка при проверке пользователя."))
-		log.Fatalf("Ошибка при проверке  пользователя: %v", err)
+		b.SendMessage(b.NewMessage(chatID, "Ошибка при проверке пользователя."))
 		return
 	}
 
@@ -25,8 +23,7 @@ func (b *Bot) HandleStart(message *tgbotapi.Message) {
 	if existing == nil {
 		user, err = b.UserSvc.Register(fmt.Sprintf("%d", tgID), name)
 		if err != nil {
-			b.send(b.newMessage(chatID, "Ошибка регистрации пользователя."))
-			log.Fatalf("Ошибка регистрации пользователя: %v", err)
+			b.SendMessage(b.NewMessage(chatID, "Ошибка регистрации пользователя."))
 			return
 		}
 
@@ -34,5 +31,9 @@ func (b *Bot) HandleStart(message *tgbotapi.Message) {
 	}
 
 	msg := b.BuildMainMenu(chatID, existing)
-	b.send(msg)
+	if msg == nil {
+		return
+	}
+
+	b.SendMessage(*msg)
 }
