@@ -26,7 +26,7 @@ func (s *UserService) Register(tgId string, name string) (*domain.User, error) {
 }
 
 func (s *UserService) FindByTgID(tgID int64) (*domain.User, error) {
-	user, err := s.UserRepo.FindByTgID(tgID)
+	user, err := s.UserRepo.GetByTgID(tgID)
 	if err != nil {
 		return nil, err
 	}

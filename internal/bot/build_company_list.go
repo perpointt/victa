@@ -16,9 +16,10 @@ func (b *Bot) BuildCompanyList(chatID int64, user *domain.User) *tgbotapi.Messag
 	var rows [][]tgbotapi.InlineKeyboardButton
 	for _, c := range companies {
 		cbData := fmt.Sprintf("%v:%d", CallbackDetailCompany, c.ID)
+		companyTitle := fmt.Sprintf("%v (ID: %d)", c.Name, c.ID)
 		rows = append(rows,
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(c.Name, cbData),
+				tgbotapi.NewInlineKeyboardButtonData(companyTitle, cbData),
 			),
 		)
 	}

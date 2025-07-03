@@ -37,18 +37,33 @@ func (b *Bot) HandleDetailCompanyCallback(cb *tgbotapi.CallbackQuery) {
 
 	// Формируем текст с информацией о компании
 	text := fmt.Sprintf(
-		"*%s* (ID: %d)\nСоздана: %s\nОбновлена: %s",
+		"*%s* (ID: %d)\n\nСоздана: %s\nОбновлена: %s",
 		company.Name,
 		company.ID,
 		company.CreatedAt.Format("02 Jan 2006 15:04"),
 		company.UpdatedAt.Format("02 Jan 2006 15:04"),
 	)
 
-	rows := tgbotapi.NewInlineKeyboardRow(
-		b.BuildCloseButton(CallbackDeleteMessage),
-	)
+	var rows [][]tgbotapi.InlineKeyboardButton
 
-	keyboard := tgbotapi.NewInlineKeyboardMarkup(rows)
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Приложения", CallbackListApp),
+	))
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Сотрудники", CallbackListUser),
+	))
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Интеграции", CallbackCompanyIntegrations),
+	))
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		b.BuildDeleteButton(CallbackRemoveCompany),
+		b.BuildEditButton(CallbackUpdateCompany),
+	))
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		b.BuildCloseButton(CallbackDeleteMessage),
+	))
+
+	keyboard := tgbotapi.NewInlineKeyboardMarkup(rows...)
 
 	b.ClearChatState(chatID)
 	b.SendMessage(b.NewKeyboardMessage(chatID, text, keyboard))

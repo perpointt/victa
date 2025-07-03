@@ -6,5 +6,6 @@ func (b *Bot) HandleDeleteMessageCallback(cb *tgbotapi.CallbackQuery) {
 	chatID := cb.Message.Chat.ID
 	messageID := cb.Message.MessageID
 
+	b.ClearChatState(cb.Message.Chat.ID)
 	b.DeleteMessage(chatID, messageID)
 }
