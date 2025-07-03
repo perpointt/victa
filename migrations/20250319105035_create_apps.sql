@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE applications
+CREATE TABLE apps
 (
     id         BIGSERIAL PRIMARY KEY,
     company_id BIGINT NOT NULL REFERENCES companies (id) ON DELETE CASCADE,
@@ -12,5 +12,5 @@ CREATE TABLE applications
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE IF EXISTS applications;
+DROP TABLE IF EXISTS apps;
 -- +goose StatementEnd
