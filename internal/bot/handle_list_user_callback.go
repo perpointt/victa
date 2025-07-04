@@ -8,14 +8,13 @@ import (
 func (b *Bot) HandleListUsersCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	messageID := callback.Message.MessageID
-	idPtr, err := b.GetIdFromCallback(callback.Data)
-	if err != nil || idPtr == nil {
+	params, err := b.GetCallbackArgs(callback.Data)
+	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Неверная команда."))
 		return
 	}
-	companyID := *idPtr
 
-	company, err := b.CompanySvc.GetById(companyID)
+	company, err := b.CompanySvc.GetById(params.CompanyID)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске компании."))
 		return

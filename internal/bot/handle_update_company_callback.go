@@ -7,15 +7,14 @@ import (
 
 func (b *Bot) HandleUpdateCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
-	idPtr, err := b.GetIdFromCallback(callback.Data)
-	if err != nil || idPtr == nil {
+	params, err := b.GetCallbackArgs(callback.Data)
+	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Неверная команда."))
 		return
 	}
-	companyID := *idPtr
 
 	b.AddChatState(chatID, StateWaitingUpdateCompany)
-	b.AddPendingUpdateCompanyData(chatID, companyID)
+	b.AddPendingUpdateCompanyData(chatID, params.CompanyID)
 
 	msgText := "Отправьте название компании"
 	cancelButton := b.BuildCancelButton()

@@ -25,15 +25,15 @@ func (b *Bot) BuildCompanyDetail(chatID int64, company *domain.Company, user *do
 
 	if err == nil {
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Сотрудники", fmt.Sprintf("%s:%v", CallbackListUser, company.ID)),
+			tgbotapi.NewInlineKeyboardButtonData("Сотрудники", fmt.Sprintf("%s?company_id=%v", CallbackListUser, company.ID)),
 		))
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("Интеграции", CallbackCompanyIntegrations),
 		))
 
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-			b.BuildDeleteButton(fmt.Sprintf("%s:%v", CallbackDeleteCompany, company.ID)),
-			b.BuildEditButton(fmt.Sprintf("%s:%v", CallbackUpdateCompany, company.ID)),
+			b.BuildDeleteButton(fmt.Sprintf("%s?company_id=%v", CallbackDeleteCompany, company.ID)),
+			b.BuildEditButton(fmt.Sprintf("%s?company_id=%v", CallbackUpdateCompany, company.ID)),
 		))
 	}
 

@@ -7,17 +7,16 @@ import (
 
 func (b *Bot) HandleDeleteCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
-	idPtr, err := b.GetIdFromCallback(callback.Data)
-	if err != nil || idPtr == nil {
+	params, err := b.GetCallbackArgs(callback.Data)
+	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Неверная команда."))
 		return
 	}
-	companyID := *idPtr
 
 	b.AddChatState(chatID, StateWaitingConfirmDeleteCompany)
 
 	msgText := "Подтвердите удаление компании"
-	confirmMessage := b.BuildConfirmMessage(chatID, msgText, fmt.Sprintf("%s:%v", CallbackConfirmOperation, companyID))
+	confirmMessage := b.BuildConfirmMessage(chatID, msgText, fmt.Sprintf("%s?company_id=%v", CallbackConfirmOperation, params.CompanyID))
 
 	b.SendPendingMessage(confirmMessage)
 }
@@ -25,12 +24,11 @@ func (b *Bot) HandleDeleteCompanyCallback(callback *tgbotapi.CallbackQuery) {
 func (b *Bot) HandleConfirmDeleteCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	tgID := callback.From.ID
-	idPtr, err := b.GetIdFromCallback(callback.Data)
-	if err != nil || idPtr == nil {
+	params, err := b.GetCallbackArgs(callback.Data)
+	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Неверная команда."))
 		return
 	}
-	companyID := *idPtr
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
@@ -42,7 +40,7 @@ func (b *Bot) HandleConfirmDeleteCompanyCallback(callback *tgbotapi.CallbackQuer
 		return
 	}
 
-	if err := b.CompanySvc.Delete(companyID, user.ID); err != nil {
+	if err := b.CompanySvc.Delete(params.CompanyID, user.ID); err != nil {
 		b.SendMessage(b.NewMessage(chatID, fmt.Sprintf("Не удалось удалить компанию: %v", err)))
 		return
 	}

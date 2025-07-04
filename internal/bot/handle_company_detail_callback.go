@@ -35,13 +35,12 @@ func (b *Bot) CreateCompanyDetailMessage(callback *tgbotapi.CallbackQuery) (*tgb
 	chatID := callback.Message.Chat.ID
 	tgID := callback.From.ID
 
-	idPtr, err := b.GetIdFromCallback(callback.Data)
-	if err != nil || idPtr == nil {
+	params, err := b.GetCallbackArgs(callback.Data)
+	if err != nil {
 		return nil, err
 	}
-	companyID := *idPtr
 
-	company, err := b.CompanySvc.GetById(companyID)
+	company, err := b.CompanySvc.GetById(params.CompanyID)
 	if err != nil {
 		return nil, err
 	}

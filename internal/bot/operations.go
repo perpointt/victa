@@ -3,7 +3,9 @@ package bot
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/gorilla/schema"
 	"log"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -20,16 +22,32 @@ func (b *Bot) GetRoleTitle(roleID int64) string {
 	}
 }
 
-func (b *Bot) GetIdFromCallback(data string) (id *int64, err error) {
-	parts := strings.SplitN(data, ":", 2)
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid callback data format: %q", data)
+type CallbackParams struct {
+	UserID    int64 `schema:"user_id"`
+	CompanyID int64 `schema:"company_id"`
+}
+
+var schemaDecoder = func() *schema.Decoder {
+	d := schema.NewDecoder()
+	d.IgnoreUnknownKeys(true)
+	return d
+}()
+
+func (b *Bot) GetCallbackArgs(data string) (*CallbackParams, error) {
+	parts := strings.SplitN(data, "?", 2)
+	if len(parts) < 2 {
+		return &CallbackParams{}, nil
 	}
-	idVal, err := strconv.ParseInt(parts[1], 10, 64)
+	vals, err := url.ParseQuery(parts[1])
 	if err != nil {
-		return nil, fmt.Errorf("invalid id in callback data %q: %w", data, err)
+		return nil, err
 	}
-	return &idVal, nil
+
+	var p CallbackParams
+	if err := schemaDecoder.Decode(&p, vals); err != nil {
+		return nil, err
+	}
+	return &p, nil
 }
 
 func (b *Bot) AddChatState(chatID int64, state ChatState) {

@@ -9,12 +9,11 @@ func (b *Bot) HandleInviteUserCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	tgID := callback.From.ID
 
-	idPtr, err := b.GetIdFromCallback(callback.Data)
-	if err != nil || idPtr == nil {
+	params, err := b.GetCallbackArgs(callback.Data)
+	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Неверная команда."))
 		return
 	}
-	companyID := *idPtr
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
@@ -22,12 +21,12 @@ func (b *Bot) HandleInviteUserCallback(callback *tgbotapi.CallbackQuery) {
 		return
 	}
 
-	if err := b.CompanySvc.CheckAdmin(user.ID, companyID); err != nil {
+	if err := b.CompanySvc.CheckAdmin(user.ID, params.CompanyID); err != nil {
 		b.SendMessage(b.NewMessage(chatID, fmt.Sprintf("Не удалось создать приглашение: %v", err)))
 		return
 	}
 
-	token := b.InviteSvc.CreateToken(companyID)
+	token := b.InviteSvc.CreateToken(params.CompanyID)
 	link := fmt.Sprintf("https://t.me/%s?start=%s", b.config.TelegramBotName, token)
 	text := fmt.Sprintf("Ссылка-приглашение (действует 48 ч):\n```%s```", link)
 

@@ -34,7 +34,7 @@ func (s *UserService) GetByTgID(tgID int64) (*domain.User, error) {
 	return user, nil
 }
 
-func (s *UserService) GetAllByCompanyID(companyId int64) ([]domain.UserDetail, error) {
+func (s *UserService) GetAllDetailByCompanyID(companyId int64) ([]domain.UserDetail, error) {
 	users, err := s.UserRepo.GetAllByCompanyID(companyId)
 	companies, err := s.UserCompaniesRepo.GetAllByCompanyID(companyId)
 
@@ -58,4 +58,23 @@ func (s *UserService) GetAllByCompanyID(companyId int64) ([]domain.UserDetail, e
 	}
 
 	return details, nil
+}
+
+// GetByCompanyAndUserID возвращает детальную информацию по одному пользователю в рамках заданной компании.
+func (s *UserService) GetByCompanyAndUserID(companyID, userId int64) (*domain.UserDetail, error) {
+	user, err := s.UserRepo.GetByID(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	uc, err := s.UserCompaniesRepo.GetByCompanyAndUserID(companyID, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	detail := &domain.UserDetail{
+		User:    *user,
+		Company: *uc,
+	}
+	return detail, nil
 }

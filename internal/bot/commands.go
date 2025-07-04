@@ -31,8 +31,10 @@ const (
 )
 
 const (
-	CallbackInviteUser = "invite_user"
-	CallbackDeleteUser = "delete_user"
-	CallbackListUser   = "list_user"
-	CallbackDetailUser = "detail_user"
+	CallbackInviteUser       = "invite_user"
+	CallbackDeleteUser       = "delete_user"
+	CallbackUpdateUserRole   = "update_user_role"
+	CallbackListUser         = "list_user"
+	CallbackDetailUser       = "detail_user"
+	CallbackBackToDetailUser = "back_to_detail_user"
 )

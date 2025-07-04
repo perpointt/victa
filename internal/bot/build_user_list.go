@@ -7,14 +7,14 @@ import (
 )
 
 func (b *Bot) BuildUserList(chatID int64, company *domain.Company) (*tgbotapi.MessageConfig, error) {
-	users, err := b.UserSvc.GetAllByCompanyID(company.ID)
+	users, err := b.UserSvc.GetAllDetailByCompanyID(company.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	var rows [][]tgbotapi.InlineKeyboardButton
 	for _, c := range users {
-		cbData := fmt.Sprintf("%v:%d", CallbackDetailUser, c.User.ID)
+		cbData := fmt.Sprintf("%v?user_id=%d&company_id=%d", CallbackDetailUser, c.User.ID, c.Company.CompanyID)
 		userTitle := fmt.Sprintf("%v (ID: %d) | %v", c.User.Name, c.User.ID, b.GetRoleTitle(c.Company.RoleID))
 		rows = append(rows,
 			tgbotapi.NewInlineKeyboardRow(
@@ -24,11 +24,11 @@ func (b *Bot) BuildUserList(chatID int64, company *domain.Company) (*tgbotapi.Me
 	}
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Пригласить пользователя", fmt.Sprintf("%v:%d", CallbackInviteUser, company.ID)),
+		tgbotapi.NewInlineKeyboardButtonData("Пригласить пользователя", fmt.Sprintf("%v?company_id=%d", CallbackInviteUser, company.ID)),
 	))
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		b.BuildBackButton(fmt.Sprintf("%v:%d", CallbackBackToDetailCompany, company.ID)),
+		b.BuildBackButton(fmt.Sprintf("%v?company_id=%d", CallbackBackToDetailCompany, company.ID)),
 	))
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(rows...)

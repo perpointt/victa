@@ -64,6 +64,12 @@ func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 	case b.isCallbackWithPrefix(data, CallbackInviteUser):
 		b.ClearChatState(chatID)
 		b.HandleInviteUserCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackDetailUser):
+		b.ClearChatState(chatID)
+		b.HandleDetailUserCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackBackToDetailUser):
+		b.ClearChatState(chatID)
+		b.HandleBackToDetailUserCallback(callback)
 
 	default:
 		b.AnswerCallback(callback, "Неизвестное действие.")

@@ -2,12 +2,14 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"victa/internal/domain"
 )
 
 type UserCompanyRepository interface {
 	// GetAllByCompanyID возвращает все связи пользователей с указанной компанией
 	GetAllByCompanyID(companyID int64) ([]domain.UserCompany, error)
+	GetByCompanyAndUserID(companyID, id int64) (*domain.UserCompany, error)
 }
 
 type PostgresUserCompanyRepository struct {
@@ -48,4 +50,23 @@ func (r *PostgresUserCompanyRepository) GetAllByCompanyID(companyID int64) ([]do
 		return nil, err
 	}
 	return list, nil
+}
+
+// GetByCompanyAndUserID возвращает связь user_companies для данного companyID и ID.
+// Если запись не найдена, возвращает (nil, nil).
+func (r *PostgresUserCompanyRepository) GetByCompanyAndUserID(companyID, userID int64) (*domain.UserCompany, error) {
+	var uc domain.UserCompany
+	err := r.DB.QueryRow(
+		`SELECT user_id, company_id, role_id
+         FROM user_companies
+         WHERE company_id = $1 AND user_id = $2`,
+		companyID, userID,
+	).Scan(&uc.UserId, &uc.CompanyID, &uc.RoleID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &uc, nil
 }
