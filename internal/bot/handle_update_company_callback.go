@@ -29,7 +29,7 @@ func (b *Bot) HandleUpdateCompany(message *tgbotapi.Message) {
 	chatID := message.Chat.ID
 	tgID := message.From.ID
 
-	user, err := b.UserSvc.FindByTgID(tgID)
+	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске пользователя."))
 		return

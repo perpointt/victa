@@ -12,7 +12,10 @@ func (b *Bot) BuildMainMenu(chatID int64, user *domain.User) *tgbotapi.MessageCo
 		user.Name,
 	)
 
-	msg := b.BuildCompanyList(chatID, user)
+	msg, err := b.BuildCompanyList(chatID, user)
+	if err != nil {
+		return nil
+	}
 	msg.Text = fmt.Sprintf("%s\n\n%s", text, msg.Text)
 	return msg
 }

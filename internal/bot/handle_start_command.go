@@ -13,7 +13,7 @@ func (b *Bot) HandleStart(message *tgbotapi.Message) {
 	tgID := message.From.ID
 	name := message.From.FirstName
 
-	existing, err := b.UserSvc.FindByTgID(tgID)
+	existing, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Ошибка при проверке пользователя."))
 		return

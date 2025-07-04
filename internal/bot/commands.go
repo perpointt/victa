@@ -19,6 +19,7 @@ const (
 	CallbackListCompany         = "list_company"
 	CallbackDetailCompany       = "detail_company"
 	CallbackCompanyIntegrations = "company_integrations"
+	CallbackBackToDetailCompany = "back_to_detail_company"
 )
 
 const (

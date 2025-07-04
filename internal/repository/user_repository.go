@@ -98,13 +98,15 @@ func (r *PostgresUserRepo) GetByTgID(tgID int64) (*domain.User, error) {
 	return u, nil
 }
 
-// GetAllByCompanyID возвращает всех пользователей, которые состоят в компании companyID
+// GetAllByCompanyID возвращает всех пользователей, которые состоят в компании companyID,
+// отсортированных по дате создания (сначала самые новые)
 func (r *PostgresUserRepo) GetAllByCompanyID(companyID int64) ([]domain.User, error) {
 	rows, err := r.DB.Query(
 		`SELECT u.id, u.tg_id, u.name, u.created_at, u.updated_at
          FROM users u
          JOIN user_companies uc ON u.id = uc.user_id
-         WHERE uc.company_id = $1`,
+         WHERE uc.company_id = $1
+         ORDER BY u.created_at DESC`, // сортировка по дате создания
 		companyID,
 	)
 	if err != nil {

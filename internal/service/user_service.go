@@ -25,10 +25,18 @@ func (s *UserService) Register(tgId string, name string) (*domain.User, error) {
 	return user, nil
 }
 
-func (s *UserService) FindByTgID(tgID int64) (*domain.User, error) {
+func (s *UserService) GetByTgID(tgID int64) (*domain.User, error) {
 	user, err := s.UserRepo.GetByTgID(tgID)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
+}
+
+func (s *UserService) GetAllByCompanyID(companyId int64) ([]domain.User, error) {
+	users, err := s.UserRepo.GetAllByCompanyID(companyId)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }

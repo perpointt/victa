@@ -6,11 +6,10 @@ import (
 	"victa/internal/domain"
 )
 
-func (b *Bot) BuildCompanyList(chatID int64, user *domain.User) *tgbotapi.MessageConfig {
+func (b *Bot) BuildCompanyList(chatID int64, user *domain.User) (*tgbotapi.MessageConfig, error) {
 	companies, err := b.CompanySvc.GetAllByUserId(user.ID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при получении списка компаний."))
-		return nil
+		return nil, err
 	}
 
 	var rows [][]tgbotapi.InlineKeyboardButton
@@ -31,5 +30,5 @@ func (b *Bot) BuildCompanyList(chatID int64, user *domain.User) *tgbotapi.Messag
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(rows...)
 
 	msg := b.NewKeyboardMessage(chatID, "", keyboard)
-	return &msg
+	return &msg, nil
 }

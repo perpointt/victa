@@ -8,7 +8,7 @@ func (b *Bot) HandleMainMenuCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	messageID := callback.Message.MessageID
 
-	user, err := b.UserSvc.FindByTgID(callback.From.ID)
+	user, err := b.UserSvc.GetByTgID(callback.From.ID)
 
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Ошибка при проверке пользователя."))

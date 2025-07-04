@@ -7,7 +7,7 @@ func (b *Bot) BuildCloseButton(data string) tgbotapi.InlineKeyboardButton {
 }
 
 func (b *Bot) BuildBackButton(data string) tgbotapi.InlineKeyboardButton {
-	return tgbotapi.NewInlineKeyboardButtonData("◀️ Назад", data)
+	return tgbotapi.NewInlineKeyboardButtonData("Назад", data)
 }
 
 func (b *Bot) BuildCancelButton() tgbotapi.InlineKeyboardButton {

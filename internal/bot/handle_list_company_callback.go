@@ -10,7 +10,7 @@ func (b *Bot) HandleListCompaniesCallback(cb *tgbotapi.CallbackQuery) {
 	messageID := cb.Message.MessageID
 	tgID := cb.From.ID
 
-	user, err := b.UserSvc.FindByTgID(tgID)
+	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске пользователя."))
 		return
@@ -20,10 +20,11 @@ func (b *Bot) HandleListCompaniesCallback(cb *tgbotapi.CallbackQuery) {
 		return
 	}
 
-	config := b.BuildCompanyList(chatID, user)
-	if config == nil {
+	message, err := b.BuildCompanyList(chatID, user)
+	if err != nil {
+		b.SendMessage(b.NewMessage(chatID, fmt.Sprintf("Ошибка при построении списка компаний: %v", err)))
 		return
 	}
 
-	b.EditMessage(messageID, *config)
+	b.EditMessage(messageID, *message)
 }

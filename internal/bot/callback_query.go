@@ -54,6 +54,11 @@ func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 			b.HandleUpdateCompanyCallback(callback)
 		case b.isCallbackWithPrefix(data, CallbackDeleteCompany):
 			b.HandleDeleteCompanyCallback(callback)
+		case b.isCallbackWithPrefix(data, CallbackBackToDetailCompany):
+			b.HandleBackToDetailCompanyCallback(callback)
+
+		case b.isCallbackWithPrefix(data, CallbackListUser):
+			b.HandleListUsersCallback(callback)
 		default:
 			b.AnswerCallback(callback, "Неизвестное действие.")
 		}
