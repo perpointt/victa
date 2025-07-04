@@ -13,55 +13,54 @@ func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	data := callback.Data
 
-	if state, exists := states[chatID]; exists {
-		switch {
-		case b.isCallbackWithPrefix(data, CallbackConfirmOperation):
-			b.HandleMainMenuCallback(callback)
+	switch {
+	case b.isCallbackWithPrefix(data, CallbackConfirmOperation):
+		if state, exists := states[chatID]; exists {
 			switch state {
 			case StateWaitingConfirmDeleteCompany:
-				b.HandleConfirmDeleteCompanyCallback(callback)
 				b.ClearChatState(chatID)
+				b.HandleConfirmDeleteCompanyCallback(callback)
 				return
 			default:
 				b.AnswerCallback(callback, "Неизвестное действие.")
 			}
-		case b.isCallbackWithPrefix(data, CallbackClearState):
-			b.HandleClearStateCallback(callback)
-		case b.isCallbackWithPrefix(data, CallbackDeleteMessage):
-			b.HandleDeleteMessageCallback(callback)
-		default:
+		} else {
 			b.AnswerCallback(callback, "Неизвестное действие.")
 		}
+	case b.isCallbackWithPrefix(data, CallbackMainMenu):
+		b.ClearChatState(chatID)
+		b.HandleMainMenuCallback(callback)
 
-	} else {
-		switch {
-		case b.isCallbackWithPrefix(data, CallbackMainMenu):
-			b.HandleMainMenuCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackClearState):
+		b.ClearChatState(chatID)
 
-		case b.isCallbackWithPrefix(data, CallbackClearState):
-			b.HandleClearStateCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackDeleteMessage):
+		b.HandleDeleteMessageCallback(callback)
 
-		case b.isCallbackWithPrefix(data, CallbackDeleteMessage):
-			b.HandleDeleteMessageCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackListCompany):
+		b.ClearChatState(chatID)
+		b.HandleListCompaniesCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackDetailCompany):
+		b.ClearChatState(chatID)
+		b.HandleDetailCompanyCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackCreateCompany):
+		b.ClearChatState(chatID)
+		b.HandleCreateCompanyCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackUpdateCompany):
+		b.ClearChatState(chatID)
+		b.HandleUpdateCompanyCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackDeleteCompany):
+		b.ClearChatState(chatID)
+		b.HandleDeleteCompanyCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackBackToDetailCompany):
+		b.ClearChatState(chatID)
+		b.HandleBackToDetailCompanyCallback(callback)
 
-		case b.isCallbackWithPrefix(data, CallbackListCompany):
-			b.HandleListCompaniesCallback(callback)
-		case b.isCallbackWithPrefix(data, CallbackDetailCompany):
-			b.HandleDetailCompanyCallback(callback)
-		case b.isCallbackWithPrefix(data, CallbackCreateCompany):
-			b.HandleCreateCompanyCallback(callback)
-		case b.isCallbackWithPrefix(data, CallbackUpdateCompany):
-			b.HandleUpdateCompanyCallback(callback)
-		case b.isCallbackWithPrefix(data, CallbackDeleteCompany):
-			b.HandleDeleteCompanyCallback(callback)
-		case b.isCallbackWithPrefix(data, CallbackBackToDetailCompany):
-			b.HandleBackToDetailCompanyCallback(callback)
-
-		case b.isCallbackWithPrefix(data, CallbackListUser):
-			b.HandleListUsersCallback(callback)
-		default:
-			b.AnswerCallback(callback, "Неизвестное действие.")
-		}
+	case b.isCallbackWithPrefix(data, CallbackListUser):
+		b.ClearChatState(chatID)
+		b.HandleListUsersCallback(callback)
+	default:
+		b.AnswerCallback(callback, "Неизвестное действие.")
 	}
 
 }

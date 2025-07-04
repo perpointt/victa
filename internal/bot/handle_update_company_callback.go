@@ -14,7 +14,6 @@ func (b *Bot) HandleUpdateCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	}
 	companyID := *idPtr
 
-	b.ClearChatState(chatID)
 	b.AddChatState(chatID, StateWaitingUpdateCompany)
 	b.AddPendingUpdateCompanyData(chatID, companyID)
 

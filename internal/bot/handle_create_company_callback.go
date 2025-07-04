@@ -8,7 +8,6 @@ import (
 func (b *Bot) HandleCreateCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 
-	b.ClearChatState(chatID)
 	b.AddChatState(chatID, StateWaitingCreateCompany)
 
 	msgText := "Отправьте название компании"

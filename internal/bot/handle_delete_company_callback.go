@@ -14,7 +14,6 @@ func (b *Bot) HandleDeleteCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	}
 	companyID := *idPtr
 
-	b.ClearChatState(chatID)
 	b.AddChatState(chatID, StateWaitingConfirmDeleteCompany)
 
 	msgText := "Подтвердите удаление компании"

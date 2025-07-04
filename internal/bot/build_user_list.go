@@ -24,7 +24,7 @@ func (b *Bot) BuildUserList(chatID int64, company *domain.Company) (*tgbotapi.Me
 	}
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Пригласить пользователя", CallbackCreateUser),
+		tgbotapi.NewInlineKeyboardButtonData("Пригласить пользователя", CallbackInviteUser),
 	))
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(

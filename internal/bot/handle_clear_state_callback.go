@@ -1,7 +1,0 @@
-package bot
-
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-
-func (b *Bot) HandleClearStateCallback(cb *tgbotapi.CallbackQuery) {
-	b.ClearChatState(cb.Message.Chat.ID)
-}
