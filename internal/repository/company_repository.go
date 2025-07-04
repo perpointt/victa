@@ -13,7 +13,7 @@ type CompanyRepository interface {
 	Delete(companyID int64) error
 	GetAllByUserId(userID int64) ([]domain.Company, error)
 	GetById(companyID int64) (*domain.Company, error)
-	GetUserRole(userID, companyID int64) (string, error)
+	GetUserRole(userID, companyID int64) (*int64, error)
 	AddUserToCompany(userID, companyID int64, roleSlug string) error
 }
 
@@ -161,19 +161,19 @@ func (r *PostgresCompanyRepo) GetById(companyID int64) (*domain.Company, error) 
 	return &c, nil
 }
 
-func (r *PostgresCompanyRepo) GetUserRole(userID, companyID int64) (string, error) {
-	var slug string
+func (r *PostgresCompanyRepo) GetUserRole(userID, companyID int64) (*int64, error) {
+	var roleId *int64
 	err := r.DB.QueryRow(
-		`SELECT r.slug
+		`SELECT r.id
          FROM user_companies uc
          JOIN roles r ON uc.role_id = r.id
          WHERE uc.user_id = $1 AND uc.company_id = $2`,
 		userID, companyID,
-	).Scan(&slug)
+	).Scan(&roleId)
 	if errors.Is(err, sql.ErrNoRows) {
-		return "", nil
+		return nil, nil
 	}
-	return slug, err
+	return roleId, err
 }
 
 func (r *PostgresCompanyRepo) AddUserToCompany(userID, companyID int64, roleSlug string) error {

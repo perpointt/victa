@@ -7,24 +7,24 @@ import (
 )
 
 type CompanyService struct {
-	repo repository.CompanyRepository
+	CompanyRepo repository.CompanyRepository
 }
 
 // NewCompanyService создаёт новый экземпляр сервиса.
-func NewCompanyService(repo repository.CompanyRepository) *CompanyService {
-	return &CompanyService{repo: repo}
+func NewCompanyService(companyRepository repository.CompanyRepository) *CompanyService {
+	return &CompanyService{CompanyRepo: companyRepository}
 }
 
 func (s *CompanyService) GetAllByUserId(userID int64) ([]domain.Company, error) {
-	return s.repo.GetAllByUserId(userID)
+	return s.CompanyRepo.GetAllByUserId(userID)
 }
 
 func (s *CompanyService) GetById(companyID int64) (*domain.Company, error) {
-	return s.repo.GetById(companyID)
+	return s.CompanyRepo.GetById(companyID)
 }
 
 func (s *CompanyService) Create(name string, userID int64) (*domain.Company, error) {
-	return s.repo.Create(domain.Company{Name: name}, userID)
+	return s.CompanyRepo.Create(domain.Company{Name: name}, userID)
 }
 
 // Update изменяет название компании, только если userID — админ в ней.
@@ -32,27 +32,28 @@ func (s *CompanyService) Update(companyID int64, name string, userID int64) (*do
 	if err := s.CheckAdmin(userID, companyID); err != nil {
 		return nil, err
 	}
-	return s.repo.Update(domain.Company{ID: companyID, Name: name})
+	return s.CompanyRepo.Update(domain.Company{ID: companyID, Name: name})
 }
 
 func (s *CompanyService) Delete(companyID, userID int64) error {
 	if err := s.CheckAdmin(userID, companyID); err != nil {
 		return err
 	}
-	return s.repo.Delete(companyID)
+	return s.CompanyRepo.Delete(companyID)
 }
 
 func (s *CompanyService) CheckAdmin(userID, companyID int64) error {
-	slug, err := s.repo.GetUserRole(userID, companyID)
+	roleIDPtr, err := s.CompanyRepo.GetUserRole(userID, companyID)
 	if err != nil {
 		return err
 	}
-	if slug != "admin" {
+	// Если связи нет или роль не равна 1 (admin)
+	if roleIDPtr == nil || *roleIDPtr != 1 {
 		return errors.New("операция доступна только администратору компании")
 	}
 	return nil
 }
 
 func (s *CompanyService) AddUserToCompany(userID, companyID int64) error {
-	return s.repo.AddUserToCompany(userID, companyID, "developer")
+	return s.CompanyRepo.AddUserToCompany(userID, companyID, "developer")
 }

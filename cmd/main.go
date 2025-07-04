@@ -24,8 +24,9 @@ func main() {
 
 	userRepo := repository.NewPostgresUserRepo(conn)
 	companyRepo := repository.NewPostgresCompanyRepo(conn)
+	userCompanyRepo := repository.NewPostgresUserCompanyRepository(conn)
 
-	userSvc := service.NewUserService(userRepo)
+	userSvc := service.NewUserService(userRepo, userCompanyRepo)
 	companySvc := service.NewCompanyService(companyRepo)
 	inviteSvc := service.NewInviteService(secretBytes)
 

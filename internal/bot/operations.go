@@ -8,6 +8,18 @@ import (
 	"strings"
 )
 
+func (b *Bot) GetRoleTitle(roleID int64) string {
+
+	switch roleID {
+	case 1:
+		return "Администратор"
+	case 2:
+		return "Разработчик"
+	default:
+		return "Роль #" + strconv.FormatInt(roleID, 10)
+	}
+}
+
 func (b *Bot) GetIdFromCallback(data string) (id *int64, err error) {
 	parts := strings.SplitN(data, ":", 2)
 	if len(parts) != 2 {
