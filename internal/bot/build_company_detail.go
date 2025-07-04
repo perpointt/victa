@@ -6,7 +6,7 @@ import (
 	"victa/internal/domain"
 )
 
-func (b *Bot) BuildCompanyDetail(chatID int64, company *domain.Company) tgbotapi.MessageConfig {
+func (b *Bot) BuildCompanyDetail(chatID int64, company *domain.Company, user *domain.User) tgbotapi.MessageConfig {
 	text := fmt.Sprintf(
 		"*%s* (ID: %d)\n\nСоздана: %s\nОбновлена: %s",
 		company.Name,
@@ -20,16 +20,23 @@ func (b *Bot) BuildCompanyDetail(chatID int64, company *domain.Company) tgbotapi
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData("Приложения", CallbackListApp),
 	))
-	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Сотрудники", fmt.Sprintf("%s:%v", CallbackListUser, company.ID)),
-	))
-	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Интеграции", CallbackCompanyIntegrations),
-	))
-	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		b.BuildDeleteButton(fmt.Sprintf("%s:%v", CallbackDeleteCompany, company.ID)),
-		b.BuildEditButton(fmt.Sprintf("%s:%v", CallbackUpdateCompany, company.ID)),
-	))
+
+	err := b.CompanySvc.CheckAdmin(user.ID, company.ID)
+
+	if err == nil {
+		rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Сотрудники", fmt.Sprintf("%s:%v", CallbackListUser, company.ID)),
+		))
+		rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Интеграции", CallbackCompanyIntegrations),
+		))
+
+		rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+			b.BuildDeleteButton(fmt.Sprintf("%s:%v", CallbackDeleteCompany, company.ID)),
+			b.BuildEditButton(fmt.Sprintf("%s:%v", CallbackUpdateCompany, company.ID)),
+		))
+	}
+
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
 		b.BuildCloseButton(CallbackDeleteMessage),
 	))

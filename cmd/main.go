@@ -20,14 +20,17 @@ func main() {
 	}
 	defer conn.Close()
 
+	secretBytes := []byte(cfg.InviteSecret)
+
 	userRepo := repository.NewPostgresUserRepo(conn)
 	companyRepo := repository.NewPostgresCompanyRepo(conn)
 
 	userSvc := service.NewUserService(userRepo)
 	companySvc := service.NewCompanyService(companyRepo)
+	inviteSvc := service.NewInviteService(secretBytes)
 
 	// Инициализируем Telegram-бота
-	b, err := bot.NewBot(*cfg, userSvc, companySvc)
+	b, err := bot.NewBot(*cfg, userSvc, companySvc, inviteSvc)
 	if err != nil {
 		log.Fatalf("Ошибка при инициализации бота: %v", err)
 	}

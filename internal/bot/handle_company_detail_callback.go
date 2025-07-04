@@ -33,6 +33,7 @@ func (b *Bot) HandleBackToDetailCompanyCallback(callback *tgbotapi.CallbackQuery
 
 func (b *Bot) CreateCompanyDetailMessage(callback *tgbotapi.CallbackQuery) (*tgbotapi.MessageConfig, error) {
 	chatID := callback.Message.Chat.ID
+	tgID := callback.From.ID
 
 	idPtr, err := b.GetIdFromCallback(callback.Data)
 	if err != nil || idPtr == nil {
@@ -45,6 +46,11 @@ func (b *Bot) CreateCompanyDetailMessage(callback *tgbotapi.CallbackQuery) (*tgb
 		return nil, err
 	}
 
-	detail := b.BuildCompanyDetail(chatID, company)
+	user, err := b.UserSvc.GetByTgID(tgID)
+	if err != nil {
+		return nil, err
+	}
+
+	detail := b.BuildCompanyDetail(chatID, company, user)
 	return &detail, nil
 }

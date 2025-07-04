@@ -14,6 +14,7 @@ type CompanyRepository interface {
 	GetAllByUserId(userID int64) ([]domain.Company, error)
 	GetById(companyID int64) (*domain.Company, error)
 	GetUserRole(userID, companyID int64) (string, error)
+	AddUserToCompany(userID, companyID int64, roleSlug string) error
 }
 
 // PostgresCompanyRepo реализует CompanyRepository через Postgres
@@ -173,4 +174,15 @@ func (r *PostgresCompanyRepo) GetUserRole(userID, companyID int64) (string, erro
 		return "", nil
 	}
 	return slug, err
+}
+
+func (r *PostgresCompanyRepo) AddUserToCompany(userID, companyID int64, roleSlug string) error {
+	_, err := r.DB.Exec(
+		`INSERT INTO user_companies (user_id, company_id, role_id)
+         SELECT $1, $2, id
+           FROM roles
+          WHERE slug = $3`,
+		userID, companyID, roleSlug,
+	)
+	return err
 }

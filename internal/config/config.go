@@ -8,22 +8,18 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Config содержит все настройки приложения (токен бота, параметры БД)
 type Config struct {
-	// Telegram-бот
-	TelegramAdminUserId string // токен бота
-	// Telegram-бот
-	TelegramToken string // токен бота
-
-	// Параметры подключения к базе
-	DBUser     string
-	DBPassword string
-	DBName     string
-	DBHost     string
-	DBPort     string
+	TelegramAdminUserId string
+	TelegramToken       string
+	TelegramBotName     string
+	InviteSecret        string
+	DBUser              string
+	DBPassword          string
+	DBName              string
+	DBHost              string
+	DBPort              string
 }
 
-// LoadConfig загружает настройки из .env, завершает работу если переменной нет
 func LoadConfig() *Config {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Ошибка загрузки .env файла: файл .env обязателен")
@@ -31,6 +27,8 @@ func LoadConfig() *Config {
 	return &Config{
 		TelegramAdminUserId: getEnv("TELEGRAM_ADMIN_USER_ID"),
 		TelegramToken:       getEnv("TELEGRAM_TOKEN"),
+		TelegramBotName:     getEnv("TELEGRAM_BOT_NAME"),
+		InviteSecret:        getEnv("INVITE_SECRET"),
 		DBUser:              getEnv("DB_USER"),
 		DBPassword:          getEnv("DB_PASSWORD"),
 		DBName:              getEnv("DB_NAME"),
@@ -39,7 +37,6 @@ func LoadConfig() *Config {
 	}
 }
 
-// GetDbDSN формирует DSN для Postgres
 func (c *Config) GetDbDSN() string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",

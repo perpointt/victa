@@ -2,7 +2,6 @@ package bot
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"log"
 )
 
 func (b *Bot) HandleCreateCompanyCallback(callback *tgbotapi.CallbackQuery) {
@@ -34,7 +33,6 @@ func (b *Bot) HandleCreateCompany(message *tgbotapi.Message) {
 	_, err = b.CompanySvc.Create(message.Text, user.ID)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Ошибка при создании компании."))
-		log.Fatalf(err.Error())
 		return
 	}
 

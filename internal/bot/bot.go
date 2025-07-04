@@ -12,6 +12,7 @@ type Bot struct {
 	config     config.Config
 	UserSvc    *service.UserService
 	CompanySvc *service.CompanyService
+	InviteSvc  *service.InviteService
 }
 
 var (
@@ -21,12 +22,12 @@ var (
 )
 
 // NewBot создаёт нового бота
-func NewBot(config config.Config, us *service.UserService, cs *service.CompanyService) (*Bot, error) {
+func NewBot(config config.Config, us *service.UserService, cs *service.CompanyService, is *service.InviteService) (*Bot, error) {
 	api, err := tgbotapi.NewBotAPI(config.TelegramToken)
 	if err != nil {
 		return nil, err
 	}
-	return &Bot{api: api, config: config, UserSvc: us, CompanySvc: cs}, nil
+	return &Bot{api: api, config: config, UserSvc: us, CompanySvc: cs, InviteSvc: is}, nil
 }
 
 func (b *Bot) Run() {
@@ -75,7 +76,7 @@ func (b *Bot) handleText(message *tgbotapi.Message) {
 func (b *Bot) handleCommand(message *tgbotapi.Message) {
 	switch message.Command() {
 	case CommandStart:
-		b.HandleStart(message)
+		b.HandleStartCommand(message)
 	default:
 		b.SendMessage(b.NewMessage(message.Chat.ID, "Неизвестная команда!"))
 	}

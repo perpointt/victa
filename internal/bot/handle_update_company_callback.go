@@ -1,8 +1,8 @@
 package bot
 
 import (
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"log"
 )
 
 func (b *Bot) HandleUpdateCompanyCallback(callback *tgbotapi.CallbackQuery) {
@@ -42,8 +42,7 @@ func (b *Bot) HandleUpdateCompany(message *tgbotapi.Message) {
 
 	_, err = b.CompanySvc.Update(companyID, message.Text, user.ID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при создании компании."))
-		log.Fatalf(err.Error())
+		b.SendMessage(b.NewMessage(chatID, fmt.Sprintf("Не удалось обновить компанию: %v", err)))
 		return
 	}
 

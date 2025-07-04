@@ -13,6 +13,8 @@ func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	data := callback.Data
 
+	b.AnswerCallback(callback, "")
+
 	switch {
 	case b.isCallbackWithPrefix(data, CallbackConfirmOperation):
 		if state, exists := states[chatID]; exists {
@@ -59,6 +61,10 @@ func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 	case b.isCallbackWithPrefix(data, CallbackListUser):
 		b.ClearChatState(chatID)
 		b.HandleListUsersCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackInviteUser):
+		b.ClearChatState(chatID)
+		b.HandleInviteUserCallback(callback)
+
 	default:
 		b.AnswerCallback(callback, "Неизвестное действие.")
 	}
