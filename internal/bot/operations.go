@@ -31,6 +31,7 @@ func (b *Bot) DeleteChatState(chatID int64) {
 func (b *Bot) ClearChatState(chatID int64) {
 	b.DeletePendingMessage(chatID)
 	b.DeleteChatState(chatID)
+	b.DeletePendingUpdateCompanyData(chatID)
 }
 
 func (b *Bot) SendPendingMessage(config tgbotapi.MessageConfig) {

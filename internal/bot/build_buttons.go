@@ -10,8 +10,12 @@ func (b *Bot) BuildBackButton(data string) tgbotapi.InlineKeyboardButton {
 	return tgbotapi.NewInlineKeyboardButtonData("◀️ Назад", data)
 }
 
-func (b *Bot) BuildCancelButton(data string) tgbotapi.InlineKeyboardButton {
-	return tgbotapi.NewInlineKeyboardButtonData("Отмена", data)
+func (b *Bot) BuildCancelButton() tgbotapi.InlineKeyboardButton {
+	return tgbotapi.NewInlineKeyboardButtonData("Отмена", CallbackClearState)
+}
+
+func (b *Bot) BuildConfirmButton(data string) tgbotapi.InlineKeyboardButton {
+	return tgbotapi.NewInlineKeyboardButtonData("Подвердить", data)
 }
 
 func (b *Bot) BuildDeleteButton(data string) tgbotapi.InlineKeyboardButton {

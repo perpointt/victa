@@ -9,8 +9,11 @@ import (
 // CompanyRepository описывает методы для работы с компаниями.
 type CompanyRepository interface {
 	Create(company domain.Company, userID int64) (*domain.Company, error)
+	Update(company domain.Company) (*domain.Company, error)
+	Delete(companyID int64) error
 	GetAllByUserId(userID int64) ([]domain.Company, error)
 	GetById(companyID int64) (*domain.Company, error)
+	GetUserRole(userID, companyID int64) (string, error)
 }
 
 // PostgresCompanyRepo реализует CompanyRepository через Postgres
@@ -62,13 +65,57 @@ func (r *PostgresCompanyRepo) Create(company domain.Company, userID int64) (*dom
 	return created, nil
 }
 
-// GetAllByUserId возвращает все компании, к которым привязан пользователь
+// Update изменяет название компании и возвращает обновлённую сущность
+func (r *PostgresCompanyRepo) Update(company domain.Company) (*domain.Company, error) {
+	updated := &domain.Company{}
+	err := r.DB.QueryRow(
+		`UPDATE companies
+         SET name = $1, updated_at = now()
+         WHERE id = $2
+         RETURNING id, name, created_at, updated_at`,
+		company.Name, company.ID,
+	).Scan(
+		&updated.ID,
+		&updated.Name,
+		&updated.CreatedAt,
+		&updated.UpdatedAt,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
+}
+
+// Delete удаляет компанию по ID; все user_companies удалятся автоматически благодаря ON DELETE CASCADE
+func (r *PostgresCompanyRepo) Delete(companyID int64) error {
+	res, err := r.DB.Exec(
+		`DELETE FROM companies WHERE id = $1`,
+		companyID,
+	)
+	if err != nil {
+		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
+// GetAllByUserId возвращает все компании, к которым привязан пользователь,
 func (r *PostgresCompanyRepo) GetAllByUserId(userID int64) ([]domain.Company, error) {
 	rows, err := r.DB.Query(
 		`SELECT c.id, c.name, c.created_at, c.updated_at
          FROM companies c
          JOIN user_companies uc ON c.id = uc.company_id
-         WHERE uc.user_id = $1`,
+         WHERE uc.user_id = $1
+         ORDER BY c.created_at DESC`, // сортируем по дате создания
 		userID,
 	)
 	if err != nil {
@@ -111,4 +158,19 @@ func (r *PostgresCompanyRepo) GetById(companyID int64) (*domain.Company, error) 
 		return nil, err
 	}
 	return &c, nil
+}
+
+func (r *PostgresCompanyRepo) GetUserRole(userID, companyID int64) (string, error) {
+	var slug string
+	err := r.DB.QueryRow(
+		`SELECT r.slug
+         FROM user_companies uc
+         JOIN roles r ON uc.role_id = r.id
+         WHERE uc.user_id = $1 AND uc.company_id = $2`,
+		userID, companyID,
+	).Scan(&slug)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
+	return slug, err
 }

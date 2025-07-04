@@ -3,21 +3,12 @@ package bot
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"log"
 )
 
-// HandleDetailCompanyCallback обрабатывает нажатие кнопки детальной информации о компании
-// и редактирует текущее сообщение, выводя информацию по выбранной компании.
-func (b *Bot) HandleDetailCompanyCallback(cb *tgbotapi.CallbackQuery) {
-	chatID := cb.Message.Chat.ID
+func (b *Bot) HandleDetailCompanyCallback(callback *tgbotapi.CallbackQuery) {
+	chatID := callback.Message.Chat.ID
 
-	// Подтверждаем получение callback, чтобы убрать «часики»
-	if _, err := b.api.Request(tgbotapi.NewCallback(cb.ID, "")); err != nil {
-		log.Printf("callback answer error: %v", err)
-	}
-
-	// Парсим ID компании из callback.Data: "<action>:<id>"
-	idPtr, err := b.GetIdFromCallback(cb.Data)
+	idPtr, err := b.GetIdFromCallback(callback.Data)
 	if err != nil || idPtr == nil {
 		b.SendMessage(b.NewMessage(chatID, "Неверная команда."))
 		return
@@ -56,8 +47,8 @@ func (b *Bot) HandleDetailCompanyCallback(cb *tgbotapi.CallbackQuery) {
 		tgbotapi.NewInlineKeyboardButtonData("Интеграции", CallbackCompanyIntegrations),
 	))
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		b.BuildDeleteButton(CallbackRemoveCompany),
-		b.BuildEditButton(CallbackUpdateCompany),
+		b.BuildDeleteButton(fmt.Sprintf("%s:%v", CallbackDeleteCompany, companyID)),
+		b.BuildEditButton(fmt.Sprintf("%s:%v", CallbackUpdateCompany, companyID)),
 	))
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
 		b.BuildCloseButton(CallbackDeleteMessage),

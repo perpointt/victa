@@ -25,7 +25,7 @@ func (b *Bot) BuildCompanyList(chatID int64, user *domain.User) *tgbotapi.Messag
 	}
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("➕ Создать компанию", CallbackCreateCompany),
+		tgbotapi.NewInlineKeyboardButtonData("Создать компанию", CallbackCreateCompany),
 	))
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(rows...)

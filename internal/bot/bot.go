@@ -15,8 +15,9 @@ type Bot struct {
 }
 
 var (
-	states          = make(map[int64]ChatState)
-	pendingMessages = make(map[int64]int)
+	states                   = make(map[int64]ChatState)
+	pendingMessages          = make(map[int64]int)
+	pendingUpdateCompanyData = make(map[int64]int64)
 )
 
 // NewBot создаёт нового бота
@@ -53,12 +54,22 @@ func (b *Bot) handleUpdate(update tgbotapi.Update) {
 func (b *Bot) handleText(message *tgbotapi.Message) {
 	chatID := message.Chat.ID
 
-	if state, exists := states[chatID]; exists && state == StateWaitingCreateCompany {
-		b.HandleCreateCompany(message)
-		return
-	}
+	if state, exists := states[chatID]; exists {
+		switch state {
+		case StateWaitingCreateCompany:
+			b.HandleCreateCompany(message)
+			b.ClearChatState(chatID)
+			return
+		case StateWaitingUpdateCompany:
+			b.HandleUpdateCompany(message)
+			b.ClearChatState(chatID)
+			return
+		default:
 
-	b.SendMessage(b.NewMessage(message.Chat.ID, message.Text))
+		}
+	} else {
+		b.SendMessage(b.NewMessage(message.Chat.ID, message.Text))
+	}
 }
 
 func (b *Bot) handleCommand(message *tgbotapi.Message) {

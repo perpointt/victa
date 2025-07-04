@@ -2,8 +2,6 @@ package bot
 
 import (
 	"fmt"
-	"log"
-
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -11,10 +9,6 @@ func (b *Bot) HandleListCompaniesCallback(cb *tgbotapi.CallbackQuery) {
 	chatID := cb.Message.Chat.ID
 	messageID := cb.Message.MessageID
 	tgID := cb.From.ID
-
-	if _, err := b.api.Request(tgbotapi.NewCallback(cb.ID, "")); err != nil {
-		log.Printf("answer callback error: %v", err)
-	}
 
 	user, err := b.UserSvc.FindByTgID(tgID)
 	if err != nil {

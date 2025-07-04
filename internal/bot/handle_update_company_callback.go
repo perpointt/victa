@@ -5,11 +5,18 @@ import (
 	"log"
 )
 
-func (b *Bot) HandleCreateCompanyCallback(callback *tgbotapi.CallbackQuery) {
+func (b *Bot) HandleUpdateCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
+	idPtr, err := b.GetIdFromCallback(callback.Data)
+	if err != nil || idPtr == nil {
+		b.SendMessage(b.NewMessage(chatID, "Неверная команда."))
+		return
+	}
+	companyID := *idPtr
 
 	b.ClearChatState(chatID)
-	b.AddChatState(chatID, StateWaitingCreateCompany)
+	b.AddChatState(chatID, StateWaitingUpdateCompany)
+	b.AddPendingUpdateCompanyData(chatID, companyID)
 
 	msgText := "Отправьте название компании"
 	cancelButton := b.BuildCancelButton()
@@ -18,7 +25,7 @@ func (b *Bot) HandleCreateCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	b.SendPendingMessage(b.NewKeyboardMessage(chatID, msgText, keyboard))
 }
 
-func (b *Bot) HandleCreateCompany(message *tgbotapi.Message) {
+func (b *Bot) HandleUpdateCompany(message *tgbotapi.Message) {
 	chatID := message.Chat.ID
 	tgID := message.From.ID
 
@@ -32,7 +39,9 @@ func (b *Bot) HandleCreateCompany(message *tgbotapi.Message) {
 		return
 	}
 
-	_, err = b.CompanySvc.Create(message.Text, user.ID)
+	companyID := pendingUpdateCompanyData[chatID]
+
+	_, err = b.CompanySvc.Update(companyID, message.Text, user.ID)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Ошибка при создании компании."))
 		log.Fatalf(err.Error())
@@ -45,4 +54,14 @@ func (b *Bot) HandleCreateCompany(message *tgbotapi.Message) {
 	}
 
 	b.SendMessage(*config)
+}
+
+func (b *Bot) AddPendingUpdateCompanyData(chatID int64, companyId int64) {
+	pendingUpdateCompanyData[chatID] = companyId
+}
+
+func (b *Bot) DeletePendingUpdateCompanyData(chatID int64) {
+	if _, ok := pendingUpdateCompanyData[chatID]; ok {
+		delete(pendingUpdateCompanyData, chatID)
+	}
 }

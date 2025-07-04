@@ -6,15 +6,16 @@ const (
 )
 
 const (
-	CallbackMainMenu      = "main_menu"
-	CallbackDeleteMessage = "delete_message"
-	CallbackClearState    = "clear_state"
+	CallbackMainMenu         = "main_menu"
+	CallbackDeleteMessage    = "delete_message"
+	CallbackClearState       = "clear_state"
+	CallbackConfirmOperation = "confirm_operation"
 )
 
 const (
 	CallbackCreateCompany       = "create_company"
-	CallbackRemoveCompany       = "remove_company"
 	CallbackUpdateCompany       = "update_company"
+	CallbackDeleteCompany       = "delete_company"
 	CallbackListCompany         = "list_company"
 	CallbackDetailCompany       = "detail_company"
 	CallbackCompanyIntegrations = "company_integrations"
@@ -22,7 +23,7 @@ const (
 
 const (
 	CallbackCreateApp       = "create_app"
-	CallbackRemoveApp       = "remove_app"
+	CallbackDeleteApp       = "delete_app"
 	CallbackListApp         = "list_app"
 	CallbackDetailApp       = "detail_app"
 	CallbackAppIntegrations = "app_integrations"
@@ -30,7 +31,7 @@ const (
 
 const (
 	CallbackCreateUser = "create_user"
-	CallbackRemoveUser = "remove_user"
+	CallbackDeleteUser = "delete_user"
 	CallbackListUser   = "list_user"
 	CallbackDetailUser = "detail_user"
 )
