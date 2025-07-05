@@ -11,8 +11,8 @@ type CompanyRepository interface {
 	Create(company domain.Company, userID int64) (*domain.Company, error)
 	Update(company domain.Company) (*domain.Company, error)
 	Delete(companyID int64) error
-	GetAllByUserId(userID int64) ([]domain.Company, error)
-	GetById(companyID int64) (*domain.Company, error)
+	GetAllByUserID(userID int64) ([]domain.Company, error)
+	GetByID(companyID int64) (*domain.Company, error)
 	GetUserRole(userID, companyID int64) (*int64, error)
 	AddUserToCompany(userID, companyID int64, roleSlug string) error
 }
@@ -109,8 +109,8 @@ func (r *PostgresCompanyRepo) Delete(companyID int64) error {
 	return nil
 }
 
-// GetAllByUserId возвращает все компании, к которым привязан пользователь,
-func (r *PostgresCompanyRepo) GetAllByUserId(userID int64) ([]domain.Company, error) {
+// GetAllByUserID возвращает все компании, к которым привязан пользователь,
+func (r *PostgresCompanyRepo) GetAllByUserID(userID int64) ([]domain.Company, error) {
 	rows, err := r.DB.Query(
 		`SELECT c.id, c.name, c.created_at, c.updated_at
          FROM companies c
@@ -138,8 +138,8 @@ func (r *PostgresCompanyRepo) GetAllByUserId(userID int64) ([]domain.Company, er
 	return list, nil
 }
 
-// GetById возвращает компанию по её ID, или nil если не найдена
-func (r *PostgresCompanyRepo) GetById(companyID int64) (*domain.Company, error) {
+// GetByID возвращает компанию по её ID, или nil если не найдена
+func (r *PostgresCompanyRepo) GetByID(companyID int64) (*domain.Company, error) {
 	var c domain.Company
 	err := r.DB.QueryRow(
 		`SELECT id, name, created_at, updated_at
@@ -162,18 +162,18 @@ func (r *PostgresCompanyRepo) GetById(companyID int64) (*domain.Company, error) 
 }
 
 func (r *PostgresCompanyRepo) GetUserRole(userID, companyID int64) (*int64, error) {
-	var roleId *int64
+	var roleID *int64
 	err := r.DB.QueryRow(
 		`SELECT r.id
          FROM user_companies uc
          JOIN roles r ON uc.role_id = r.id
          WHERE uc.user_id = $1 AND uc.company_id = $2`,
 		userID, companyID,
-	).Scan(&roleId)
+	).Scan(&roleID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
-	return roleId, err
+	return roleID, err
 }
 
 func (r *PostgresCompanyRepo) AddUserToCompany(userID, companyID int64, roleSlug string) error {

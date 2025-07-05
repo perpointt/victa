@@ -30,5 +30,13 @@ func (b *Bot) HandleInviteUserCallback(callback *tgbotapi.CallbackQuery) {
 	link := fmt.Sprintf("https://t.me/%s?start=%s", b.config.TelegramBotName, token)
 	text := fmt.Sprintf("Ссылка-приглашение (действует 48 ч):\n```%s```", link)
 
-	b.SendMessage(b.NewMessage(chatID, text))
+	var rows [][]tgbotapi.InlineKeyboardButton
+
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		b.BuildCloseButton(CallbackDeleteMessage),
+	))
+
+	keyboard := tgbotapi.NewInlineKeyboardMarkup(rows...)
+
+	b.SendMessage(b.NewKeyboardMessage(chatID, text, keyboard))
 }

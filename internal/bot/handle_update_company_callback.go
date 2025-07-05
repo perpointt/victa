@@ -53,8 +53,8 @@ func (b *Bot) HandleUpdateCompany(message *tgbotapi.Message) {
 	b.SendMessage(*config)
 }
 
-func (b *Bot) AddPendingUpdateCompanyData(chatID int64, companyId int64) {
-	pendingUpdateCompanyData[chatID] = companyId
+func (b *Bot) AddPendingUpdateCompanyData(chatID int64, companyID int64) {
+	pendingUpdateCompanyData[chatID] = companyID
 }
 
 func (b *Bot) DeletePendingUpdateCompanyData(chatID int64) {

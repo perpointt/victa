@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	TelegramAdminUserId string
+	TelegramAdminUserID string
 	TelegramToken       string
 	TelegramBotName     string
 	InviteSecret        string
@@ -25,7 +25,7 @@ func LoadConfig() *Config {
 		log.Fatal("Ошибка загрузки .env файла: файл .env обязателен")
 	}
 	return &Config{
-		TelegramAdminUserId: getEnv("TELEGRAM_ADMIN_USER_ID"),
+		TelegramAdminUserID: getEnv("TELEGRAM_ADMIN_USER_ID"),
 		TelegramToken:       getEnv("TELEGRAM_TOKEN"),
 		TelegramBotName:     getEnv("TELEGRAM_BOT_NAME"),
 		InviteSecret:        getEnv("INVITE_SECRET"),

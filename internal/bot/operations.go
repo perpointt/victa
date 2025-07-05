@@ -110,6 +110,8 @@ func (b *Bot) EditMessage(messageID int, config tgbotapi.MessageConfig) (*tgbota
 	}
 
 	editMsg := tgbotapi.NewEditMessageTextAndMarkup(config.ChatID, messageID, text, replyMarkup)
+	editMsg.ParseMode = config.ParseMode
+
 	msg, err := b.api.Send(editMsg)
 
 	if err != nil {

@@ -15,12 +15,12 @@ func NewCompanyService(companyRepository repository.CompanyRepository) *CompanyS
 	return &CompanyService{CompanyRepo: companyRepository}
 }
 
-func (s *CompanyService) GetAllByUserId(userID int64) ([]domain.Company, error) {
-	return s.CompanyRepo.GetAllByUserId(userID)
+func (s *CompanyService) GetAllByUserID(userID int64) ([]domain.Company, error) {
+	return s.CompanyRepo.GetAllByUserID(userID)
 }
 
-func (s *CompanyService) GetById(companyID int64) (*domain.Company, error) {
-	return s.CompanyRepo.GetById(companyID)
+func (s *CompanyService) GetByID(companyID int64) (*domain.Company, error) {
+	return s.CompanyRepo.GetByID(companyID)
 }
 
 func (s *CompanyService) Create(name string, userID int64) (*domain.Company, error) {

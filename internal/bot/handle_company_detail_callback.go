@@ -40,7 +40,7 @@ func (b *Bot) CreateCompanyDetailMessage(callback *tgbotapi.CallbackQuery) (*tgb
 		return nil, err
 	}
 
-	company, err := b.CompanySvc.GetById(params.CompanyID)
+	company, err := b.CompanySvc.GetByID(params.CompanyID)
 	if err != nil {
 		return nil, err
 	}

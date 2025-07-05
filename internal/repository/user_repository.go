@@ -36,10 +36,10 @@ func (r *PostgresUserRepo) Create(u *domain.User) (*domain.User, error) {
 		`INSERT INTO users (tg_id, name, created_at, updated_at)
          VALUES ($1, $2, now(), now())
          RETURNING id, tg_id, name, created_at, updated_at`,
-		u.TgId, u.Name,
+		u.TgID, u.Name,
 	).Scan(
 		&newUser.ID,
-		&newUser.TgId,
+		&newUser.TgID,
 		&newUser.Name,
 		&newUser.CreatedAt,
 		&newUser.UpdatedAt,
@@ -60,7 +60,7 @@ func (r *PostgresUserRepo) GetByID(id int64) (*domain.User, error) {
 		id,
 	).Scan(
 		&u.ID,
-		&u.TgId,
+		&u.TgID,
 		&u.Name,
 		&u.CreatedAt,
 		&u.UpdatedAt,
@@ -84,7 +84,7 @@ func (r *PostgresUserRepo) GetByTgID(tgID int64) (*domain.User, error) {
 		tgID,
 	).Scan(
 		&u.ID,
-		&u.TgId,
+		&u.TgID,
 		&u.Name,
 		&u.CreatedAt,
 		&u.UpdatedAt,
@@ -119,7 +119,7 @@ func (r *PostgresUserRepo) GetAllByCompanyID(companyID int64) ([]domain.User, er
 		var u domain.User
 		if err := rows.Scan(
 			&u.ID,
-			&u.TgId,
+			&u.TgID,
 			&u.Name,
 			&u.CreatedAt,
 			&u.UpdatedAt,

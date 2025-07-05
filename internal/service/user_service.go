@@ -17,8 +17,8 @@ func NewUserService(userRepo repository.UserRepository, userCompaniesRepo reposi
 }
 
 // Register регистрирует пользователя (создаёт или обновляет запись)
-func (s *UserService) Register(tgId string, name string) (*domain.User, error) {
-	u := &domain.User{TgId: tgId, Name: name}
+func (s *UserService) Register(tgID string, name string) (*domain.User, error) {
+	u := &domain.User{TgID: tgID, Name: name}
 	user, err := s.UserRepo.Create(u)
 	if err != nil {
 		return nil, err
@@ -34,9 +34,9 @@ func (s *UserService) GetByTgID(tgID int64) (*domain.User, error) {
 	return user, nil
 }
 
-func (s *UserService) GetAllDetailByCompanyID(companyId int64) ([]domain.UserDetail, error) {
-	users, err := s.UserRepo.GetAllByCompanyID(companyId)
-	companies, err := s.UserCompaniesRepo.GetAllByCompanyID(companyId)
+func (s *UserService) GetAllDetailByCompanyID(companyID int64) ([]domain.UserDetail, error) {
+	users, err := s.UserRepo.GetAllByCompanyID(companyID)
+	companies, err := s.UserCompaniesRepo.GetAllByCompanyID(companyID)
 
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (s *UserService) GetAllDetailByCompanyID(companyId int64) ([]domain.UserDet
 
 	var details []domain.UserDetail
 	for _, uc := range companies {
-		if u, ok := userMap[uc.UserId]; ok {
+		if u, ok := userMap[uc.UserID]; ok {
 			details = append(details, domain.UserDetail{
 				User:    u,
 				Company: uc,
@@ -61,13 +61,13 @@ func (s *UserService) GetAllDetailByCompanyID(companyId int64) ([]domain.UserDet
 }
 
 // GetByCompanyAndUserID возвращает детальную информацию по одному пользователю в рамках заданной компании.
-func (s *UserService) GetByCompanyAndUserID(companyID, userId int64) (*domain.UserDetail, error) {
-	user, err := s.UserRepo.GetByID(userId)
+func (s *UserService) GetByCompanyAndUserID(companyID, userID int64) (*domain.UserDetail, error) {
+	user, err := s.UserRepo.GetByID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	uc, err := s.UserCompaniesRepo.GetByCompanyAndUserID(companyID, userId)
+	uc, err := s.UserCompaniesRepo.GetByCompanyAndUserID(companyID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -77,4 +77,8 @@ func (s *UserService) GetByCompanyAndUserID(companyID, userId int64) (*domain.Us
 		Company: *uc,
 	}
 	return detail, nil
+}
+
+func (s *UserService) DeleteFromCompany(userID, companyID int64) error {
+	return s.UserCompaniesRepo.Delete(userID, companyID)
 }

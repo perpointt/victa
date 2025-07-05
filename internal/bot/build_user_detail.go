@@ -17,6 +17,10 @@ func (b *Bot) BuildUserDetail(chatID int64, user *domain.UserDetail) tgbotapi.Me
 	var rows [][]tgbotapi.InlineKeyboardButton
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Удалить из компании", fmt.Sprintf("%v?user_id=%d&company_id=%d", CallbackDeleteUser, user.User.ID, user.Company.CompanyID)),
+	))
+
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
 		b.BuildCloseButton(CallbackDeleteMessage),
 	))
 

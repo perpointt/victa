@@ -10,6 +10,7 @@ const (
 	CallbackDeleteMessage    = "delete_message"
 	CallbackClearState       = "clear_state"
 	CallbackConfirmOperation = "confirm_operation"
+	CallbackBlank            = "blank"
 )
 
 const (
@@ -33,7 +34,6 @@ const (
 const (
 	CallbackInviteUser       = "invite_user"
 	CallbackDeleteUser       = "delete_user"
-	CallbackUpdateUserRole   = "update_user_role"
 	CallbackListUser         = "list_user"
 	CallbackDetailUser       = "detail_user"
 	CallbackBackToDetailUser = "back_to_detail_user"

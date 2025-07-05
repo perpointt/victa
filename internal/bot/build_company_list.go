@@ -7,7 +7,7 @@ import (
 )
 
 func (b *Bot) BuildCompanyList(chatID int64, user *domain.User) (*tgbotapi.MessageConfig, error) {
-	companies, err := b.CompanySvc.GetAllByUserId(user.ID)
+	companies, err := b.CompanySvc.GetAllByUserID(user.ID)
 	if err != nil {
 		return nil, err
 	}

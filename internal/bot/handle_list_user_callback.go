@@ -8,19 +8,21 @@ import (
 func (b *Bot) HandleListUsersCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	messageID := callback.Message.MessageID
+	tgID := callback.From.ID
+
 	params, err := b.GetCallbackArgs(callback.Data)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Неверная команда."))
 		return
 	}
 
-	company, err := b.CompanySvc.GetById(params.CompanyID)
+	company, err := b.CompanySvc.GetByID(params.CompanyID)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске компании."))
 		return
 	}
 
-	message, err := b.BuildUserList(chatID, company)
+	message, err := b.BuildUserList(chatID, tgID, company)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, fmt.Sprintf("Ошибка при построении списка пользователей: %v", err)))
 		return
