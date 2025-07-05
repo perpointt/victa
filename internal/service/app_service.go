@@ -5,40 +5,46 @@ import (
 	"victa/internal/repository"
 )
 
-// AppService описывает бизнес-логику для приложений.
-type AppService interface {
-	CreateApp(app *domain.App) error
-	GetAllApps() ([]domain.App, error)
-	GetAppByID(id int64) (*domain.App, error)
-	UpdateApp(app *domain.App) error
-	DeleteApp(id int64) error
-}
-
-type appService struct {
+type AppService struct {
 	repo repository.AppRepository
 }
 
-// NewAppService создаёт новый экземпляр AppService.
-func NewAppService(repo repository.AppRepository) AppService {
-	return &appService{repo: repo}
+// NewAppService создаёт новый сервис для работы с приложениями.
+func NewAppService(repo repository.AppRepository) *AppService {
+	return &AppService{repo: repo}
 }
 
-func (s *appService) CreateApp(app *domain.App) error {
-	return s.repo.Create(app)
-}
-
-func (s *appService) GetAllApps() ([]domain.App, error) {
-	return s.repo.GetAll()
-}
-
-func (s *appService) GetAppByID(id int64) (*domain.App, error) {
+// GetByID возвращает приложение по его ID или nil, если не найдено.
+func (s *AppService) GetByID(id int64) (*domain.App, error) {
 	return s.repo.GetByID(id)
 }
 
-func (s *appService) UpdateApp(app *domain.App) error {
+// GetAllByCompanyID возвращает все приложения для заданной компании.
+func (s *AppService) GetAllByCompanyID(companyID int64) ([]domain.App, error) {
+	return s.repo.GetAllByCompanyID(companyID)
+}
+
+// Create создаёт новое приложение и возвращает его сущность.
+func (s *AppService) Create(companyID int64, name, slug string) (*domain.App, error) {
+	app := &domain.App{
+		CompanyID: companyID,
+		Name:      name,
+		Slug:      slug,
+	}
+	return s.repo.Create(app)
+}
+
+// Update изменяет имя и slug приложения и возвращает обновлённую сущность.
+func (s *AppService) Update(id int64, name, slug string) (*domain.App, error) {
+	app := &domain.App{
+		ID:   id,
+		Name: name,
+		Slug: slug,
+	}
 	return s.repo.Update(app)
 }
 
-func (s *appService) DeleteApp(id int64) error {
+// Delete удаляет приложение по его ID.
+func (s *AppService) Delete(id int64) error {
 	return s.repo.Delete(id)
 }

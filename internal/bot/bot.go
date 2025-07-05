@@ -13,6 +13,7 @@ type Bot struct {
 	UserSvc    *service.UserService
 	CompanySvc *service.CompanyService
 	InviteSvc  *service.InviteService
+	AppSvc     *service.AppService
 }
 
 var (
@@ -22,12 +23,25 @@ var (
 )
 
 // NewBot создаёт нового бота
-func NewBot(config config.Config, us *service.UserService, cs *service.CompanyService, is *service.InviteService) (*Bot, error) {
+func NewBot(
+	config config.Config,
+	us *service.UserService,
+	cs *service.CompanyService,
+	is *service.InviteService,
+	as *service.AppService,
+) (*Bot, error) {
 	api, err := tgbotapi.NewBotAPI(config.TelegramToken)
 	if err != nil {
 		return nil, err
 	}
-	return &Bot{api: api, config: config, UserSvc: us, CompanySvc: cs, InviteSvc: is}, nil
+	return &Bot{
+		api:        api,
+		config:     config,
+		UserSvc:    us,
+		CompanySvc: cs,
+		InviteSvc:  is,
+		AppSvc:     as,
+	}, nil
 }
 
 func (b *Bot) Run() {

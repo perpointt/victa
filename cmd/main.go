@@ -26,13 +26,21 @@ func main() {
 	companyRepo := repository.NewPostgresCompanyRepo(conn)
 	userCompanyRepo := repository.NewPostgresUserCompanyRepository(conn)
 	integrationRepo := repository.NewPostgresCompanyIntegrationRepo(conn)
+	appRepo := repository.NewPostgresAppRepo(conn)
 
 	userSvc := service.NewUserService(userRepo, userCompanyRepo)
 	companySvc := service.NewCompanyService(companyRepo, integrationRepo)
 	inviteSvc := service.NewInviteService(secretBytes)
+	appSvc := service.NewAppService(appRepo)
 
 	// Инициализируем Telegram-бота
-	b, err := bot.NewBot(*cfg, userSvc, companySvc, inviteSvc)
+	b, err := bot.NewBot(
+		*cfg,
+		userSvc,
+		companySvc,
+		inviteSvc,
+		appSvc,
+	)
 	if err != nil {
 		log.Fatalf("Ошибка при инициализации бота: %v", err)
 	}
