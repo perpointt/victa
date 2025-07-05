@@ -19,6 +19,7 @@ type Config struct {
 	DBName              string
 	DBHost              string
 	DBPort              string
+	APIPort             string
 }
 
 func LoadConfig() *Config {
@@ -36,6 +37,7 @@ func LoadConfig() *Config {
 		DBName:              getEnv("DB_NAME"),
 		DBHost:              getEnv("DB_HOST"),
 		DBPort:              getEnv("DB_PORT"),
+		APIPort:             getEnv("API_PORT"),
 	}
 }
 

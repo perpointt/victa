@@ -2,18 +2,18 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"victa/internal/bot"
 	"victa/internal/config"
 	"victa/internal/db"
 	"victa/internal/repository"
 	"victa/internal/service"
+	"victa/internal/webhook"
 )
 
 func main() {
-	// Загружаем конфиг
 	cfg := config.LoadConfig()
 
-	// Подключаемся к БД
 	conn, err := db.New(cfg.GetDbDSN())
 	if err != nil {
 		log.Fatalf("Не удалось подключиться к БД: %v", err)
@@ -34,7 +34,6 @@ func main() {
 	appSvc := service.NewAppService(appRepo)
 	jwtSvc := service.NewJWTService(cfg.JwtSecret)
 
-	// Инициализируем Telegram-бота
 	b, err := bot.NewBot(
 		*cfg,
 		userSvc,
@@ -47,6 +46,18 @@ func main() {
 		log.Fatalf("Ошибка при инициализации бота: %v", err)
 	}
 
-	log.Println("Bot started...")
-	b.Run()
+	go func() {
+		log.Println("Bot started…")
+		b.Run()
+		log.Println("Bot stopped")
+	}()
+
+	buildHandler := webhook.NewBuildWebhookHandler(jwtSvc, companySvc)
+	http.Handle("/webhook/build", buildHandler)
+
+	addr := ":" + cfg.APIPort
+	log.Printf("API server listening on %s…", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		log.Fatalf("HTTP server error: %v", err)
+	}
 }
