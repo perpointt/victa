@@ -22,6 +22,7 @@ const (
 	CallbackCompanyIntegrations       = "company_integrations"
 	CallbackBackToDetailCompany       = "back_to_detail_company"
 	CallbackUpdateCompanyIntegrations = "update_integrations"
+	CallbackCreateJwtToken            = "create_jwt_token"
 )
 
 const (

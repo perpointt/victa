@@ -24,14 +24,21 @@ func (b *Bot) BuildCompanyIntegrationsDetail(chatID int64, company *domain.Compa
 		text = fmt.Sprintf("%s\n\n%s\n\n```json\n%s\n```", text, "🟢 Интеграции настроены", tmpl)
 	}
 
-	keyboard := tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(
-			b.BuildEditButton(fmt.Sprintf("%s?company_id=%d", CallbackUpdateCompanyIntegrations, company.ID)),
-		),
-		tgbotapi.NewInlineKeyboardRow(
-			b.BuildBackButton(fmt.Sprintf("%v?company_id=%d", CallbackBackToDetailCompany, company.ID)),
-		),
-	)
+	var rows [][]tgbotapi.InlineKeyboardButton
+
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		b.BuildEditButton(fmt.Sprintf("%s?company_id=%d", CallbackUpdateCompanyIntegrations, company.ID)),
+	))
+
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("🔒 Сгенерировать API токен", fmt.Sprintf("%v?company_id=%d", CallbackCreateJwtToken, company.ID)),
+	))
+
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		b.BuildBackButton(fmt.Sprintf("%v?company_id=%d", CallbackBackToDetailCompany, company.ID)),
+	))
+
+	keyboard := tgbotapi.NewInlineKeyboardMarkup(rows...)
 
 	config := b.NewKeyboardMessage(chatID, text, keyboard)
 

@@ -20,7 +20,7 @@ func (b *Bot) BuildUserDetail(chatID int64, user *domain.UserDetail) tgbotapi.Me
 	))
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		b.BuildCloseButton(CallbackDeleteMessage),
+		b.BuildCloseButton(),
 	))
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(rows...)

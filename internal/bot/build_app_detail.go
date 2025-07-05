@@ -11,10 +11,6 @@ func (b *Bot) BuildAppDetail(chatID int64, app *domain.App, user *domain.User) t
 
 	var rows [][]tgbotapi.InlineKeyboardButton
 
-	//rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-	//	tgbotapi.NewInlineKeyboardButtonData("📱 Приложения", fmt.Sprintf("%s?company_id=%v", CallbackListApp, app.ID)),
-	//))
-
 	err := b.CompanySvc.CheckAdmin(user.ID, app.CompanyID)
 
 	if err == nil {
@@ -22,18 +18,10 @@ func (b *Bot) BuildAppDetail(chatID int64, app *domain.App, user *domain.User) t
 			b.BuildDeleteButton(fmt.Sprintf("%v?app_id=%d&company_id=%d", CallbackDeleteApp, app.ID, app.CompanyID)),
 			b.BuildEditButton(fmt.Sprintf("%v?app_id=%d&company_id=%d", CallbackUpdateApp, app.ID, app.CompanyID)),
 		))
-		//rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		//	tgbotapi.NewInlineKeyboardButtonData("🧩 Интеграции", fmt.Sprintf("%s?company_id=%v", CallbackCompanyIntegrations, company.ID)),
-		//))
-		//
-		//rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		//	b.BuildDeleteButton(fmt.Sprintf("%s?company_id=%v", CallbackDeleteCompany, company.ID)),
-		//	b.BuildEditButton(fmt.Sprintf("%s?company_id=%v", CallbackUpdateCompany, company.ID)),
-		//))
 	}
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		b.BuildCloseButton(CallbackDeleteMessage),
+		b.BuildCloseButton(),
 	))
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(rows...)

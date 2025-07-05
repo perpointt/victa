@@ -13,6 +13,7 @@ type Config struct {
 	TelegramToken       string
 	TelegramBotName     string
 	InviteSecret        string
+	JwtSecret           string
 	DBUser              string
 	DBPassword          string
 	DBName              string
@@ -29,6 +30,7 @@ func LoadConfig() *Config {
 		TelegramToken:       getEnv("TELEGRAM_TOKEN"),
 		TelegramBotName:     getEnv("TELEGRAM_BOT_NAME"),
 		InviteSecret:        getEnv("INVITE_SECRET"),
+		JwtSecret:           getEnv("JWT_SECRET"),
 		DBUser:              getEnv("DB_USER"),
 		DBPassword:          getEnv("DB_PASSWORD"),
 		DBName:              getEnv("DB_NAME"),

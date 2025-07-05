@@ -66,6 +66,9 @@ func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 	case b.isCallbackWithPrefix(data, CallbackCompanyIntegrations):
 		b.ClearChatState(chatID)
 		b.HandleCompanyIntegrationsCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackCreateJwtToken):
+		b.ClearChatState(chatID)
+		b.HandleCreateJwtToken(callback)
 	case b.isCallbackWithPrefix(data, CallbackUpdateCompanyIntegrations):
 		b.ClearChatState(chatID)
 		b.HandleUpdateCompanyIntegrationCallback(callback)

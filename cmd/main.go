@@ -32,6 +32,7 @@ func main() {
 	companySvc := service.NewCompanyService(companyRepo, integrationRepo)
 	inviteSvc := service.NewInviteService(secretBytes)
 	appSvc := service.NewAppService(appRepo)
+	jwtSvc := service.NewJWTService(cfg.JwtSecret)
 
 	// Инициализируем Telegram-бота
 	b, err := bot.NewBot(
@@ -40,6 +41,7 @@ func main() {
 		companySvc,
 		inviteSvc,
 		appSvc,
+		jwtSvc,
 	)
 	if err != nil {
 		log.Fatalf("Ошибка при инициализации бота: %v", err)

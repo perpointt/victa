@@ -33,7 +33,7 @@ func (b *Bot) HandleInviteUserCallback(callback *tgbotapi.CallbackQuery) {
 	var rows [][]tgbotapi.InlineKeyboardButton
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		b.BuildCloseButton(CallbackDeleteMessage),
+		b.BuildCloseButton(),
 	))
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(rows...)

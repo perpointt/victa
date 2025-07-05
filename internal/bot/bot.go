@@ -14,6 +14,7 @@ type Bot struct {
 	CompanySvc *service.CompanyService
 	InviteSvc  *service.InviteService
 	AppSvc     *service.AppService
+	JwtSvc     *service.JWTService
 }
 
 var (
@@ -36,6 +37,7 @@ func NewBot(
 	cs *service.CompanyService,
 	is *service.InviteService,
 	as *service.AppService,
+	js *service.JWTService,
 ) (*Bot, error) {
 	api, err := tgbotapi.NewBotAPI(config.TelegramToken)
 	if err != nil {
@@ -48,6 +50,7 @@ func NewBot(
 		CompanySvc: cs,
 		InviteSvc:  is,
 		AppSvc:     as,
+		JwtSvc:     js,
 	}, nil
 }
 

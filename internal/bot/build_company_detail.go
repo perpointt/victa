@@ -32,7 +32,7 @@ func (b *Bot) BuildCompanyDetail(chatID int64, company *domain.Company, user *do
 	}
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		b.BuildCloseButton(CallbackDeleteMessage),
+		b.BuildCloseButton(),
 	))
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(rows...)
