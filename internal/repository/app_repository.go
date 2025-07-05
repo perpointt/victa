@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"victa/internal/domain"
 )
 
@@ -44,6 +45,9 @@ func (r *PostgresAppRepo) GetByID(appID int64) (*domain.App, error) {
 		&a.CreatedAt,
 		&a.UpdatedAt,
 	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 
 	if err != nil {
 		return nil, err
@@ -124,6 +128,9 @@ func (r *PostgresAppRepo) Update(app *domain.App) (*domain.App, error) {
 		&a.CreatedAt,
 		&a.UpdatedAt,
 	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 
 	if err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"victa/internal/domain"
 )
 
@@ -37,6 +38,9 @@ func (r *PostgresCompanyIntegrationRepo) GetByID(companyID int64) (*domain.Compa
 		&ci.NotificationBotToken,
 		&ci.NotificationChatID,
 	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 
 	if err != nil {
 		return nil, err

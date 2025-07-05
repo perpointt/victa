@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"victa/internal/domain"
 )
 
@@ -80,6 +81,9 @@ func (r *PostgresCompanyRepo) Update(company domain.Company) (*domain.Company, e
 		&updated.CreatedAt,
 		&updated.UpdatedAt,
 	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 
 	if err != nil {
 		return nil, err
@@ -149,6 +153,9 @@ func (r *PostgresCompanyRepo) GetByID(companyID int64) (*domain.Company, error) 
 		&c.CreatedAt,
 		&c.UpdatedAt,
 	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 
 	if err != nil {
 		return nil, err
@@ -165,6 +172,9 @@ func (r *PostgresCompanyRepo) GetUserRole(userID, companyID int64) (*int64, erro
          WHERE uc.user_id = $1 AND uc.company_id = $2`,
 		userID, companyID,
 	).Scan(&roleID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 
 	return roleID, err
 }

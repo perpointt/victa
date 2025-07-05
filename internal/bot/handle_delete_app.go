@@ -23,6 +23,8 @@ func (b *Bot) HandleDeleteAppCallback(callback *tgbotapi.CallbackQuery) {
 
 func (b *Bot) HandleConfirmDeleteAppCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
+	tgID := callback.From.ID
+
 	params, err := b.GetCallbackArgs(callback.Data)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Неверная команда."))
@@ -40,7 +42,7 @@ func (b *Bot) HandleConfirmDeleteAppCallback(callback *tgbotapi.CallbackQuery) {
 		return
 	}
 
-	config, err := b.BuildAppList(chatID, company)
+	config, err := b.BuildAppList(chatID, tgID, company)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, fmt.Sprintf("Ошибка при построении списка приложений: %v", err)))
 		return

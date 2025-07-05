@@ -8,6 +8,7 @@ import (
 func (b *Bot) HandleListAppsCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	messageID := callback.Message.MessageID
+	tgID := callback.From.ID
 
 	params, err := b.GetCallbackArgs(callback.Data)
 	if err != nil {
@@ -21,7 +22,7 @@ func (b *Bot) HandleListAppsCallback(callback *tgbotapi.CallbackQuery) {
 		return
 	}
 
-	message, err := b.BuildAppList(chatID, company)
+	message, err := b.BuildAppList(chatID, tgID, company)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, fmt.Sprintf("Ошибка при построении списка приложений: %v", err)))
 		return

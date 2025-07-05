@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"victa/internal/domain"
 )
 
@@ -63,6 +64,9 @@ func (r *PostgresUserCompanyRepository) GetByCompanyAndUserID(companyID, userID 
 		companyID, userID,
 	).Scan(&uc.UserID, &uc.CompanyID, &uc.RoleID)
 
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
