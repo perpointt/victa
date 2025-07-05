@@ -14,13 +14,14 @@ const (
 )
 
 const (
-	CallbackCreateCompany       = "create_company"
-	CallbackUpdateCompany       = "update_company"
-	CallbackDeleteCompany       = "delete_company"
-	CallbackListCompany         = "list_company"
-	CallbackDetailCompany       = "detail_company"
-	CallbackCompanyIntegrations = "company_integrations"
-	CallbackBackToDetailCompany = "back_to_detail_company"
+	CallbackCreateCompany             = "create_company"
+	CallbackUpdateCompany             = "update_company"
+	CallbackDeleteCompany             = "delete_company"
+	CallbackListCompany               = "list_company"
+	CallbackDetailCompany             = "detail_company"
+	CallbackCompanyIntegrations       = "company_integrations"
+	CallbackBackToDetailCompany       = "back_to_detail_company"
+	CallbackUpdateCompanyIntegrations = "update_integrations"
 )
 
 const (

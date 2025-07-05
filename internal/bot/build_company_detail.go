@@ -22,7 +22,7 @@ func (b *Bot) BuildCompanyDetail(chatID int64, company *domain.Company, user *do
 			tgbotapi.NewInlineKeyboardButtonData("👥 Участники", fmt.Sprintf("%s?company_id=%v", CallbackListUser, company.ID)),
 		))
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("🧩 Интеграции", CallbackCompanyIntegrations),
+			tgbotapi.NewInlineKeyboardButtonData("🧩 Интеграции", fmt.Sprintf("%s?company_id=%v", CallbackCompanyIntegrations, company.ID)),
 		))
 
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(

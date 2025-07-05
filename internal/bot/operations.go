@@ -11,6 +11,16 @@ import (
 	"victa/internal/domain"
 )
 
+func (b *Bot) AddPendingCompanyID(chatID int64, companyID int64) {
+	pendingCompanyIDs[chatID] = companyID
+}
+
+func (b *Bot) DeletePendingCompanyID(chatID int64) {
+	if _, ok := pendingCompanyIDs[chatID]; ok {
+		delete(pendingCompanyIDs, chatID)
+	}
+}
+
 func (b *Bot) GetUserDetailMessage(user *domain.User) string {
 	return fmt.Sprintf(
 		"*ID пользователя*: `%d`\n*Telegram ID*: `%s`",
@@ -80,7 +90,7 @@ func (b *Bot) DeleteChatState(chatID int64) {
 func (b *Bot) ClearChatState(chatID int64) {
 	b.DeletePendingMessage(chatID)
 	b.DeleteChatState(chatID)
-	b.DeletePendingUpdateCompanyData(chatID)
+	b.DeletePendingCompanyID(chatID)
 }
 
 func (b *Bot) SendPendingMessage(config tgbotapi.MessageConfig) {

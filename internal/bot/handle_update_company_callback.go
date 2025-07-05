@@ -14,7 +14,7 @@ func (b *Bot) HandleUpdateCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	}
 
 	b.AddChatState(chatID, StateWaitingUpdateCompany)
-	b.AddPendingUpdateCompanyData(chatID, params.CompanyID)
+	b.AddPendingCompanyID(chatID, params.CompanyID)
 
 	msgText := "Отправьте название компании"
 	cancelButton := b.BuildCancelButton()
@@ -37,7 +37,7 @@ func (b *Bot) HandleUpdateCompany(message *tgbotapi.Message) {
 		return
 	}
 
-	companyID := pendingUpdateCompanyData[chatID]
+	companyID := pendingCompanyIDs[chatID]
 
 	_, err = b.CompanySvc.Update(companyID, message.Text, user.ID)
 	if err != nil {
@@ -51,14 +51,4 @@ func (b *Bot) HandleUpdateCompany(message *tgbotapi.Message) {
 	}
 
 	b.SendMessage(*config)
-}
-
-func (b *Bot) AddPendingUpdateCompanyData(chatID int64, companyID int64) {
-	pendingUpdateCompanyData[chatID] = companyID
-}
-
-func (b *Bot) DeletePendingUpdateCompanyData(chatID int64) {
-	if _, ok := pendingUpdateCompanyData[chatID]; ok {
-		delete(pendingUpdateCompanyData, chatID)
-	}
 }

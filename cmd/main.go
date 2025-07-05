@@ -25,9 +25,10 @@ func main() {
 	userRepo := repository.NewPostgresUserRepo(conn)
 	companyRepo := repository.NewPostgresCompanyRepo(conn)
 	userCompanyRepo := repository.NewPostgresUserCompanyRepository(conn)
+	integrationRepo := repository.NewPostgresCompanyIntegrationRepo(conn)
 
 	userSvc := service.NewUserService(userRepo, userCompanyRepo)
-	companySvc := service.NewCompanyService(companyRepo)
+	companySvc := service.NewCompanyService(companyRepo, integrationRepo)
 	inviteSvc := service.NewInviteService(secretBytes)
 
 	// Инициализируем Telegram-бота

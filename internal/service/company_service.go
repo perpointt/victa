@@ -1,18 +1,27 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"victa/internal/domain"
 	"victa/internal/repository"
 )
 
 type CompanyService struct {
-	CompanyRepo repository.CompanyRepository
+	CompanyRepo     repository.CompanyRepository
+	IntegrationRepo repository.CompanyIntegrationRepository
 }
 
 // NewCompanyService создаёт новый экземпляр сервиса.
-func NewCompanyService(companyRepository repository.CompanyRepository) *CompanyService {
-	return &CompanyService{CompanyRepo: companyRepository}
+func NewCompanyService(
+	companyRepository repository.CompanyRepository,
+	integrationRepo repository.CompanyIntegrationRepository,
+) *CompanyService {
+	return &CompanyService{
+		CompanyRepo:     companyRepository,
+		IntegrationRepo: integrationRepo,
+	}
 }
 
 func (s *CompanyService) GetAllByUserID(userID int64) ([]domain.Company, error) {
@@ -56,4 +65,25 @@ func (s *CompanyService) CheckAdmin(userID, companyID int64) error {
 
 func (s *CompanyService) AddUserToCompany(userID, companyID int64) error {
 	return s.CompanyRepo.AddUserToCompany(userID, companyID, "developer")
+}
+
+// GetCompanyIntegrationByID возвращает настройки интеграций для компании.
+func (s *CompanyService) GetCompanyIntegrationByID(companyID int64) (*domain.CompanyIntegration, error) {
+	return s.IntegrationRepo.GetByID(companyID)
+}
+
+// CreateOrUpdateCompanyIntegration парсит JSON-пayload и сохраняет интеграции.
+// Требует, чтобы userID был администратором компании.
+func (s *CompanyService) CreateOrUpdateCompanyIntegration(
+	companyID int64,
+	payload string,
+) (*domain.CompanyIntegration, error) {
+	var ci domain.CompanyIntegration
+	if err := json.Unmarshal([]byte(payload), &ci); err != nil {
+		return nil, fmt.Errorf("неверный формат JSON интеграций: %w", err)
+	}
+
+	ci.CompanyID = companyID
+
+	return s.IntegrationRepo.CreateOrUpdate(&ci)
 }

@@ -16,9 +16,9 @@ type Bot struct {
 }
 
 var (
-	states                   = make(map[int64]ChatState)
-	pendingMessages          = make(map[int64]int)
-	pendingUpdateCompanyData = make(map[int64]int64)
+	states            = make(map[int64]ChatState)
+	pendingMessages   = make(map[int64]int)
+	pendingCompanyIDs = make(map[int64]int64)
 )
 
 // NewBot создаёт нового бота
@@ -63,6 +63,10 @@ func (b *Bot) handleText(message *tgbotapi.Message) {
 			return
 		case StateWaitingUpdateCompany:
 			b.HandleUpdateCompany(message)
+			b.ClearChatState(chatID)
+			return
+		case StateWaitingUpdateCompanyIntegration:
+			b.HandleUpdateCompanyIntegration(message)
 			b.ClearChatState(chatID)
 			return
 		default:

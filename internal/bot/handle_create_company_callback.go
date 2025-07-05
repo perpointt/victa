@@ -30,16 +30,13 @@ func (b *Bot) HandleCreateCompany(message *tgbotapi.Message) {
 		return
 	}
 
-	_, err = b.CompanySvc.Create(message.Text, user.ID)
+	company, err := b.CompanySvc.Create(message.Text, user.ID)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Ошибка при создании компании."))
 		return
 	}
 
-	config := b.BuildMainMenu(chatID, user)
-	if config == nil {
-		return
-	}
+	config := b.BuildCompanyDetail(chatID, company, user)
 
-	b.SendMessage(*config)
+	b.SendMessage(config)
 }
