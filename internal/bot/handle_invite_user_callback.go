@@ -28,7 +28,7 @@ func (b *Bot) HandleInviteUserCallback(callback *tgbotapi.CallbackQuery) {
 
 	token := b.InviteSvc.CreateToken(params.CompanyID)
 	link := fmt.Sprintf("https://t.me/%s?start=%s", b.config.TelegramBotName, token)
-	text := fmt.Sprintf("Ссылка-приглашение (действует 48 ч):\n```%s```", link)
+	text := fmt.Sprintf("👤 Ссылка-приглашение (действует 48 ч):\n\n`%s`", link)
 
 	var rows [][]tgbotapi.InlineKeyboardButton
 
