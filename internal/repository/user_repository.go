@@ -11,6 +11,7 @@ import (
 type UserRepository interface {
 	// Create сохраняет нового пользователя и возвращает созданную сущность
 	Create(u *domain.User) (*domain.User, error)
+	Update(u *domain.User) (*domain.User, error)
 	// GetByID возвращает пользователя по внутреннему ID или nil, если не найден
 	GetByID(id int64) (*domain.User, error)
 	// GetByTgID возвращает пользователя по Telegram ID или nil, если не найден
@@ -48,6 +49,31 @@ func (r *PostgresUserRepo) Create(u *domain.User) (*domain.User, error) {
 		return nil, err
 	}
 	return newUser, nil
+}
+
+func (r *PostgresUserRepo) Update(u *domain.User) (*domain.User, error) {
+	updated := &domain.User{}
+	err := r.DB.QueryRow(
+		`UPDATE users
+         SET name = $1,
+             updated_at = now()
+         WHERE id = $2
+         RETURNING id, tg_id, name, created_at, updated_at`,
+		u.Name, u.ID,
+	).Scan(
+		&updated.ID,
+		&updated.TgID,
+		&updated.Name,
+		&updated.CreatedAt,
+		&updated.UpdatedAt,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 // GetByID ищет пользователя по внутреннему ID

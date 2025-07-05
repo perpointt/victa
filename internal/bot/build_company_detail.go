@@ -7,28 +7,22 @@ import (
 )
 
 func (b *Bot) BuildCompanyDetail(chatID int64, company *domain.Company, user *domain.User) tgbotapi.MessageConfig {
-	text := fmt.Sprintf(
-		"*%s* (ID: %d)\n\nСоздана: %s\nОбновлена: %s",
-		company.Name,
-		company.ID,
-		company.CreatedAt.Format("02 Jan 2006 15:04"),
-		company.UpdatedAt.Format("02 Jan 2006 15:04"),
-	)
+	text := b.GetCompanyDetailMessage(company)
 
 	var rows [][]tgbotapi.InlineKeyboardButton
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Приложения", CallbackListApp),
+		tgbotapi.NewInlineKeyboardButtonData("📱 Приложения", CallbackListApp),
 	))
 
 	err := b.CompanySvc.CheckAdmin(user.ID, company.ID)
 
 	if err == nil {
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Сотрудники", fmt.Sprintf("%s?company_id=%v", CallbackListUser, company.ID)),
+			tgbotapi.NewInlineKeyboardButtonData("👥 Участники", fmt.Sprintf("%s?company_id=%v", CallbackListUser, company.ID)),
 		))
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Интеграции", CallbackCompanyIntegrations),
+			tgbotapi.NewInlineKeyboardButtonData("🧩 Интеграции", CallbackCompanyIntegrations),
 		))
 
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(

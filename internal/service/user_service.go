@@ -26,6 +26,15 @@ func (s *UserService) Register(tgID string, name string) (*domain.User, error) {
 	return user, nil
 }
 
+func (s *UserService) Update(userID int64, name string) (*domain.User, error) {
+	u := &domain.User{ID: userID, Name: name}
+	user, err := s.UserRepo.Update(u)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 func (s *UserService) GetByTgID(tgID int64) (*domain.User, error) {
 	user, err := s.UserRepo.GetByTgID(tgID)
 	if err != nil {

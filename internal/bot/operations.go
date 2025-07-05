@@ -8,15 +8,34 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"victa/internal/domain"
 )
+
+func (b *Bot) GetUserDetailMessage(user *domain.User) string {
+	return fmt.Sprintf(
+		"*ID пользователя*: `%d`\n*Telegram ID*: `%s`",
+		user.ID,
+		user.TgID,
+	)
+}
+
+func (b *Bot) GetCompanyDetailMessage(company *domain.Company) string {
+	return fmt.Sprintf(
+		"💼 *%s* \n\n*ID компании*: `%d`\n*Создана*: %s\n*Обновлена*: %s",
+		company.Name,
+		company.ID,
+		company.CreatedAt.Format("02.01.2006 15:04:05"),
+		company.UpdatedAt.Format("02.01.2006 15:04:05"),
+	)
+}
 
 func (b *Bot) GetRoleTitle(roleID int64) string {
 
 	switch roleID {
 	case 1:
-		return "Администратор"
+		return "Admin"
 	case 2:
-		return "Разработчик"
+		return "Developer"
 	default:
 		return "Роль #" + strconv.FormatInt(roleID, 10)
 	}

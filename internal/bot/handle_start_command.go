@@ -7,7 +7,6 @@ import (
 	"victa/internal/domain"
 )
 
-// HandleStartCommand обрабатывает /start, учитывая необязательный payload-invite
 func (b *Bot) HandleStartCommand(message *tgbotapi.Message) {
 	chatID := message.Chat.ID
 	tgID := message.From.ID
@@ -22,7 +21,6 @@ func (b *Bot) HandleStartCommand(message *tgbotapi.Message) {
 
 	var user *domain.User
 	if existing == nil {
-		// новый пользователь
 		user, err = b.UserSvc.Register(fmt.Sprintf("%d", tgID), name)
 		if err != nil {
 			b.SendMessage(b.NewMessage(chatID, "Ошибка регистрации пользователя."))
@@ -30,12 +28,12 @@ func (b *Bot) HandleStartCommand(message *tgbotapi.Message) {
 		}
 		existing = user
 	} else {
-		//// обновляем имя
-		//user, err = b.UserSvc.Update(existing.ID, name)
-		//if err != nil {
-		//	b.SendMessage(b.NewMessage(chatID, "Ошибка обновления данных пользователя."))
-		//	return
-		//}
+		user, err = b.UserSvc.Update(existing.ID, name)
+		if err != nil {
+			b.SendMessage(b.NewMessage(chatID, "Ошибка обновления данных пользователя."))
+			return
+		}
+		existing = user
 	}
 
 	if payload != "" {

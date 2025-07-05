@@ -19,12 +19,12 @@ func (b *Bot) BuildUserList(chatID, tgID int64, company *domain.Company) (*tgbot
 		cbData := fmt.Sprintf("%v?user_id=%d&company_id=%d", CallbackDetailUser, c.User.ID, c.Company.CompanyID)
 		suffix := ""
 		if userTgID == tgID {
-			suffix = " (Вы)"
+			suffix = " (Это вы)"
 			cbData = CallbackBlank
 		}
 
-		userTitle := fmt.Sprintf("%s (ID: %d) | %s%s",
-			c.User.Name, c.User.ID, b.GetRoleTitle(c.Company.RoleID), suffix,
+		userTitle := fmt.Sprintf("👤 %s | %s%s",
+			c.User.Name, b.GetRoleTitle(c.Company.RoleID), suffix,
 		)
 
 		rows = append(rows,
@@ -35,7 +35,7 @@ func (b *Bot) BuildUserList(chatID, tgID int64, company *domain.Company) (*tgbot
 	}
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Пригласить пользователя", fmt.Sprintf("%v?company_id=%d", CallbackInviteUser, company.ID)),
+		tgbotapi.NewInlineKeyboardButtonData("➕ Пригласить пользователя", fmt.Sprintf("%v?company_id=%d", CallbackInviteUser, company.ID)),
 	))
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
@@ -44,10 +44,8 @@ func (b *Bot) BuildUserList(chatID, tgID int64, company *domain.Company) (*tgbot
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(rows...)
 
-	msg := b.NewKeyboardMessage(chatID, fmt.Sprintf(
-		"*%s* (ID: %d)",
-		company.Name,
-		company.ID,
-	), keyboard)
+	text := fmt.Sprintf("💼 *%s | Участники* 👥", company.Name)
+
+	msg := b.NewKeyboardMessage(chatID, text, keyboard)
 	return &msg, nil
 }

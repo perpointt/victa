@@ -7,17 +7,16 @@ import (
 )
 
 func (b *Bot) BuildUserDetail(chatID int64, user *domain.UserDetail) tgbotapi.MessageConfig {
-	text := fmt.Sprintf(
-		"*%s* (ID: %d)\n\n%s",
+	text := fmt.Sprintf("👤 *%s*\n\n%s\n*Роль*: %s",
 		user.User.Name,
-		user.User.ID,
+		b.GetUserDetailMessage(&user.User),
 		b.GetRoleTitle(user.Company.RoleID),
 	)
 
 	var rows [][]tgbotapi.InlineKeyboardButton
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Удалить из компании", fmt.Sprintf("%v?user_id=%d&company_id=%d", CallbackDeleteUser, user.User.ID, user.Company.CompanyID)),
+		tgbotapi.NewInlineKeyboardButtonData("🗑 Удалить из компании", fmt.Sprintf("%v?user_id=%d&company_id=%d", CallbackDeleteUser, user.User.ID, user.Company.CompanyID)),
 	))
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
