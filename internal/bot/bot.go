@@ -18,9 +18,16 @@ type Bot struct {
 
 var (
 	states            = make(map[int64]ChatState)
-	pendingMessages   = make(map[int64]int)
+	pendingMessages   = make(map[int64][]int)
 	pendingCompanyIDs = make(map[int64]int64)
+	pendingAppData    = make(map[int64]PendingAppData)
 )
+
+type PendingAppData struct {
+	ID   int64
+	Name string
+	Slug string
+}
 
 // NewBot создаёт нового бота
 func NewBot(
@@ -71,18 +78,25 @@ func (b *Bot) handleText(message *tgbotapi.Message) {
 
 	if state, exists := states[chatID]; exists {
 		switch state {
-		case StateWaitingCreateCompany:
-			b.HandleCreateCompany(message)
+		case StateWaitingCreateCompanyName:
+			b.HandleCompanyNameCreated(message)
 			b.ClearChatState(chatID)
-			return
-		case StateWaitingUpdateCompany:
-			b.HandleUpdateCompany(message)
+		case StateWaitingUpdateCompanyName:
+			b.HandleCompanyNameUpdated(message)
 			b.ClearChatState(chatID)
-			return
 		case StateWaitingUpdateCompanyIntegration:
 			b.HandleUpdateCompanyIntegration(message)
 			b.ClearChatState(chatID)
-			return
+		case StateWaitingCreateAppName:
+			b.HandleAppNameCreated(message)
+		case StateWaitingCreateAppSlug:
+			b.HandleAppSlugCreated(message)
+			b.ClearChatState(chatID)
+		case StateWaitingUpdateAppName:
+			b.HandleAppNameUpdated(message)
+		case StateWaitingUpdateAppSlug:
+			b.HandleAppSlugUpdated(message)
+			b.ClearChatState(chatID)
 		default:
 
 		}

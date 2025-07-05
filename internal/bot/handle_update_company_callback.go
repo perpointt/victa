@@ -13,7 +13,7 @@ func (b *Bot) HandleUpdateCompanyCallback(callback *tgbotapi.CallbackQuery) {
 		return
 	}
 
-	b.AddChatState(chatID, StateWaitingUpdateCompany)
+	b.AddChatState(chatID, StateWaitingUpdateCompanyName)
 	b.AddPendingCompanyID(chatID, params.CompanyID)
 
 	msgText := "Отправьте название компании"
@@ -23,17 +23,13 @@ func (b *Bot) HandleUpdateCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	b.SendPendingMessage(b.NewKeyboardMessage(chatID, msgText, keyboard))
 }
 
-func (b *Bot) HandleUpdateCompany(message *tgbotapi.Message) {
+func (b *Bot) HandleCompanyNameUpdated(message *tgbotapi.Message) {
 	chatID := message.Chat.ID
 	tgID := message.From.ID
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске пользователя."))
-		return
-	}
-	if user == nil {
-		b.SendMessage(b.NewMessage(chatID, "Сначала зарегистрируйтесь через /start."))
 		return
 	}
 

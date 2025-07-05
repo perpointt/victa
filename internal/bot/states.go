@@ -3,9 +3,14 @@ package bot
 type ChatState int
 
 const (
-	StateWaitingCreateCompany ChatState = iota
-	StateWaitingUpdateCompany
+	StateWaitingCreateCompanyName ChatState = iota
+	StateWaitingUpdateCompanyName
 	StateWaitingConfirmDeleteCompany
 	StateWaitingConfirmDeleteUser
+	StateWaitingConfirmDeleteApp
 	StateWaitingUpdateCompanyIntegration
+	StateWaitingCreateAppName
+	StateWaitingCreateAppSlug
+	StateWaitingUpdateAppName
+	StateWaitingUpdateAppSlug
 )

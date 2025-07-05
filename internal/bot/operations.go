@@ -11,6 +11,16 @@ import (
 	"victa/internal/domain"
 )
 
+func (b *Bot) AddPendingAppData(chatID int64, data PendingAppData) {
+	pendingAppData[chatID] = data
+}
+
+func (b *Bot) DeletePendingAppData(chatID int64) {
+	if _, ok := pendingAppData[chatID]; ok {
+		delete(pendingAppData, chatID)
+	}
+}
+
 func (b *Bot) AddPendingCompanyID(chatID int64, companyID int64) {
 	pendingCompanyIDs[chatID] = companyID
 }
@@ -19,6 +29,17 @@ func (b *Bot) DeletePendingCompanyID(chatID int64) {
 	if _, ok := pendingCompanyIDs[chatID]; ok {
 		delete(pendingCompanyIDs, chatID)
 	}
+}
+
+func (b *Bot) GetAppDetailMessage(app *domain.App) string {
+	return fmt.Sprintf(
+		"📱 *%s | %s* \n\n*ID приложения*: `%d`\n*Создано*: %s\n*Обновлено*: %s",
+		app.Name,
+		app.Slug,
+		app.ID,
+		app.CreatedAt.Format("02.01.2006 15:04:05"),
+		app.UpdatedAt.Format("02.01.2006 15:04:05"),
+	)
 }
 
 func (b *Bot) GetUserDetailMessage(user *domain.User) string {
@@ -54,6 +75,7 @@ func (b *Bot) GetRoleTitle(roleID int64) string {
 type CallbackParams struct {
 	UserID    int64 `schema:"user_id"`
 	CompanyID int64 `schema:"company_id"`
+	AppID     int64 `schema:"app_id"`
 }
 
 var schemaDecoder = func() *schema.Decoder {
@@ -91,21 +113,25 @@ func (b *Bot) ClearChatState(chatID int64) {
 	b.DeletePendingMessage(chatID)
 	b.DeleteChatState(chatID)
 	b.DeletePendingCompanyID(chatID)
+	b.DeletePendingAppData(chatID)
 }
 
+// SendPendingMessage отправляет сообщение и добавляет его ID в очередь для последующего удаления
 func (b *Bot) SendPendingMessage(config tgbotapi.MessageConfig) {
 	sentMsg, err := b.SendMessage(config)
-	if err == nil {
-		pendingMessages[config.ChatID] = sentMsg.MessageID
+	if err != nil {
+		return
 	}
+
+	pendingMessages[config.ChatID] = append(pendingMessages[config.ChatID], sentMsg.MessageID)
 }
 
 func (b *Bot) DeletePendingMessage(chatID int64) {
-	if msgID, ok := pendingMessages[chatID]; ok {
-		err := b.DeleteMessage(chatID, msgID)
-		if err == nil {
-			delete(pendingMessages, chatID)
+	if msgIDs, ok := pendingMessages[chatID]; ok {
+		for _, msgID := range msgIDs {
+			_ = b.DeleteMessage(chatID, msgID)
 		}
+		delete(pendingMessages, chatID)
 	}
 }
 

@@ -15,8 +15,8 @@ func NewAppService(repo repository.AppRepository) *AppService {
 }
 
 // GetByID возвращает приложение по его ID или nil, если не найдено.
-func (s *AppService) GetByID(id int64) (*domain.App, error) {
-	return s.repo.GetByID(id)
+func (s *AppService) GetByID(appID int64) (*domain.App, error) {
+	return s.repo.GetByID(appID)
 }
 
 // GetAllByCompanyID возвращает все приложения для заданной компании.
@@ -35,9 +35,9 @@ func (s *AppService) Create(companyID int64, name, slug string) (*domain.App, er
 }
 
 // Update изменяет имя и slug приложения и возвращает обновлённую сущность.
-func (s *AppService) Update(id int64, name, slug string) (*domain.App, error) {
+func (s *AppService) Update(appID int64, name, slug string) (*domain.App, error) {
 	app := &domain.App{
-		ID:   id,
+		ID:   appID,
 		Name: name,
 		Slug: slug,
 	}
@@ -45,6 +45,6 @@ func (s *AppService) Update(id int64, name, slug string) (*domain.App, error) {
 }
 
 // Delete удаляет приложение по его ID.
-func (s *AppService) Delete(id int64) error {
-	return s.repo.Delete(id)
+func (s *AppService) Delete(appID int64) error {
+	return s.repo.Delete(appID)
 }

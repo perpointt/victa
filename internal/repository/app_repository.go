@@ -2,15 +2,13 @@ package repository
 
 import (
 	"database/sql"
-	"errors"
-
 	"victa/internal/domain"
 )
 
 // AppRepository описывает CRUD для приложений.
 type AppRepository interface {
 	// GetByID возвращает приложение по его ID или nil, если не найдено.
-	GetByID(id int64) (*domain.App, error)
+	GetByID(appID int64) (*domain.App, error)
 	// GetAllByCompanyID возвращает все приложения компании, отсортированные по дате создания (DESC).
 	GetAllByCompanyID(companyID int64) ([]domain.App, error)
 	// Create сохраняет новое приложение и возвращает созданную сущность.
@@ -18,7 +16,7 @@ type AppRepository interface {
 	// Update изменяет имя и slug приложения и возвращает обновлённую сущность.
 	Update(app *domain.App) (*domain.App, error)
 	// Delete удаляет приложение по ID.
-	Delete(id int64) error
+	Delete(appID int64) error
 }
 
 // PostgresAppRepo реализует AppRepository через Postgres.
@@ -32,12 +30,12 @@ func NewPostgresAppRepo(db *sql.DB) *PostgresAppRepo {
 }
 
 // GetByID возвращает приложение по его ID или nil, если не найдено.
-func (r *PostgresAppRepo) GetByID(id int64) (*domain.App, error) {
+func (r *PostgresAppRepo) GetByID(appID int64) (*domain.App, error) {
 	var a domain.App
 	err := r.DB.QueryRow(
 		`SELECT id, company_id, name, slug, created_at, updated_at
          FROM apps
-         WHERE id = $1`, id,
+         WHERE id = $1`, appID,
 	).Scan(
 		&a.ID,
 		&a.CompanyID,
@@ -46,9 +44,7 @@ func (r *PostgresAppRepo) GetByID(id int64) (*domain.App, error) {
 		&a.CreatedAt,
 		&a.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -128,9 +124,7 @@ func (r *PostgresAppRepo) Update(app *domain.App) (*domain.App, error) {
 		&a.CreatedAt,
 		&a.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -138,9 +132,9 @@ func (r *PostgresAppRepo) Update(app *domain.App) (*domain.App, error) {
 }
 
 // Delete удаляет приложение по ID.
-func (r *PostgresAppRepo) Delete(id int64) error {
+func (r *PostgresAppRepo) Delete(appID int64) error {
 	res, err := r.DB.Exec(
-		`DELETE FROM apps WHERE id = $1`, id,
+		`DELETE FROM apps WHERE id = $1`, appID,
 	)
 	if err != nil {
 		return err

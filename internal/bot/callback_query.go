@@ -22,11 +22,12 @@ func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 			case StateWaitingConfirmDeleteCompany:
 				b.HandleConfirmDeleteCompanyCallback(callback)
 				b.ClearChatState(chatID)
-				return
 			case StateWaitingConfirmDeleteUser:
 				b.HandleConfirmDeleteUserCallback(callback)
 				b.ClearChatState(chatID)
-				return
+			case StateWaitingConfirmDeleteApp:
+				b.HandleConfirmDeleteAppCallback(callback)
+				b.ClearChatState(chatID)
 			default:
 				b.AnswerCallback(callback, "Неизвестное действие.")
 			}
@@ -84,6 +85,22 @@ func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 	case b.isCallbackWithPrefix(data, CallbackBackToDetailUser):
 		b.ClearChatState(chatID)
 		b.HandleBackToDetailUserCallback(callback)
+
+	case b.isCallbackWithPrefix(data, CallbackListApp):
+		b.ClearChatState(chatID)
+		b.HandleListAppsCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackCreateApp):
+		b.ClearChatState(chatID)
+		b.HandleCreateAppCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackUpdateApp):
+		b.ClearChatState(chatID)
+		b.HandleUpdateAppCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackDetailApp):
+		b.ClearChatState(chatID)
+		b.HandleDetailAppCallback(callback)
+	case b.isCallbackWithPrefix(data, CallbackDeleteApp):
+		b.ClearChatState(chatID)
+		b.HandleDeleteAppCallback(callback)
 
 	default:
 		b.AnswerCallback(callback, "Неизвестное действие.")

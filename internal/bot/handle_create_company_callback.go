@@ -7,7 +7,7 @@ import (
 func (b *Bot) HandleCreateCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 
-	b.AddChatState(chatID, StateWaitingCreateCompany)
+	b.AddChatState(chatID, StateWaitingCreateCompanyName)
 
 	msgText := "Отправьте название компании"
 	cancelButton := b.BuildCancelButton()
@@ -16,17 +16,13 @@ func (b *Bot) HandleCreateCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	b.SendPendingMessage(b.NewKeyboardMessage(chatID, msgText, keyboard))
 }
 
-func (b *Bot) HandleCreateCompany(message *tgbotapi.Message) {
+func (b *Bot) HandleCompanyNameCreated(message *tgbotapi.Message) {
 	chatID := message.Chat.ID
 	tgID := message.From.ID
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске пользователя."))
-		return
-	}
-	if user == nil {
-		b.SendMessage(b.NewMessage(chatID, "Сначала зарегистрируйтесь через /start."))
 		return
 	}
 

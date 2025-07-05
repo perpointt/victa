@@ -23,13 +23,13 @@ func (b *Bot) BuildUserList(chatID, tgID int64, company *domain.Company) (*tgbot
 			cbData = CallbackBlank
 		}
 
-		userTitle := fmt.Sprintf("👤 %s | %s%s",
+		title := fmt.Sprintf("👤 %s | %s%s",
 			c.User.Name, b.GetRoleTitle(c.Company.RoleID), suffix,
 		)
 
 		rows = append(rows,
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(userTitle, cbData),
+				tgbotapi.NewInlineKeyboardButtonData(title, cbData),
 			),
 		)
 	}

@@ -12,7 +12,7 @@ func (b *Bot) BuildCompanyDetail(chatID int64, company *domain.Company, user *do
 	var rows [][]tgbotapi.InlineKeyboardButton
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("📱 Приложения", CallbackListApp),
+		tgbotapi.NewInlineKeyboardButtonData("📱 Приложения", fmt.Sprintf("%s?company_id=%v", CallbackListApp, company.ID)),
 	))
 
 	err := b.CompanySvc.CheckAdmin(user.ID, company.ID)

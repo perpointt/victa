@@ -27,6 +27,7 @@ const (
 const (
 	CallbackCreateApp       = "create_app"
 	CallbackDeleteApp       = "delete_app"
+	CallbackUpdateApp       = "update_app"
 	CallbackListApp         = "list_app"
 	CallbackDetailApp       = "detail_app"
 	CallbackAppIntegrations = "app_integrations"

@@ -2,8 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"errors"
-
 	"victa/internal/domain"
 )
 
@@ -67,9 +65,7 @@ func (r *PostgresUserRepo) Update(u *domain.User) (*domain.User, error) {
 		&updated.CreatedAt,
 		&updated.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -91,9 +87,7 @@ func (r *PostgresUserRepo) GetByID(id int64) (*domain.User, error) {
 		&u.CreatedAt,
 		&u.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -115,9 +109,7 @@ func (r *PostgresUserRepo) GetByTgID(tgID int64) (*domain.User, error) {
 		&u.CreatedAt,
 		&u.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
+
 	if err != nil {
 		return nil, err
 	}

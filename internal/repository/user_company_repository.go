@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"errors"
 	"victa/internal/domain"
 )
 
@@ -63,9 +62,7 @@ func (r *PostgresUserCompanyRepository) GetByCompanyAndUserID(companyID, userID 
          WHERE company_id = $1 AND user_id = $2`,
 		companyID, userID,
 	).Scan(&uc.UserID, &uc.CompanyID, &uc.RoleID)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +70,6 @@ func (r *PostgresUserCompanyRepository) GetByCompanyAndUserID(companyID, userID 
 }
 
 // Delete удаляет связь user_companies для заданного userID и companyID.
-// Если записи нет, возвращает sql.ErrNoRows.
 func (r *PostgresUserCompanyRepository) Delete(userID, companyID int64) error {
 	res, err := r.DB.Exec(
 		`DELETE FROM user_companies
