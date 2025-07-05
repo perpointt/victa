@@ -7,7 +7,7 @@ import (
 )
 
 func (b *Bot) BuildMainMenu(chatID int64, user *domain.User) *tgbotapi.MessageConfig {
-	text := fmt.Sprintf("🦊*VICTA*🦊\n\n*Имя пользователя*: %s\n%s\n\nВаши компании ⬇️", user.Name, b.GetUserDetailMessage(user))
+	text := fmt.Sprintf("🦊*VICTA*🦊\n\n*Имя пользователя*: %s\n%s", user.Name, b.GetUserDetailMessage(user))
 
 	msg, err := b.BuildCompanyList(chatID, user)
 	if err != nil {
