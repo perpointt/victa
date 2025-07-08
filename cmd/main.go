@@ -1,11 +1,12 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
 	"log"
-	"net/http"
-	"victa/internal/bot"
 	"victa/internal/config"
 	"victa/internal/db"
+	"victa/internal/new_bot/bot_common"
+	"victa/internal/new_bot/victa_bot"
 	"victa/internal/repository"
 	"victa/internal/service"
 	"victa/internal/webhook"
@@ -22,6 +23,8 @@ func main() {
 
 	secretBytes := []byte(cfg.InviteSecret)
 
+	var botFactory = bot_common.NewBotFactory()
+
 	userRepo := repository.NewPostgresUserRepo(conn)
 	companyRepo := repository.NewPostgresCompanyRepo(conn)
 	userCompanyRepo := repository.NewPostgresUserCompanyRepository(conn)
@@ -33,19 +36,21 @@ func main() {
 	inviteSvc := service.NewInviteService(secretBytes)
 	appSvc := service.NewAppService(appRepo)
 	jwtSvc := service.NewJWTService(cfg.JwtSecret)
-	cmSvc := service.NewCodemagicService(cfg.CodemagicAPIHost)
+	codemagicSvc := service.NewCodemagicService(cfg.CodemagicAPIHost)
 
-	b, err := bot.NewBot(
-		*cfg,
+	base, err := botFactory.GetBaseBot(cfg.TelegramToken)
+	if err != nil {
+		log.Fatalf("Ошибка при инициализации бота: %v", err)
+	}
+
+	b := victa_bot.NewBot(
+		base,
 		userSvc,
 		companySvc,
 		inviteSvc,
 		appSvc,
 		jwtSvc,
 	)
-	if err != nil {
-		log.Fatalf("Ошибка при инициализации бота: %v", err)
-	}
 
 	go func() {
 		log.Println("Bot started…")
@@ -53,12 +58,22 @@ func main() {
 		log.Println("Bot stopped")
 	}()
 
-	buildHandler := webhook.NewBuildWebhookHandler(jwtSvc, companySvc, cmSvc)
-	http.Handle("/webhook/build", buildHandler)
+	switch cfg.ENV {
+	case "prod", "production":
+		gin.SetMode(gin.ReleaseMode)
+	default:
+		gin.SetMode(gin.DebugMode)
+	}
+
+	r := gin.Default()
+
+	buildHandler := webhook.NewBuildWebhookHandler(botFactory, jwtSvc, companySvc, codemagicSvc)
+	r.POST("/webhook/build", buildHandler.Handle)
 
 	addr := ":" + cfg.APIPort
 	log.Printf("API server listening on %s…", addr)
-	if err := http.ListenAndServe(addr, nil); err != nil {
+	if err := r.Run(addr); err != nil {
 		log.Fatalf("HTTP server error: %v", err)
 	}
+
 }

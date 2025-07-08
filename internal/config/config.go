@@ -21,6 +21,7 @@ type Config struct {
 	DBPort              string
 	APIPort             string
 	CodemagicAPIHost    string
+	ENV                 string
 }
 
 func LoadConfig() *Config {
@@ -40,6 +41,7 @@ func LoadConfig() *Config {
 		DBPort:              getEnv("DB_PORT"),
 		APIPort:             getEnv("API_PORT"),
 		CodemagicAPIHost:    getEnv("CODEMAGIC_API_HOST"),
+		ENV:                 getEnv("ENV"),
 	}
 }
 
