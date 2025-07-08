@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"victa/internal/new_bot/notification_bot"
@@ -62,6 +63,19 @@ func (h *BuildWebhookHandler) Handle(c *gin.Context) {
 	if err != nil {
 		h.respondJSON(c, http.StatusBadGateway, err.Error(), nil)
 		return
+	}
+	for idx, art := range buildResp.Build.Artefacts {
+		if strings.EqualFold(art.Type, "apk") {
+			publicURL, err := h.codemagicSvc.GetArtifactPublicURL(
+				art.Path, *integration.CodemagicAPIKey,
+			)
+			if err != nil {
+				log.Printf("codemagic public-url error: %v", err)
+				break
+			}
+			buildResp.Build.Artefacts[idx].PublicURL = publicURL
+			break
+		}
 	}
 
 	baseBot, err := h.factory.GetBaseBot(*integration.NotificationBotToken)

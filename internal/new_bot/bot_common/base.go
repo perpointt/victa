@@ -72,6 +72,13 @@ func (b *BaseBot) NewMessage(chatID int64, text string) tgbotapi.MessageConfig {
 	return msg
 }
 
+func (b *BaseBot) NewHtmlMessage(chatID int64, text string) tgbotapi.MessageConfig {
+	msg := tgbotapi.NewMessage(chatID, text)
+	msg.ParseMode = tgbotapi.ModeHTML
+	msg.DisableWebPagePreview = true
+	return msg
+}
+
 func (b *BaseBot) NewKeyboardMessage(chatID int64, text string, keyboard tgbotapi.InlineKeyboardMarkup) tgbotapi.MessageConfig {
 	msg := tgbotapi.NewMessage(chatID, text)
 	msg.ParseMode = tgbotapi.ModeMarkdown

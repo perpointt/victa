@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -55,4 +56,42 @@ func (s *CodemagicService) GetBuildByID(buildID, apiKey string) (*domain.Codemag
 		return nil, fmt.Errorf("failed to decode codemagic response: %w", err)
 	}
 	return &out, nil
+}
+
+func (s *CodemagicService) GetArtifactPublicURL(path, apiKey string) (string, error) {
+	ttl := 7 * 24 * time.Hour
+	expires := time.Now().Add(ttl).Unix()
+
+	payload, _ := json.Marshal(struct {
+		ExpiresAt int64 `json:"expiresAt"`
+	}{expires})
+
+	url := fmt.Sprintf("%s/artifacts/%s/public-url", s.baseURL, strings.TrimPrefix(path, "/"))
+
+	req, err := http.NewRequest("POST", url, bytes.NewReader(payload))
+	if err != nil {
+		return "", fmt.Errorf("create request: %w", err)
+	}
+	req.Header.Set("x-auth-token", apiKey)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("codemagic request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("codemagic %d: %s", resp.StatusCode, body)
+	}
+
+	var out struct {
+		URL string `json:"url"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return "", fmt.Errorf("decode response: %w", err)
+	}
+	return out.URL, nil
 }

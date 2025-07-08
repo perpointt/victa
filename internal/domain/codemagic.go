@@ -14,6 +14,7 @@ type CodemagicApplication struct {
 type CodemagicBuild struct {
 	ID         string    `json:"_id"`
 	Status     string    `json:"status"`
+	Version    string    `json:"version"`
 	StartedAt  time.Time `json:"startedAt"`
 	FinishedAt time.Time `json:"finishedAt"`
 	Commit     struct {
@@ -34,12 +35,9 @@ type CodemagicBuild struct {
 	} `json:"buildActions"`
 	Message   string `json:"message"`
 	Artefacts []struct {
-		Name        string  `json:"name"`
-		Type        string  `json:"type"`
-		URL         string  `json:"url"`
-		VersionName *string `json:"versionName"`
-		VersionCode string  `json:"versionCode"`
-		Path        string  `json:"path"`
+		Type      string `json:"type"`
+		Path      string `json:"path"`
+		PublicURL string `json:"public_url"`
 	} `json:"artefacts"`
 }
 
