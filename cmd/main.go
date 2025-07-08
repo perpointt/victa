@@ -33,6 +33,7 @@ func main() {
 	inviteSvc := service.NewInviteService(secretBytes)
 	appSvc := service.NewAppService(appRepo)
 	jwtSvc := service.NewJWTService(cfg.JwtSecret)
+	cmSvc := service.NewCodemagicService(cfg.CodemagicAPIHost)
 
 	b, err := bot.NewBot(
 		*cfg,
@@ -52,7 +53,7 @@ func main() {
 		log.Println("Bot stopped")
 	}()
 
-	buildHandler := webhook.NewBuildWebhookHandler(jwtSvc, companySvc)
+	buildHandler := webhook.NewBuildWebhookHandler(jwtSvc, companySvc, cmSvc)
 	http.Handle("/webhook/build", buildHandler)
 
 	addr := ":" + cfg.APIPort
