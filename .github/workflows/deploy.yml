@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Archive repository
-        run: tar czf victa.tar.gz --exclude=victa.tar.gz .
+        run: git archive --format=tgz HEAD -o victa.tar.gz
 
       - name: Copy archive and deploy script to server
         uses: appleboy/scp-action@v0.1.0
