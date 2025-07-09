@@ -28,7 +28,7 @@ RUN apk add --no-cache ca-certificates curl
 # Копируем артефакты из builder
 COPY --from=builder /app/victa .
 COPY --from=builder /go/bin/goose /usr/local/bin/goose
-COPY --from=builder /app/internal/migrations ./migrations
+COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/entrypoint.sh .
 
 # Скрипт-запускатель
