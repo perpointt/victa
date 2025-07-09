@@ -9,19 +9,18 @@ import (
 )
 
 type Config struct {
-	TelegramAdminUserID string
-	TelegramToken       string
-	TelegramBotName     string
-	InviteSecret        string
-	JwtSecret           string
-	DBUser              string
-	DBPassword          string
-	DBName              string
-	DBHost              string
-	DBPort              string
-	APIPort             string
-	CodemagicAPIHost    string
-	ENV                 string
+	TelegramToken    string
+	TelegramBotName  string
+	InviteSecret     string
+	JwtSecret        string
+	DBUser           string
+	DBPassword       string
+	DBName           string
+	DBHost           string
+	DBPort           string
+	APIPort          string
+	CodemagicAPIHost string
+	ENV              string
 }
 
 func LoadConfig() *Config {
@@ -29,19 +28,18 @@ func LoadConfig() *Config {
 		log.Fatal("Ошибка загрузки .env файла: файл .env обязателен")
 	}
 	return &Config{
-		TelegramAdminUserID: getEnv("TELEGRAM_ADMIN_USER_ID"),
-		TelegramToken:       getEnv("TELEGRAM_TOKEN"),
-		TelegramBotName:     getEnv("TELEGRAM_BOT_NAME"),
-		InviteSecret:        getEnv("INVITE_SECRET"),
-		JwtSecret:           getEnv("JWT_SECRET"),
-		DBUser:              getEnv("DB_USER"),
-		DBPassword:          getEnv("DB_PASSWORD"),
-		DBName:              getEnv("DB_NAME"),
-		DBHost:              getEnv("DB_HOST"),
-		DBPort:              getEnv("DB_PORT"),
-		APIPort:             getEnv("API_PORT"),
-		CodemagicAPIHost:    getEnv("CODEMAGIC_API_HOST"),
-		ENV:                 getEnv("ENV"),
+		TelegramToken:    getEnv("TELEGRAM_TOKEN"),
+		TelegramBotName:  getEnv("TELEGRAM_BOT_NAME"),
+		InviteSecret:     getEnv("INVITE_SECRET"),
+		JwtSecret:        getEnv("JWT_SECRET"),
+		DBUser:           getEnv("DB_USER"),
+		DBPassword:       getEnv("DB_PASSWORD"),
+		DBName:           getEnv("DB_NAME"),
+		DBHost:           getEnv("DB_HOST"),
+		DBPort:           getEnv("DB_PORT"),
+		APIPort:          getEnv("API_PORT"),
+		CodemagicAPIHost: getEnv("CODEMAGIC_API_HOST"),
+		ENV:              getEnv("ENV"),
 	}
 }
 
