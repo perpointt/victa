@@ -24,6 +24,8 @@ services:
       - .env
     ports:
       - "${API_PORT}:3000"
+    volumes:
+      - ./.env:/app/.env:ro
 
 volumes:
   db:
