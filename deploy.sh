@@ -29,7 +29,7 @@ ln -sfn "$RELEASE_DIR" "$PROJECT_DIR"
 echo "Перезапускаем контейнеры..."
 cd "$PROJECT_DIR"
 
-docker-compose -f docker-compose.yaml down
-docker-compose -f docker-compose.yaml up -d --build
+docker-compose -p victa -f docker-compose.yaml down
+docker-compose -p victa -f docker-compose.yaml up -d --build
 
 echo "Деплой завершен."
