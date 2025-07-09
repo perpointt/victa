@@ -1,40 +1,40 @@
-# Stage 1: сборка приложения и установка утилиты goose
+# ————— Stage 1: Build —————
 FROM golang:1.23-alpine AS builder
 WORKDIR /app
 
-# Устанавливаем необходимые утилиты
-RUN apk --no-cache add git
+# Утилиты
+RUN apk add --no-cache git
 
-# Копируем файлы модулей и загружаем зависимости
+# Модули
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Копируем исходный код
+# Код и миграции
 COPY . .
 
-# Устанавливаем goose (он будет собран и сохранён в /go/bin)
-RUN go install github.com/pressly/goose/cmd/goose@latest
+# Установим goose для миграций
+RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 
-# Собираем бинарный файл приложения (предполагается, что точка входа находится в cmd)
+# Собираем бинарник
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o victa ./cmd
 
-# Stage 2: финальный образ
+# ————— Stage 2: Runtime —————
 FROM alpine:latest
 WORKDIR /app
 
-# Устанавливаем сертификаты
-RUN apk --no-cache add ca-certificates
+# Системные зависимости
+RUN apk add --no-cache ca-certificates curl
 
-# Копируем бинарник приложения и утилиту goose из сборочного образа
+# Копируем артефакты из builder
 COPY --from=builder /app/victa .
 COPY --from=builder /go/bin/goose /usr/local/bin/goose
+COPY --from=builder /app/internal/migrations ./migrations
+COPY --from=builder /app/entrypoint.sh .
 
-# Копируем миграции (они лежат в internal/database/migrations)
-COPY --from=builder /app/internal/migrations /app/migrations
+# Скрипт-запускатель
+RUN chmod +x entrypoint.sh
 
-# Копируем entrypoint.sh (скрипт, который запустит миграции, а затем приложение)
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# Порт приложения
+EXPOSE 3000
 
-EXPOSE 8080
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
