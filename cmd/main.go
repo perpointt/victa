@@ -84,7 +84,15 @@ func main() {
 		companySvc,
 		codemagicSvc,
 	)
+
+	gitlabHandler := webhook.NewGitlabWebhookHandler(
+		botFactory,
+		logg,
+		jwtSvc,
+	)
+
 	r.POST("/webhook/codemagic", codemagicHandler.Handle)
+	r.POST("/webhook/gitlab", gitlabHandler.Handle)
 
 	addr := ":" + cfg.APIPort
 	logg.Info("API сервер слушается на %s…", addr)
