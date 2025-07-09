@@ -25,7 +25,7 @@ func (b *BaseBot) AnswerCallback(callback *tgbotapi.CallbackQuery, text string) 
 }
 
 func (b *BaseBot) SendErrorMessage(chatID int64, err error) *tgbotapi.Message {
-	b.logger.Errorf(err.Error())
+	b.logger.ErrorDepth(3, err.Error())
 
 	msg, err := b.BotAPI.Send(b.NewMessage(chatID, err.Error()))
 
@@ -62,7 +62,7 @@ func (b *BaseBot) EditMessage(messageID int, config tgbotapi.MessageConfig) *tgb
 	msg, err := b.BotAPI.Send(editMsg)
 
 	if err != nil {
-		b.SendErrorMessage(config.ChatID, err)
+		b.logger.Errorf(err.Error())
 		return nil
 	}
 
@@ -72,7 +72,7 @@ func (b *BaseBot) EditMessage(messageID int, config tgbotapi.MessageConfig) *tgb
 func (b *BaseBot) DeleteMessage(chatID int64, messageID int) {
 	delMsg := tgbotapi.NewDeleteMessage(chatID, messageID)
 	if _, err := b.BotAPI.Request(delMsg); err != nil {
-		b.SendErrorMessage(chatID, err)
+		b.logger.Errorf(err.Error())
 	}
 }
 

@@ -80,7 +80,7 @@ func (s *CompanyService) CreateOrUpdateCompanyIntegration(
 ) (*domain.CompanyIntegration, error) {
 	var ci domain.CompanyIntegration
 	if err := json.Unmarshal([]byte(payload), &ci); err != nil {
-		return nil, fmt.Errorf("неверный формат JSON интеграций: %w", err)
+		return nil, fmt.Errorf(err.Error())
 	}
 
 	ci.CompanyID = companyID

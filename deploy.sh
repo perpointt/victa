@@ -25,6 +25,8 @@ tar xzf "$TAR_FILE" -C "$PROJECT_DIR"
 
 echo "Перезапускаем контейнеры..."
 cd "$PROJECT_DIR"
+
+docker builder prune --force
 docker-compose -p victa -f docker-compose.yaml down
 docker-compose -p victa -f docker-compose.yaml up -d --build
 

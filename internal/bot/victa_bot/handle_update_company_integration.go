@@ -46,14 +46,7 @@ func (b *Bot) HandleUpdateCompanyIntegrationCallback(cb *tgbotapi.CallbackQuery)
 
 func (b *Bot) HandleUpdateCompanyIntegration(message *tgbotapi.Message) {
 	chatID := message.Chat.ID
-	tgID := message.From.ID
 	companyID := b.pendingCompanyIDs[chatID]
-
-	user, err := b.UserSvc.GetByTgID(tgID)
-	if err != nil {
-		b.SendErrorMessage(chatID, err)
-		return
-	}
 
 	company, err := b.CompanySvc.GetByID(companyID)
 	if err != nil {
@@ -61,7 +54,7 @@ func (b *Bot) HandleUpdateCompanyIntegration(message *tgbotapi.Message) {
 		return
 	}
 
-	_, err = b.CompanySvc.CreateOrUpdateCompanyIntegration(user.ID, message.Text)
+	_, err = b.CompanySvc.CreateOrUpdateCompanyIntegration(company.ID, message.Text)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
