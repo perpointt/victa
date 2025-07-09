@@ -23,7 +23,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.REMOTE_PRIVATE_KEY }}
           source: |
-            victa.tar.gz
+            artifacts/victa.tar.gz
             deploy.sh
           target: "/opt/victa/releases/"
 
