@@ -28,6 +28,6 @@ ln -sfn "$RELEASE_DIR" "$PROJECT_DIR"
 
 echo "Перезапускаем контейнеры..."
 cd "$PROJECT_DIR"
-docker-compose -f docker-compose.prod.yaml up -d --build
+docker-compose -f docker-compose.yaml up -d --build
 
 echo "Деплой завершен."

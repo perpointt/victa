@@ -33,6 +33,6 @@ fi
 
 # Строим образы и поднимаем контейнеры в режиме detached (продакшн).
 echo "Строим образы и поднимаем контейнеры..."
-sudo docker-compose -f docker-compose.prod.yaml up -d --build
+sudo docker-compose -f docker-compose.yaml up -d --build
 
 echo "Развертывание завершено. Приложение victa запущено."
