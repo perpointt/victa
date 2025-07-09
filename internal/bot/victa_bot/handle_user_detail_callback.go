@@ -9,7 +9,7 @@ func (b *Bot) HandleDetailUserCallback(callback *tgbotapi.CallbackQuery) {
 
 	message, err := b.CreateUserDetailMessage(callback)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при получении данных пользователя."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
@@ -23,7 +23,7 @@ func (b *Bot) HandleBackToDetailUserCallback(callback *tgbotapi.CallbackQuery) {
 
 	message, err := b.CreateUserDetailMessage(callback)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при получении данных пользователя."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 

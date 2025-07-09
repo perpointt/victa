@@ -1,11 +1,10 @@
 package victa_bot
 
 import (
-	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func (b *Bot) HandleListUsersCallback(callback *tgbotapi.CallbackQuery) {
+func (b *Bot) HandleListAppsCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	messageID := callback.Message.MessageID
 	tgID := callback.From.ID
@@ -18,13 +17,13 @@ func (b *Bot) HandleListUsersCallback(callback *tgbotapi.CallbackQuery) {
 
 	company, err := b.CompanySvc.GetByID(params.CompanyID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске компании."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
-	message, err := b.BuildUserList(chatID, tgID, company)
+	message, err := b.BuildAppList(chatID, tgID, company)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, fmt.Sprintf("Ошибка при построении списка пользователей: %v", err)))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 

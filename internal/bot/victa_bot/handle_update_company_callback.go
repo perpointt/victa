@@ -29,7 +29,7 @@ func (b *Bot) HandleCompanyNameUpdated(message *tgbotapi.Message) {
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске пользователя."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
@@ -41,10 +41,11 @@ func (b *Bot) HandleCompanyNameUpdated(message *tgbotapi.Message) {
 		return
 	}
 
-	config := b.BuildMainMenu(chatID, user)
-	if config == nil {
+	menu, err := b.BuildMainMenu(chatID, user)
+	if err != nil {
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
-	b.SendMessage(*config)
+	b.SendMessage(*menu)
 }

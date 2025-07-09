@@ -3,7 +3,7 @@ package victa_bot
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"strings"
-	"victa/internal/new_bot/bot_common"
+	"victa/internal/bot/bot_common"
 	"victa/internal/service"
 )
 

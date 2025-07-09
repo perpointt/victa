@@ -3,16 +3,18 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"log"
+	"victa/internal/bot/bot_common"
+	"victa/internal/bot/victa_bot"
 	"victa/internal/config"
 	"victa/internal/db"
-	"victa/internal/new_bot/bot_common"
-	"victa/internal/new_bot/victa_bot"
 	"victa/internal/repository"
 	"victa/internal/service"
 	"victa/internal/webhook"
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	cfg := config.LoadConfig()
 
 	conn, err := db.New(cfg.GetDbDSN())

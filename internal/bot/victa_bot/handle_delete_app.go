@@ -33,18 +33,18 @@ func (b *Bot) HandleConfirmDeleteAppCallback(callback *tgbotapi.CallbackQuery) {
 
 	company, err := b.CompanySvc.GetByID(params.CompanyID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при проверке компании."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
 	if err := b.AppSvc.Delete(params.AppID); err != nil {
-		b.SendMessage(b.NewMessage(chatID, fmt.Sprintf("Не удалось удалить приложение: %v", err)))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
 	config, err := b.BuildAppList(chatID, tgID, company)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, fmt.Sprintf("Ошибка при построении списка приложений: %v", err)))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 

@@ -26,14 +26,9 @@ var stepAlias = map[string]string{
 	"Set up code signing identities": "Set up code signing",
 }
 
-func (bot *Bot) SendNewNotification(app domain.CodemagicApplication, build domain.CodemagicBuild) error {
+func (bot *Bot) SendNewNotification(app domain.CodemagicApplication, build domain.CodemagicBuild) {
 	text := bot.buildCodemagicText(app, build)
-	_, err := bot.SendMessage(bot.NewHtmlMessage(bot.chatID, text))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_ = bot.SendMessage(bot.NewHtmlMessage(bot.chatID, text))
 }
 
 func esc(s string) string { return html.EscapeString(s) }

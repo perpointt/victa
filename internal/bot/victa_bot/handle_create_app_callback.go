@@ -1,12 +1,10 @@
 package victa_bot
 
 import (
-	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"log"
 )
 
-func (b *Bot) HandleUpdateAppCallback(callback *tgbotapi.CallbackQuery) {
+func (b *Bot) HandleCreateAppCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	params, err := b.GetCallbackArgs(callback.Data)
 
@@ -20,15 +18,13 @@ func (b *Bot) HandleUpdateAppCallback(callback *tgbotapi.CallbackQuery) {
 		b.BuildCancelButton(),
 	))
 
-	b.AddPendingAppData(chatID, PendingAppData{ID: params.AppID})
-
 	b.AddPendingCompanyID(chatID, params.CompanyID)
-	b.AddChatState(chatID, StateWaitingUpdateAppName)
+	b.AddChatState(chatID, StateWaitingCreateAppName)
 
 	b.SendPendingMessage(b.NewKeyboardMessage(chatID, msgText, keyboard))
 }
 
-func (b *Bot) HandleAppNameUpdated(message *tgbotapi.Message) {
+func (b *Bot) HandleAppNameCreated(message *tgbotapi.Message) {
 	chatID := message.Chat.ID
 
 	msgText := "Отправьте короткий тэг приложения"
@@ -40,13 +36,14 @@ func (b *Bot) HandleAppNameUpdated(message *tgbotapi.Message) {
 	data.Name = message.Text
 
 	b.AddPendingAppData(chatID, data)
-	b.AddChatState(chatID, StateWaitingUpdateAppSlug)
+	b.AddChatState(chatID, StateWaitingCreateAppSlug)
 
 	b.SendPendingMessage(b.NewKeyboardMessage(chatID, msgText, keyboard))
 }
 
-func (b *Bot) HandleAppSlugUpdated(message *tgbotapi.Message) {
+func (b *Bot) HandleAppSlugCreated(message *tgbotapi.Message) {
 	chatID := message.Chat.ID
+	companyID := b.pendingCompanyIDs[chatID]
 	tgID := message.From.ID
 
 	data := b.pendingAppData[chatID]
@@ -54,15 +51,13 @@ func (b *Bot) HandleAppSlugUpdated(message *tgbotapi.Message) {
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске пользователя."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
-	app, err := b.AppSvc.Update(data.ID, data.Name, data.Slug)
+	app, err := b.AppSvc.Create(companyID, data.Name, data.Slug)
 	if err != nil {
-		log.Printf(fmt.Sprintf("%v", err.Error()))
-
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при обновлении приложения"))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 

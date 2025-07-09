@@ -22,13 +22,13 @@ func (b *Bot) HandleCompanyIntegrationsCallback(callback *tgbotapi.CallbackQuery
 
 	company, err := b.CompanySvc.GetByID(companyID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при получении компании."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
 	config, err := b.BuildCompanyIntegrationsDetail(chatID, company)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при получении интеграций."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 	b.EditMessage(messageID, *config)

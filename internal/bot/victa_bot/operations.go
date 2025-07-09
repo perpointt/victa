@@ -117,18 +117,14 @@ func (b *Bot) ClearChatState(chatID int64) {
 
 // SendPendingMessage отправляет сообщение и добавляет его ID в очередь для последующего удаления
 func (b *Bot) SendPendingMessage(config tgbotapi.MessageConfig) {
-	sentMsg, err := b.SendMessage(config)
-	if err != nil {
-		return
-	}
-
+	sentMsg := b.SendMessage(config)
 	b.pendingMessages[config.ChatID] = append(b.pendingMessages[config.ChatID], sentMsg.MessageID)
 }
 
 func (b *Bot) DeletePendingMessage(chatID int64) {
 	if msgIDs, ok := b.pendingMessages[chatID]; ok {
 		for _, msgID := range msgIDs {
-			_ = b.DeleteMessage(chatID, msgID)
+			b.DeleteMessage(chatID, msgID)
 		}
 		delete(b.pendingMessages, chatID)
 	}

@@ -2,7 +2,7 @@ package notification_bot
 
 import (
 	"strconv"
-	"victa/internal/new_bot/bot_common"
+	"victa/internal/bot/bot_common"
 )
 
 // Bot хранит API и ссылку на БД

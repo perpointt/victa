@@ -1,10 +1,12 @@
 package victa_bot
 
 import (
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"log"
 )
 
-func (b *Bot) HandleCreateAppCallback(callback *tgbotapi.CallbackQuery) {
+func (b *Bot) HandleUpdateAppCallback(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	params, err := b.GetCallbackArgs(callback.Data)
 
@@ -18,13 +20,15 @@ func (b *Bot) HandleCreateAppCallback(callback *tgbotapi.CallbackQuery) {
 		b.BuildCancelButton(),
 	))
 
+	b.AddPendingAppData(chatID, PendingAppData{ID: params.AppID})
+
 	b.AddPendingCompanyID(chatID, params.CompanyID)
-	b.AddChatState(chatID, StateWaitingCreateAppName)
+	b.AddChatState(chatID, StateWaitingUpdateAppName)
 
 	b.SendPendingMessage(b.NewKeyboardMessage(chatID, msgText, keyboard))
 }
 
-func (b *Bot) HandleAppNameCreated(message *tgbotapi.Message) {
+func (b *Bot) HandleAppNameUpdated(message *tgbotapi.Message) {
 	chatID := message.Chat.ID
 
 	msgText := "Отправьте короткий тэг приложения"
@@ -36,14 +40,13 @@ func (b *Bot) HandleAppNameCreated(message *tgbotapi.Message) {
 	data.Name = message.Text
 
 	b.AddPendingAppData(chatID, data)
-	b.AddChatState(chatID, StateWaitingCreateAppSlug)
+	b.AddChatState(chatID, StateWaitingUpdateAppSlug)
 
 	b.SendPendingMessage(b.NewKeyboardMessage(chatID, msgText, keyboard))
 }
 
-func (b *Bot) HandleAppSlugCreated(message *tgbotapi.Message) {
+func (b *Bot) HandleAppSlugUpdated(message *tgbotapi.Message) {
 	chatID := message.Chat.ID
-	companyID := b.pendingCompanyIDs[chatID]
 	tgID := message.From.ID
 
 	data := b.pendingAppData[chatID]
@@ -51,13 +54,15 @@ func (b *Bot) HandleAppSlugCreated(message *tgbotapi.Message) {
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске пользователя."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
-	app, err := b.AppSvc.Create(companyID, data.Name, data.Slug)
+	app, err := b.AppSvc.Update(data.ID, data.Name, data.Slug)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при создании приложения"))
+		log.Printf(fmt.Sprintf("%v", err.Error()))
+
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 

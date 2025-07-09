@@ -3,7 +3,6 @@ package victa_bot
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"log"
 )
 
 func (b *Bot) HandleUpdateCompanyIntegrationCallback(cb *tgbotapi.CallbackQuery) {
@@ -18,13 +17,13 @@ func (b *Bot) HandleUpdateCompanyIntegrationCallback(cb *tgbotapi.CallbackQuery)
 
 	ci, err := b.CompanySvc.GetCompanyIntegrationByID(companyID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при получении интеграций."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
 	tmpl, err := b.BuildIntegrationTemplate(ci)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при создании шаблона"))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
@@ -52,26 +51,25 @@ func (b *Bot) HandleUpdateCompanyIntegration(message *tgbotapi.Message) {
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске пользователя."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
 	company, err := b.CompanySvc.GetByID(companyID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске компании."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
 	_, err = b.CompanySvc.CreateOrUpdateCompanyIntegration(user.ID, message.Text)
 	if err != nil {
-		log.Fatalf(err.Error())
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при обновлении интеграции."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
 	config, err := b.BuildCompanyIntegrationsDetail(chatID, company)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при получении интеграций."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 

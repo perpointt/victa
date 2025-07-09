@@ -22,13 +22,13 @@ func (b *Bot) HandleCompanyNameCreated(message *tgbotapi.Message) {
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске пользователя."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
 	company, err := b.CompanySvc.Create(message.Text, user.ID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при создании компании."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 

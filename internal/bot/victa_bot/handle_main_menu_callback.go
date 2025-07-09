@@ -11,7 +11,7 @@ func (b *Bot) HandleMainMenuCallback(callback *tgbotapi.CallbackQuery) {
 	user, err := b.UserSvc.GetByTgID(callback.From.ID)
 
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при проверке пользователя."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
@@ -20,11 +20,12 @@ func (b *Bot) HandleMainMenuCallback(callback *tgbotapi.CallbackQuery) {
 		return
 	}
 
-	config := b.BuildMainMenu(chatID, user)
-	if config == nil {
+	menu, err := b.BuildMainMenu(chatID, user)
+	if err != nil {
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
 	b.ClearChatState(chatID)
-	b.EditMessage(messageID, *config)
+	b.EditMessage(messageID, *menu)
 }

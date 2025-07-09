@@ -5,11 +5,11 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"victa/internal/new_bot/notification_bot"
+	"victa/internal/bot/notification_bot"
 
 	"github.com/gin-gonic/gin"
 
-	"victa/internal/new_bot/bot_common"
+	"victa/internal/bot/bot_common"
 	"victa/internal/service"
 )
 
@@ -90,10 +90,7 @@ func (h *BuildWebhookHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	if err = bot.SendNewNotification(buildResp.Application, buildResp.Build); err != nil {
-		h.respondJSON(c, http.StatusInternalServerError, err.Error(), nil)
-		return
-	}
+	bot.SendNewNotification(buildResp.Application, buildResp.Build)
 
 	h.respondJSON(c, http.StatusOK, "OK", nil)
 }

@@ -17,7 +17,7 @@ func (b *Bot) HandleInviteUserCallback(callback *tgbotapi.CallbackQuery) {
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при проверке пользователя."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 

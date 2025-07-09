@@ -32,13 +32,13 @@ func (b *Bot) HandleConfirmDeleteUserCallback(callback *tgbotapi.CallbackQuery) 
 
 	err = b.UserSvc.DeleteFromCompany(params.UserID, params.CompanyID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при проверке пользователя."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
 	company, err := b.CompanySvc.GetByID(params.CompanyID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при поиске компании."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 

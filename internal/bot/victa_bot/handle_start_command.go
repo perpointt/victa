@@ -15,7 +15,7 @@ func (b *Bot) HandleStartCommand(message *tgbotapi.Message) {
 
 	existing, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, "Ошибка при проверке пользователя."))
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
 
@@ -23,14 +23,14 @@ func (b *Bot) HandleStartCommand(message *tgbotapi.Message) {
 	if existing == nil {
 		user, err = b.UserSvc.Register(fmt.Sprintf("%d", tgID), name)
 		if err != nil {
-			b.SendMessage(b.NewMessage(chatID, "Ошибка регистрации пользователя."))
+			b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 			return
 		}
 		existing = user
 	} else {
 		user, err = b.UserSvc.Update(existing.ID, name)
 		if err != nil {
-			b.SendMessage(b.NewMessage(chatID, "Ошибка обновления данных пользователя."))
+			b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 			return
 		}
 		existing = user
@@ -40,16 +40,18 @@ func (b *Bot) HandleStartCommand(message *tgbotapi.Message) {
 		companyID, err := b.InviteSvc.ValidateToken(payload)
 		if err == nil {
 			if err := b.CompanySvc.AddUserToCompany(existing.ID, companyID); err != nil {
-				b.SendMessage(b.NewMessage(chatID, "Ошибка при добавлении пользователя в компанию."))
+				b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 			}
 		} else {
-			b.SendMessage(b.NewMessage(chatID, "Ошибка при проверке приглашения"))
+			b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		}
 	}
 
-	msg := b.BuildMainMenu(chatID, existing)
-	if msg == nil {
+	menu, err := b.BuildMainMenu(chatID, user)
+	if err != nil {
+		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
 		return
 	}
-	b.SendMessage(*msg)
+
+	b.SendMessage(*menu)
 }
