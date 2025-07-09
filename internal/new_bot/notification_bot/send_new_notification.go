@@ -133,7 +133,7 @@ func (bot *Bot) buildCodemagicText(
 
 	fmt.Fprintf(
 		&b,
-		"\n\n🔗 <b><a href=\"%s\">Информация о сборке</a></b>\n",
+		"\n\n\n🔗 <b><a href=\"%s\">Информация о сборке</a></b>\n",
 		esc(buildURL),
 	)
 
