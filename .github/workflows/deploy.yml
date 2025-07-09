@@ -10,15 +10,29 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Create .env
+
+      - name: Create .env from secret
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
           echo "$ENV_FILE" > .env
-      - name: Archive repository
+
+      - name: Prepare staging directory
         run: |
-          tar czf victa.tar.gz --exclude='victa.tar.gz' --exclude='.git' .
-        
+          mkdir staging
+          rsync -a \
+            --exclude='.git' \
+            --exclude='victa.tar.gz' \
+            --exclude='staging' \
+            . staging/
+
+      - name: Archive staging contents
+        run: |
+          tar czf victa.tar.gz -C staging .
+
+      - name: Clean up staging
+        run: rm -rf staging
+
       - name: Copy archive and deploy script to server
         uses: appleboy/scp-action@v1
         with:
@@ -36,11 +50,7 @@ jobs:
           key: ${{ secrets.REMOTE_PRIVATE_KEY }}
           script: |
             set -e
-            # Переходим в корневую директорию приложения на сервере
             cd /opt/victa
-            # Если ранее не была создана директория releases, создаем её
             mkdir -p releases
-            # Перемещаем deploy.sh из releases (если он там) в корень, чтобы его можно было вызвать
             cp releases/deploy.sh .
-            # Запускаем скрипт деплоя
             bash deploy.sh
