@@ -11,7 +11,7 @@ func (b *Bot) HandleMainMenuCallback(callback *tgbotapi.CallbackQuery) {
 	user, err := b.UserSvc.GetByTgID(callback.From.ID)
 
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
@@ -22,7 +22,7 @@ func (b *Bot) HandleMainMenuCallback(callback *tgbotapi.CallbackQuery) {
 
 	menu, err := b.BuildMainMenu(chatID, user)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 

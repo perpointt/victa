@@ -17,13 +17,13 @@ func (b *Bot) HandleListAppsCallback(callback *tgbotapi.CallbackQuery) {
 
 	company, err := b.CompanySvc.GetByID(params.CompanyID)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
 	message, err := b.BuildAppList(chatID, tgID, company)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 

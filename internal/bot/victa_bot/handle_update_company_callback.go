@@ -1,7 +1,6 @@
 package victa_bot
 
 import (
-	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -29,7 +28,7 @@ func (b *Bot) HandleCompanyNameUpdated(message *tgbotapi.Message) {
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
@@ -37,13 +36,13 @@ func (b *Bot) HandleCompanyNameUpdated(message *tgbotapi.Message) {
 
 	_, err = b.CompanySvc.Update(companyID, message.Text, user.ID)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, fmt.Sprintf("Не удалось обновить компанию: %v", err)))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
 	menu, err := b.BuildMainMenu(chatID, user)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 

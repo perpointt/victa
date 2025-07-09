@@ -20,13 +20,13 @@ func (b *BaseBot) AnswerCallback(callback *tgbotapi.CallbackQuery, text string) 
 	}
 }
 
-func (b *BaseBot) SendErrorMessage(config tgbotapi.MessageConfig) *tgbotapi.Message {
-	log.Printf(config.Text)
+func (b *BaseBot) SendErrorMessage(chatID int64, err error) *tgbotapi.Message {
+	log.Printf(err.Error())
 
-	msg, err := b.BotAPI.Send(config)
+	msg, err := b.BotAPI.Send(b.NewMessage(chatID, err.Error()))
 
 	if err != nil {
-		log.Printf("Ошибка при отправке сообщения: %v", err)
+		log.Printf(err.Error())
 		return nil
 	}
 
@@ -37,7 +37,7 @@ func (b *BaseBot) SendMessage(config tgbotapi.MessageConfig) *tgbotapi.Message {
 	msg, err := b.BotAPI.Send(config)
 
 	if err != nil {
-		log.Printf("Ошибка при отправке сообщения: %v", err)
+		log.Printf(err.Error())
 		return nil
 	}
 
@@ -58,7 +58,7 @@ func (b *BaseBot) EditMessage(messageID int, config tgbotapi.MessageConfig) *tgb
 	msg, err := b.BotAPI.Send(editMsg)
 
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(config.ChatID, err.Error()))
+		b.SendErrorMessage(config.ChatID, err)
 		return nil
 	}
 
@@ -68,7 +68,7 @@ func (b *BaseBot) EditMessage(messageID int, config tgbotapi.MessageConfig) *tgb
 func (b *BaseBot) DeleteMessage(chatID int64, messageID int) {
 	delMsg := tgbotapi.NewDeleteMessage(chatID, messageID)
 	if _, err := b.BotAPI.Request(delMsg); err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 	}
 }
 

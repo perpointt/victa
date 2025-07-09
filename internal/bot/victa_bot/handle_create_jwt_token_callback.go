@@ -9,13 +9,13 @@ func (b *Bot) HandleCreateJwtToken(callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	params, err := b.GetCallbackArgs(callback.Data)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
 	token, err := b.JwtSvc.GenerateToken(params.CompanyID)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 

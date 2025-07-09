@@ -9,7 +9,7 @@ func (b *Bot) HandleDetailAppCallback(callback *tgbotapi.CallbackQuery) {
 
 	message, err := b.CreateAppDetailMessage(callback)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
@@ -23,7 +23,7 @@ func (b *Bot) HandleBackToDetailAppCallback(callback *tgbotapi.CallbackQuery) {
 
 	message, err := b.CreateAppDetailMessage(callback)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 

@@ -17,13 +17,13 @@ func (b *Bot) HandleUpdateCompanyIntegrationCallback(cb *tgbotapi.CallbackQuery)
 
 	ci, err := b.CompanySvc.GetCompanyIntegrationByID(companyID)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
 	tmpl, err := b.BuildIntegrationTemplate(ci)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
@@ -51,25 +51,25 @@ func (b *Bot) HandleUpdateCompanyIntegration(message *tgbotapi.Message) {
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
 	company, err := b.CompanySvc.GetByID(companyID)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
 	_, err = b.CompanySvc.CreateOrUpdateCompanyIntegration(user.ID, message.Text)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
 	config, err := b.BuildCompanyIntegrationsDetail(chatID, company)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 

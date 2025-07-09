@@ -17,12 +17,12 @@ func (b *Bot) HandleInviteUserCallback(callback *tgbotapi.CallbackQuery) {
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
 	if err := b.CompanySvc.CheckAdmin(user.ID, params.CompanyID); err != nil {
-		b.SendMessage(b.NewMessage(chatID, fmt.Sprintf("Не удалось создать приглашение: %v", err)))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 

@@ -32,7 +32,7 @@ func (b *Bot) HandleConfirmDeleteCompanyCallback(callback *tgbotapi.CallbackQuer
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 	if user == nil {
@@ -41,13 +41,13 @@ func (b *Bot) HandleConfirmDeleteCompanyCallback(callback *tgbotapi.CallbackQuer
 	}
 
 	if err := b.CompanySvc.Delete(params.CompanyID, user.ID); err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
 	menu, err := b.BuildMainMenu(chatID, user)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 

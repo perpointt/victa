@@ -12,7 +12,7 @@ func (b *Bot) HandleListCompaniesCallback(cb *tgbotapi.CallbackQuery) {
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 	if user == nil {

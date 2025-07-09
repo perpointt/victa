@@ -17,7 +17,7 @@ func (b *Bot) HandleListUsersCallback(callback *tgbotapi.CallbackQuery) {
 
 	company, err := b.CompanySvc.GetByID(params.CompanyID)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 

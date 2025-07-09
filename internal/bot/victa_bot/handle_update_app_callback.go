@@ -54,7 +54,7 @@ func (b *Bot) HandleAppSlugUpdated(message *tgbotapi.Message) {
 
 	user, err := b.UserSvc.GetByTgID(tgID)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
@@ -62,7 +62,7 @@ func (b *Bot) HandleAppSlugUpdated(message *tgbotapi.Message) {
 	if err != nil {
 		log.Printf(fmt.Sprintf("%v", err.Error()))
 
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 

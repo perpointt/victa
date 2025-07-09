@@ -32,19 +32,19 @@ func (b *Bot) HandleConfirmDeleteUserCallback(callback *tgbotapi.CallbackQuery) 
 
 	err = b.UserSvc.DeleteFromCompany(params.UserID, params.CompanyID)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
 	company, err := b.CompanySvc.GetByID(params.CompanyID)
 	if err != nil {
-		b.SendErrorMessage(b.NewMessage(chatID, err.Error()))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
 	userList, err := b.BuildUserList(chatID, tgID, company)
 	if err != nil {
-		b.SendMessage(b.NewMessage(chatID, fmt.Sprintf("Ошибка при построении списка пользователей: %v", err)))
+		b.SendErrorMessage(chatID, err)
 		return
 	}
 
