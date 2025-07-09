@@ -95,7 +95,7 @@ func (bot *Bot) buildCodemagicText(
 		fmt.Sprintf("<b>Версия Flutter:</b> %s", esc(build.Config.BuildSettings.FlutterVersion)),
 
 		fmt.Sprintf("\n<b>Ветка:</b> %s", esc(build.Commit.Branch)),
-		fmt.Sprintf("<b>Коммит:</b> %s", esc(build.Commit.CommitMessage)),
+		fmt.Sprintf("<b>Коммит:</b> `%s`", esc(build.Commit.CommitMessage)),
 		fmt.Sprintf("<b>Автор коммита:</b> %s", esc(build.Commit.AuthorName)),
 	}
 
