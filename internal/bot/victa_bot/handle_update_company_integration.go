@@ -66,5 +66,7 @@ func (b *Bot) HandleUpdateCompanyIntegration(message *tgbotapi.Message) {
 		return
 	}
 
+	b.ClearChatState(chatID)
+
 	b.SendMessage(*config)
 }

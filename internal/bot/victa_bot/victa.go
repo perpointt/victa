@@ -95,10 +95,7 @@ func (b *Bot) handleText(message *tgbotapi.Message) {
 		case StateWaitingUpdateAppSlug:
 			b.HandleAppSlugUpdated(message)
 		default:
-
 		}
-	} else {
-		b.SendMessage(b.NewMessage(message.Chat.ID, message.Text))
 	}
 }
 

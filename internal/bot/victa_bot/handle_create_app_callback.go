@@ -63,5 +63,7 @@ func (b *Bot) HandleAppSlugCreated(message *tgbotapi.Message) {
 
 	config := b.BuildAppDetail(chatID, app, user)
 
+	b.ClearChatState(chatID)
+
 	b.SendMessage(config)
 }

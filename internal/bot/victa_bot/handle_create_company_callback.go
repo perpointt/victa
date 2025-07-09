@@ -34,5 +34,7 @@ func (b *Bot) HandleCompanyNameCreated(message *tgbotapi.Message) {
 
 	config := b.BuildCompanyDetail(chatID, company, user)
 
+	b.ClearChatState(chatID)
+
 	b.SendMessage(config)
 }

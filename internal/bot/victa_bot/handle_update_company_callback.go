@@ -46,5 +46,7 @@ func (b *Bot) HandleCompanyNameUpdated(message *tgbotapi.Message) {
 		return
 	}
 
+	b.ClearChatState(chatID)
+
 	b.SendMessage(*menu)
 }
