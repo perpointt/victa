@@ -1,9 +1,7 @@
 package victa_bot
 
 import (
-	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"log"
 )
 
 func (b *Bot) HandleUpdateAppCallback(callback *tgbotapi.CallbackQuery) {
@@ -60,8 +58,6 @@ func (b *Bot) HandleAppSlugUpdated(message *tgbotapi.Message) {
 
 	app, err := b.AppSvc.Update(data.ID, data.Name, data.Slug)
 	if err != nil {
-		log.Printf(fmt.Sprintf("%v", err.Error()))
-
 		b.SendErrorMessage(chatID, err)
 		return
 	}

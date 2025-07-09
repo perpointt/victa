@@ -1,27 +1,35 @@
 package main
 
 import (
+	"database/sql"
 	"github.com/gin-gonic/gin"
 	"log"
 	"victa/internal/bot/bot_common"
 	"victa/internal/bot/victa_bot"
 	"victa/internal/config"
 	"victa/internal/db"
+	"victa/internal/logger"
 	"victa/internal/repository"
 	"victa/internal/service"
 	"victa/internal/webhook"
 )
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	logg := logger.New()
+	logg.Info("Приложение запущено")
 
-	cfg := config.LoadConfig()
+	cfg := config.LoadConfig(logg)
 
 	conn, err := db.New(cfg.GetDbDSN())
 	if err != nil {
 		log.Fatalf("Не удалось подключиться к БД: %v", err)
 	}
-	defer conn.Close()
+	defer func(conn *sql.DB) {
+		err := conn.Close()
+		if err != nil {
+			logg.Errorf(err.Error())
+		}
+	}(conn)
 
 	secretBytes := []byte(cfg.InviteSecret)
 
@@ -40,7 +48,7 @@ func main() {
 	jwtSvc := service.NewJWTService(cfg.JwtSecret)
 	codemagicSvc := service.NewCodemagicService(cfg.CodemagicAPIHost)
 
-	base, err := botFactory.GetBaseBot(cfg.TelegramToken)
+	base, err := botFactory.GetBaseBot(cfg.TelegramToken, logg)
 	if err != nil {
 		log.Fatalf("Ошибка при инициализации бота: %v", err)
 	}
@@ -55,9 +63,9 @@ func main() {
 	)
 
 	go func() {
-		log.Println("Bot started…")
+		logg.Info("Бот запущен")
 		b.Run()
-		log.Println("Bot stopped")
+		logg.Warn("Бот остановлен")
 	}()
 
 	switch cfg.ENV {
@@ -69,13 +77,19 @@ func main() {
 
 	r := gin.Default()
 
-	buildHandler := webhook.NewBuildWebhookHandler(botFactory, jwtSvc, companySvc, codemagicSvc)
+	buildHandler := webhook.NewBuildWebhookHandler(
+		botFactory,
+		logg,
+		jwtSvc,
+		companySvc,
+		codemagicSvc,
+	)
 	r.POST("/webhook/build", buildHandler.Handle)
 
 	addr := ":" + cfg.APIPort
-	log.Printf("API server listening on %s…", addr)
+	logg.Info("API сервер слушается на %s…", addr)
 	if err := r.Run(addr); err != nil {
-		log.Fatalf("HTTP server error: %v", err)
+		logg.Errorf(err.Error())
 	}
 
 }

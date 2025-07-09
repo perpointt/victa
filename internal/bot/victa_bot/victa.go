@@ -82,23 +82,18 @@ func (b *Bot) handleText(message *tgbotapi.Message) {
 		switch state {
 		case StateWaitingCreateCompanyName:
 			b.HandleCompanyNameCreated(message)
-			b.ClearChatState(chatID)
 		case StateWaitingUpdateCompanyName:
 			b.HandleCompanyNameUpdated(message)
-			b.ClearChatState(chatID)
 		case StateWaitingUpdateCompanyIntegration:
 			b.HandleUpdateCompanyIntegration(message)
-			b.ClearChatState(chatID)
 		case StateWaitingCreateAppName:
 			b.HandleAppNameCreated(message)
 		case StateWaitingCreateAppSlug:
 			b.HandleAppSlugCreated(message)
-			b.ClearChatState(chatID)
 		case StateWaitingUpdateAppName:
 			b.HandleAppNameUpdated(message)
 		case StateWaitingUpdateAppSlug:
 			b.HandleAppSlugUpdated(message)
-			b.ClearChatState(chatID)
 		default:
 
 		}

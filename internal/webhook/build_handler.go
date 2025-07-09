@@ -2,12 +2,11 @@ package webhook
 
 import (
 	"fmt"
-	"log"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
 	"victa/internal/bot/notification_bot"
-
-	"github.com/gin-gonic/gin"
+	"victa/internal/logger"
 
 	"victa/internal/bot/bot_common"
 	"victa/internal/service"
@@ -20,18 +19,27 @@ type apiResponse struct {
 
 type BuildWebhookHandler struct {
 	factory      *bot_common.BotFactory
+	logger       logger.Logger
 	jwtSvc       *service.JWTService
 	companySvc   *service.CompanyService
 	codemagicSvc *service.CodemagicService
 }
 
 func NewBuildWebhookHandler(
+
 	factory *bot_common.BotFactory,
+	logger logger.Logger,
 	jwtSvc *service.JWTService,
 	companySvc *service.CompanyService,
 	codemagicSvc *service.CodemagicService,
 ) *BuildWebhookHandler {
-	return &BuildWebhookHandler{factory, jwtSvc, companySvc, codemagicSvc}
+	return &BuildWebhookHandler{
+		factory,
+		logger,
+		jwtSvc,
+		companySvc,
+		codemagicSvc,
+	}
 }
 
 func (h *BuildWebhookHandler) Handle(c *gin.Context) {
@@ -70,7 +78,7 @@ func (h *BuildWebhookHandler) Handle(c *gin.Context) {
 				art.Path, *integration.CodemagicAPIKey,
 			)
 			if err != nil {
-				log.Printf("codemagic public-url error: %v", err)
+				h.logger.Errorf(err.Error())
 				break
 			}
 			buildResp.Build.Artefacts[idx].PublicURL = publicURL
@@ -78,7 +86,7 @@ func (h *BuildWebhookHandler) Handle(c *gin.Context) {
 		}
 	}
 
-	baseBot, err := h.factory.GetBaseBot(*integration.NotificationBotToken)
+	baseBot, err := h.factory.GetBaseBot(*integration.NotificationBotToken, h.logger)
 	if err != nil {
 		h.respondJSON(c, http.StatusUnauthorized, err.Error(), nil)
 		return

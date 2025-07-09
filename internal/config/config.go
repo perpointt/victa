@@ -2,10 +2,9 @@ package config
 
 import (
 	"fmt"
-	"log"
-	"os"
-
 	"github.com/joho/godotenv"
+	"os"
+	"victa/internal/logger"
 )
 
 type Config struct {
@@ -23,23 +22,23 @@ type Config struct {
 	ENV              string
 }
 
-func LoadConfig() *Config {
+func LoadConfig(logger logger.Logger) *Config {
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Ошибка загрузки .env файла: файл .env обязателен")
+		logger.Errorf(err.Error())
 	}
 	return &Config{
-		TelegramToken:    getEnv("TELEGRAM_TOKEN"),
-		TelegramBotName:  getEnv("TELEGRAM_BOT_NAME"),
-		InviteSecret:     getEnv("INVITE_SECRET"),
-		JwtSecret:        getEnv("JWT_SECRET"),
-		DBUser:           getEnv("DB_USER"),
-		DBPassword:       getEnv("DB_PASSWORD"),
-		DBName:           getEnv("DB_NAME"),
-		DBHost:           getEnv("DB_HOST"),
-		DBPort:           getEnv("DB_PORT"),
-		APIPort:          getEnv("API_PORT"),
-		CodemagicAPIHost: getEnv("CODEMAGIC_API_HOST"),
-		ENV:              getEnv("ENV"),
+		TelegramToken:    getEnv("TELEGRAM_TOKEN", logger),
+		TelegramBotName:  getEnv("TELEGRAM_BOT_NAME", logger),
+		InviteSecret:     getEnv("INVITE_SECRET", logger),
+		JwtSecret:        getEnv("JWT_SECRET", logger),
+		DBUser:           getEnv("DB_USER", logger),
+		DBPassword:       getEnv("DB_PASSWORD", logger),
+		DBName:           getEnv("DB_NAME", logger),
+		DBHost:           getEnv("DB_HOST", logger),
+		DBPort:           getEnv("DB_PORT", logger),
+		APIPort:          getEnv("API_PORT", logger),
+		CodemagicAPIHost: getEnv("CODEMAGIC_API_HOST", logger),
+		ENV:              getEnv("ENV", logger),
 	}
 }
 
@@ -50,10 +49,10 @@ func (c *Config) GetDbDSN() string {
 	)
 }
 
-func getEnv(key string) string {
+func getEnv(key string, logger logger.Logger) string {
 	if v, ok := os.LookupEnv(key); ok {
 		return v
 	}
-	log.Fatalf("Переменная окружения %s должна быть установлена", key)
+	logger.Warn("Переменная окружения %s должна быть установлена", key)
 	return ""
 }

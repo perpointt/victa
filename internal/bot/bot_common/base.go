@@ -2,31 +2,35 @@ package bot_common
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"log"
+	"victa/internal/logger"
 )
 
 type BaseBot struct {
 	BotAPI *tgbotapi.BotAPI
+	logger logger.Logger
 }
 
-func NewBaseBot(api *tgbotapi.BotAPI) *BaseBot {
-	return &BaseBot{BotAPI: api}
+func NewBaseBot(api *tgbotapi.BotAPI, logger logger.Logger) *BaseBot {
+	return &BaseBot{
+		BotAPI: api,
+		logger: logger,
+	}
 }
 
 func (b *BaseBot) AnswerCallback(callback *tgbotapi.CallbackQuery, text string) {
 	answer := tgbotapi.NewCallback(callback.ID, text)
 	if _, err := b.BotAPI.Request(answer); err != nil {
-		log.Printf(err.Error())
+		b.logger.Errorf(err.Error())
 	}
 }
 
 func (b *BaseBot) SendErrorMessage(chatID int64, err error) *tgbotapi.Message {
-	log.Printf(err.Error())
+	b.logger.Errorf(err.Error())
 
 	msg, err := b.BotAPI.Send(b.NewMessage(chatID, err.Error()))
 
 	if err != nil {
-		log.Printf(err.Error())
+		b.logger.Errorf(err.Error())
 		return nil
 	}
 
@@ -37,7 +41,7 @@ func (b *BaseBot) SendMessage(config tgbotapi.MessageConfig) *tgbotapi.Message {
 	msg, err := b.BotAPI.Send(config)
 
 	if err != nil {
-		log.Printf(err.Error())
+		b.logger.Errorf(err.Error())
 		return nil
 	}
 

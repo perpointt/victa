@@ -2,6 +2,7 @@ package bot_common
 
 import (
 	"sync"
+	"victa/internal/logger"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -18,7 +19,7 @@ func NewBotFactory() *BotFactory {
 }
 
 // GetBaseBot возвращает *BotAPI для token, создавая и кэшируя при первом запросе.
-func (f *BotFactory) GetBaseBot(token string) (*BaseBot, error) {
+func (f *BotFactory) GetBaseBot(token string, logger logger.Logger) (*BaseBot, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -29,7 +30,7 @@ func (f *BotFactory) GetBaseBot(token string) (*BaseBot, error) {
 	if err != nil {
 		return nil, err
 	}
-	baseBot := NewBaseBot(api)
+	baseBot := NewBaseBot(api, logger)
 	f.cache[token] = baseBot
 
 	return baseBot, nil
