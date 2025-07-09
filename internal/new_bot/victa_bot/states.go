@@ -1,0 +1,16 @@
+package victa_bot
+
+type ChatState int
+
+const (
+	StateWaitingCreateCompanyName ChatState = iota
+	StateWaitingUpdateCompanyName
+	StateWaitingConfirmDeleteCompany
+	StateWaitingConfirmDeleteUser
+	StateWaitingConfirmDeleteApp
+	StateWaitingUpdateCompanyIntegration
+	StateWaitingCreateAppName
+	StateWaitingCreateAppSlug
+	StateWaitingUpdateAppName
+	StateWaitingUpdateAppSlug
+)

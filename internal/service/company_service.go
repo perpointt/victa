@@ -1,44 +1,89 @@
 package service
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"victa/internal/domain"
 	"victa/internal/repository"
 )
 
-// CompanyService описывает бизнес-логику для компаний.
-type CompanyService interface {
-	CreateCompany(company *domain.Company, userID int64) error
-	GetCompanies(userID int64) ([]domain.Company, error)
-	GetCompanyByID(id int64, userID int64) (*domain.Company, error)
-	UpdateCompany(company *domain.Company) error
-	DeleteCompany(id int64) error
-}
-
-type companyService struct {
-	repo repository.CompanyRepository
+type CompanyService struct {
+	CompanyRepo     repository.CompanyRepository
+	IntegrationRepo repository.CompanyIntegrationRepository
 }
 
 // NewCompanyService создаёт новый экземпляр сервиса.
-func NewCompanyService(repo repository.CompanyRepository) CompanyService {
-	return &companyService{repo: repo}
+func NewCompanyService(
+	companyRepository repository.CompanyRepository,
+	integrationRepo repository.CompanyIntegrationRepository,
+) *CompanyService {
+	return &CompanyService{
+		CompanyRepo:     companyRepository,
+		IntegrationRepo: integrationRepo,
+	}
 }
 
-func (s *companyService) CreateCompany(company *domain.Company, userID int64) error {
-	return s.repo.CreateCompanyWithUser(company, userID)
+func (s *CompanyService) GetAllByUserID(userID int64) ([]domain.Company, error) {
+	return s.CompanyRepo.GetAllByUserID(userID)
 }
 
-func (s *companyService) GetCompanies(userID int64) ([]domain.Company, error) {
-	return s.repo.GetAllWithUser(userID)
+func (s *CompanyService) GetByID(companyID int64) (*domain.Company, error) {
+	return s.CompanyRepo.GetByID(companyID)
 }
 
-func (s *companyService) GetCompanyByID(id int64, userID int64) (*domain.Company, error) {
-	return s.repo.GetByIdWithUser(id, userID)
+func (s *CompanyService) Create(name string, userID int64) (*domain.Company, error) {
+	return s.CompanyRepo.Create(domain.Company{Name: name}, userID)
 }
 
-func (s *companyService) UpdateCompany(company *domain.Company) error {
-	return s.repo.Update(company)
+// Update изменяет название компании, только если userID — админ в ней.
+func (s *CompanyService) Update(companyID int64, name string, userID int64) (*domain.Company, error) {
+	if err := s.CheckAdmin(userID, companyID); err != nil {
+		return nil, err
+	}
+	return s.CompanyRepo.Update(domain.Company{ID: companyID, Name: name})
 }
 
-func (s *companyService) DeleteCompany(id int64) error {
-	return s.repo.Delete(id)
+func (s *CompanyService) Delete(companyID, userID int64) error {
+	if err := s.CheckAdmin(userID, companyID); err != nil {
+		return err
+	}
+	return s.CompanyRepo.Delete(companyID)
+}
+
+func (s *CompanyService) CheckAdmin(userID, companyID int64) error {
+	roleIDPtr, err := s.CompanyRepo.GetUserRole(userID, companyID)
+	if err != nil {
+		return err
+	}
+	// Если связи нет или роль не равна 1 (admin)
+	if roleIDPtr == nil || *roleIDPtr != 1 {
+		return errors.New("операция доступна только администратору компании")
+	}
+	return nil
+}
+
+func (s *CompanyService) AddUserToCompany(userID, companyID int64) error {
+	return s.CompanyRepo.AddUserToCompany(userID, companyID, "developer")
+}
+
+// GetCompanyIntegrationByID возвращает настройки интеграций для компании.
+func (s *CompanyService) GetCompanyIntegrationByID(companyID int64) (*domain.CompanyIntegration, error) {
+	return s.IntegrationRepo.GetByID(companyID)
+}
+
+// CreateOrUpdateCompanyIntegration парсит JSON-пayload и сохраняет интеграции.
+// Требует, чтобы userID был администратором компании.
+func (s *CompanyService) CreateOrUpdateCompanyIntegration(
+	companyID int64,
+	payload string,
+) (*domain.CompanyIntegration, error) {
+	var ci domain.CompanyIntegration
+	if err := json.Unmarshal([]byte(payload), &ci); err != nil {
+		return nil, fmt.Errorf("неверный формат JSON интеграций: %w", err)
+	}
+
+	ci.CompanyID = companyID
+
+	return s.IntegrationRepo.CreateOrUpdate(&ci)
 }
