@@ -15,6 +15,7 @@ jobs:
           ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
           echo "$ENV_FILE" > .env
+          cat .env
       - name: Archive repository
         run: git archive --format=tgz HEAD -o victa.tar.gz
 
