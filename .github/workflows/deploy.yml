@@ -15,10 +15,10 @@ jobs:
           ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
           echo "$ENV_FILE" > .env
-          cat .env
       - name: Archive repository
-        run: git archive --format=tgz HEAD -o victa.tar.gz
-
+        run: |
+          tar czf victa.tar.gz --exclude='victa.tar.gz' --exclude='.git' .
+        
       - name: Copy archive and deploy script to server
         uses: appleboy/scp-action@v1
         with:
