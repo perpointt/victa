@@ -21,7 +21,7 @@ if [ -d "$PROJECT_DIR" ]; then
 fi
 
 echo "Распаковываем новый архив..."
-tar xzf /opt/victa/releases/new.tar.gz -C "$RELEASE_DIR"
+tar xzf /opt/victa/releases/victa.tar.gz -C "$RELEASE_DIR"
 
 echo "Обновляем симлинк: $PROJECT_DIR -> $RELEASE_DIR"
 ln -sfn "$RELEASE_DIR" "$PROJECT_DIR"
