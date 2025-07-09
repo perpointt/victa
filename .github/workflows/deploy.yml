@@ -12,10 +12,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Archive repository
-        run: |
-          mkdir artifacts
-          ls -la
-          tar czf artifacts/victa.tar.gz .
+        run: tar czf victa.tar.gz .
 
       - name: Copy archive and deploy script to server
         uses: appleboy/scp-action@v0.1.0
@@ -24,7 +21,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.REMOTE_PRIVATE_KEY }}
           source: |
-            artifacts/victa.tar.gz
+            victa.tar.gz
             deploy.sh
           target: "/opt/victa/releases/"
 
