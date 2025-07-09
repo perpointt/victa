@@ -17,7 +17,7 @@ type apiResponse struct {
 	Message string `json:"message"`
 }
 
-type BuildWebhookHandler struct {
+type CodemagicWebhookHandler struct {
 	factory      *bot_common.BotFactory
 	logger       logger.Logger
 	jwtSvc       *service.JWTService
@@ -25,15 +25,15 @@ type BuildWebhookHandler struct {
 	codemagicSvc *service.CodemagicService
 }
 
-func NewBuildWebhookHandler(
+func NewCodemagicWebhookHandler(
 
 	factory *bot_common.BotFactory,
 	logger logger.Logger,
 	jwtSvc *service.JWTService,
 	companySvc *service.CompanyService,
 	codemagicSvc *service.CodemagicService,
-) *BuildWebhookHandler {
-	return &BuildWebhookHandler{
+) *CodemagicWebhookHandler {
+	return &CodemagicWebhookHandler{
 		factory,
 		logger,
 		jwtSvc,
@@ -42,7 +42,7 @@ func NewBuildWebhookHandler(
 	}
 }
 
-func (h *BuildWebhookHandler) Handle(c *gin.Context) {
+func (h *CodemagicWebhookHandler) Handle(c *gin.Context) {
 	companyID, err := h.authorize(c)
 	if err != nil {
 		h.respondJSON(c, http.StatusUnauthorized, err.Error(), nil)
@@ -103,7 +103,7 @@ func (h *BuildWebhookHandler) Handle(c *gin.Context) {
 	h.respondJSON(c, http.StatusOK, "OK", nil)
 }
 
-func (h *BuildWebhookHandler) authorize(c *gin.Context) (int64, error) {
+func (h *CodemagicWebhookHandler) authorize(c *gin.Context) (int64, error) {
 	auth := c.GetHeader("Authorization")
 	if !strings.HasPrefix(auth, "Bearer ") {
 		return 0, fmt.Errorf("missing bearer token")
@@ -111,7 +111,7 @@ func (h *BuildWebhookHandler) authorize(c *gin.Context) (int64, error) {
 	return h.jwtSvc.ParseToken(strings.TrimPrefix(auth, "Bearer "))
 }
 
-func (h *BuildWebhookHandler) respondJSON(
+func (h *CodemagicWebhookHandler) respondJSON(
 	c *gin.Context,
 	code int,
 	msg string,

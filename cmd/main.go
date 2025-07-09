@@ -77,14 +77,14 @@ func main() {
 
 	r := gin.Default()
 
-	buildHandler := webhook.NewBuildWebhookHandler(
+	codemagicHandler := webhook.NewCodemagicWebhookHandler(
 		botFactory,
 		logg,
 		jwtSvc,
 		companySvc,
 		codemagicSvc,
 	)
-	r.POST("/webhook/build", buildHandler.Handle)
+	r.POST("/webhook/codemagic", codemagicHandler.Handle)
 
 	addr := ":" + cfg.APIPort
 	logg.Info("API сервер слушается на %s…", addr)
