@@ -40,7 +40,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.REMOTE_PRIVATE_KEY }}
           source: "victa.tar.gz,deploy.sh"
-          target: "/opt/victa/releases/"
+          target: "/opt/victa/"
 
       - name: Run deploy script on server
         uses: appleboy/ssh-action@v1
@@ -51,6 +51,4 @@ jobs:
           script: |
             set -e
             cd /opt/victa
-            mkdir -p releases
-            cp releases/deploy.sh .
             bash deploy.sh
