@@ -9,13 +9,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Archive repository
         run: git archive --format=tgz HEAD -o victa.tar.gz
 
       - name: Copy archive and deploy script to server
-        uses: appleboy/scp-action@v0.1.0
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
@@ -26,7 +26,7 @@ jobs:
           target: "/opt/victa/releases/"
 
       - name: Run deploy script on server
-        uses: appleboy/ssh-action@v0.1.7
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
