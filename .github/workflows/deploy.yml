@@ -14,6 +14,7 @@ jobs:
       - name: Archive repository
         run: |
           mkdir artifacts
+          ls -la
           tar czf artifacts/victa.tar.gz .
 
       - name: Copy archive and deploy script to server
