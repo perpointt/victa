@@ -20,9 +20,7 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.REMOTE_PRIVATE_KEY }}
-          source: |
-            victa.tar.gz
-            deploy.sh
+          source: "victa.tar.gz,deploy.sh"
           target: "/opt/victa/releases/"
 
       - name: Run deploy script on server
