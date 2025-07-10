@@ -89,6 +89,7 @@ func main() {
 		botFactory,
 		logg,
 		jwtSvc,
+		companySvc,
 	)
 
 	r.POST("/webhook/codemagic", codemagicHandler.Handle)

@@ -9,6 +9,7 @@ require (
 	github.com/gorilla/schema v1.4.1
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
+	github.com/yuin/goldmark v1.7.12
 )
 
 require (

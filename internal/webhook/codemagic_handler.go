@@ -89,7 +89,7 @@ func (h *CodemagicWebhookHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	bot.SendNewNotification(buildResp.Application, buildResp.Build)
+	bot.SendDeployNotification(buildResp.Application, buildResp.Build)
 
 	h.SendNewResponse(c, http.StatusOK, "OK")
 }
