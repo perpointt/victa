@@ -83,7 +83,7 @@ func (h *CodemagicWebhookHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	bot, err := notification_bot.NewBot(baseBot, *integration.NotificationChatID)
+	bot, err := notification_bot.NewBot(baseBot, *integration.DeployNotificationChatID)
 	if err != nil {
 		h.SendNewResponse(c, http.StatusUnauthorized, err.Error())
 		return

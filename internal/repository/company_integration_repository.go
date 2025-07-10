@@ -28,7 +28,7 @@ func NewPostgresCompanyIntegrationRepo(db *sql.DB) *PostgresCompanyIntegrationRe
 func (r *PostgresCompanyIntegrationRepo) GetByID(companyID int64) (*domain.CompanyIntegration, error) {
 	var ci domain.CompanyIntegration
 	err := r.DB.QueryRow(
-		`SELECT company_id, codemagic_api_key, notification_bot_token, notification_chat_id
+		`SELECT company_id, codemagic_api_key, notification_bot_token, deploy_notification_chat_id, issues_notification_chat_id
          FROM company_integrations
          WHERE company_id = $1`,
 		companyID,
@@ -36,7 +36,8 @@ func (r *PostgresCompanyIntegrationRepo) GetByID(companyID int64) (*domain.Compa
 		&ci.CompanyID,
 		&ci.CodemagicAPIKey,
 		&ci.NotificationBotToken,
-		&ci.NotificationChatID,
+		&ci.DeployNotificationChatID,
+		&ci.IssuesNotificationChatID,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
@@ -52,17 +53,19 @@ func (r *PostgresCompanyIntegrationRepo) GetByID(companyID int64) (*domain.Compa
 func (r *PostgresCompanyIntegrationRepo) CreateOrUpdate(ci *domain.CompanyIntegration) (*domain.CompanyIntegration, error) {
 	row := r.DB.QueryRow(
 		`INSERT INTO company_integrations
-             (company_id, codemagic_api_key, notification_bot_token, notification_chat_id)
+             (company_id, codemagic_api_key, notification_bot_token, deploy_notification_chat_id, issues_notification_chat_id)
          VALUES ($1, $2, $3, $4)
          ON CONFLICT (company_id) DO UPDATE
            SET codemagic_api_key      = EXCLUDED.codemagic_api_key,
                notification_bot_token = EXCLUDED.notification_bot_token,
-               notification_chat_id   = EXCLUDED.notification_chat_id
-         RETURNING company_id, codemagic_api_key, notification_bot_token, notification_chat_id`,
+               deploy_notification_chat_id   = EXCLUDED.deploy_notification_chat_id,
+               issues_notification_chat_id = EXCLUDED.issues_notification_chat_id
+         RETURNING company_id, codemagic_api_key, notification_bot_token, deploy_notification_chat_id, issues_notification_chat_id`,
 		ci.CompanyID,
 		ci.CodemagicAPIKey,
 		ci.NotificationBotToken,
-		ci.NotificationChatID,
+		ci.DeployNotificationChatID,
+		ci.IssuesNotificationChatID,
 	)
 
 	var updated domain.CompanyIntegration
@@ -70,7 +73,8 @@ func (r *PostgresCompanyIntegrationRepo) CreateOrUpdate(ci *domain.CompanyIntegr
 		&updated.CompanyID,
 		&updated.CodemagicAPIKey,
 		&updated.NotificationBotToken,
-		&updated.NotificationChatID,
+		&updated.DeployNotificationChatID,
+		&updated.IssuesNotificationChatID,
 	); err != nil {
 		return nil, err
 	}
