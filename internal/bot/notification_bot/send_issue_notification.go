@@ -44,6 +44,7 @@ func (bot *Bot) buildIssueText(issue domain.GitlabWebhook) string {
 	case "issue":
 		switch issue.ObjectAttributes.Action {
 		case "open":
+		case "reopen":
 			b.WriteString("🚀 <b>Задача открыта</b>")
 		case "close":
 			b.WriteString("✅ <b>Задача закрыта</b>")
