@@ -9,16 +9,17 @@ import (
 )
 
 var ruBuildStatus = map[string]string{
-	"failed":   "Ошибка при сборке",
-	"cancel":   "Сборка отменена",
-	"finished": "Сборка завершена",
+	"failed":     "Ошибка при сборке",
+	"cancel":     "Сборка отменена",
+	"finished":   "Сборка завершена",
+	"publishing": "Сборка завершена",
 }
 
 var emojiByBuildStatus = map[string]string{
-	"success":  "✅",
-	"finished": "✅",
-	"canceled": "⚠️",
-	"failed":   "❌",
+	"publishing": "✅",
+	"finished":   "✅",
+	"canceled":   "⚠️",
+	"failed":     "❌",
 }
 
 var buildStepAlias = map[string]string{
@@ -77,7 +78,13 @@ func (bot *Bot) buildDeployText(
 		}
 	}
 
-	duration := build.FinishedAt.Sub(build.StartedAt).Round(time.Second)
+	var duration time.Duration
+	if build.FinishedAt.IsZero() {
+		duration = time.Since(build.StartedAt)
+	} else {
+		duration = build.FinishedAt.Sub(build.StartedAt)
+	}
+	duration = duration.Round(time.Second)
 	version := build.Version
 	if version == "" {
 		version = "Не определена"
