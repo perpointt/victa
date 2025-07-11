@@ -44,9 +44,12 @@ func (h *GitlabWebhookHandler) Handle(c *gin.Context) {
 	}
 
 	// Если исьюха закрыта, то игнорируем сообщения об обновлении, т.к. при закрытии исьюхи уже срабатывает обработчик уведомление дублируется
-	if payload.ObjectKind == "issue" && payload.ObjectAttributes.Action == "update" && payload.Changes.ClosedAt.Current != nil {
-		h.SendNewResponse(c, http.StatusOK, "OK, but ignored")
-		return
+	if payload.ObjectKind == "issue" && payload.ObjectAttributes.Action == "update" {
+		if (payload.Changes.ClosedAt.Previous == nil && payload.Changes.ClosedAt.Current != nil) ||
+			(payload.Changes.ClosedAt.Current == nil && payload.Changes.ClosedAt.Previous != nil) {
+			h.SendNewResponse(c, http.StatusOK, "OK, but ignored")
+			return
+		}
 	}
 
 	integration, err := h.companySvc.GetCompanyIntegrationByID(companyID)
