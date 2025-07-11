@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -26,7 +27,13 @@ func (s *JWTService) GenerateToken(companyID int64) (string, error) {
 		"iat":        time.Now().Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(s.secret)
+
+	signedToken, err := token.SignedString(s.secret)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("Bearer %s", signedToken), nil
 }
 
 // ParseToken разбирает и проверяет токен, возвращает companyID.

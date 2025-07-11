@@ -31,7 +31,7 @@ func NewBaseWebhook(
 func (wh *BaseWebhook) Authorize(c *gin.Context) (int64, error) {
 	auth := c.GetHeader("Authorization")
 	if !strings.HasPrefix(auth, "Bearer ") {
-		return 0, fmt.Errorf("missing bearer token")
+		return 0, fmt.Errorf("missing authorization token")
 	}
 	return wh.jwtSvc.ParseToken(strings.TrimPrefix(auth, "Bearer "))
 }
