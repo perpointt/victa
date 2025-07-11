@@ -50,6 +50,8 @@ func (bot *Bot) buildIssueText(issue domain.GitlabWebhook) string {
 			b.WriteString("✅ <b>Задача закрыта</b>")
 		case "update":
 			b.WriteString("🔄 <b>Задача обновлена</b>")
+		default:
+			fmt.Fprintf(&b, "<b>%s</b>", issue.ObjectAttributes.Action)
 		}
 
 		fmt.Fprintf(&b,
@@ -63,6 +65,8 @@ func (bot *Bot) buildIssueText(issue domain.GitlabWebhook) string {
 			b.WriteString("💬 <b>Новый комментарий</b>")
 		case "update":
 			b.WriteString("💬 <b>Комментарий отредактирован</b>")
+		default:
+			fmt.Fprintf(&b, "<b>%s</b>", issue.ObjectAttributes.Action)
 		}
 
 		fmt.Fprintf(&b,
