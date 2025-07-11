@@ -53,14 +53,14 @@ func (r *PostgresCompanyIntegrationRepo) GetByID(companyID int64) (*domain.Compa
 func (r *PostgresCompanyIntegrationRepo) CreateOrUpdate(ci *domain.CompanyIntegration) (*domain.CompanyIntegration, error) {
 	row := r.DB.QueryRow(
 		`INSERT INTO company_integrations
-             (company_id, codemagic_api_key, notification_bot_token, deploy_notification_chat_id, issues_notification_chat_id)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (company_id) DO UPDATE
-           SET codemagic_api_key      = EXCLUDED.codemagic_api_key,
-               notification_bot_token = EXCLUDED.notification_bot_token,
-               deploy_notification_chat_id   = EXCLUDED.deploy_notification_chat_id,
-               issues_notification_chat_id = EXCLUDED.issues_notification_chat_id
-         RETURNING company_id, codemagic_api_key, notification_bot_token, deploy_notification_chat_id, issues_notification_chat_id`,
+         (company_id, codemagic_api_key, notification_bot_token, deploy_notification_chat_id, issues_notification_chat_id)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (company_id) DO UPDATE
+       SET codemagic_api_key            = EXCLUDED.codemagic_api_key,
+           notification_bot_token       = EXCLUDED.notification_bot_token,
+           deploy_notification_chat_id  = EXCLUDED.deploy_notification_chat_id,
+           issues_notification_chat_id  = EXCLUDED.issues_notification_chat_id
+     RETURNING company_id, codemagic_api_key, notification_bot_token, deploy_notification_chat_id, issues_notification_chat_id`,
 		ci.CompanyID,
 		ci.CodemagicAPIKey,
 		ci.NotificationBotToken,
