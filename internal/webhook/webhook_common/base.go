@@ -34,7 +34,7 @@ func (wh *BaseWebhook) Authorize(c *gin.Context) (int64, error) {
 	if auth == "" {
 		token := c.Query("access_token")
 		if token != "" {
-			c.Request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+			auth = fmt.Sprintf("Bearer %s", token)
 		}
 	}
 
