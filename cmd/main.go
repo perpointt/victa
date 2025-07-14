@@ -92,8 +92,16 @@ func main() {
 		companySvc,
 	)
 
+	bugsnagHandler := webhook.NewBugsnagWebhookHandler(
+		botFactory,
+		logg,
+		jwtSvc,
+		companySvc,
+	)
+
 	r.POST("/webhook/codemagic", codemagicHandler.Handle)
 	r.POST("/webhook/gitlab", gitlabHandler.Handle)
+	r.POST("/webhook/bugsnag", bugsnagHandler.Handle)
 
 	addr := ":" + cfg.APIPort
 	logg.Info("API сервер слушается на %s…", addr)

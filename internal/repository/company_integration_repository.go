@@ -7,10 +7,10 @@ import (
 )
 
 // CompanyIntegrationRepository определяет методы для работы с company_integrations.
+// GetByID возвращает настройки интеграций для заданной компании или nil, если их нет.
+// CreateOrUpdate создаёт или обновляет настройки интеграций и возвращает их.
 type CompanyIntegrationRepository interface {
-	// GetByID возвращает настройки интеграций для заданной компании или nil, если их нет.
 	GetByID(companyID int64) (*domain.CompanyIntegration, error)
-	// CreateOrUpdate создаёт или обновляет настройки интеграций компании и возвращает их.
 	CreateOrUpdate(ci *domain.CompanyIntegration) (*domain.CompanyIntegration, error)
 }
 
@@ -28,7 +28,12 @@ func NewPostgresCompanyIntegrationRepo(db *sql.DB) *PostgresCompanyIntegrationRe
 func (r *PostgresCompanyIntegrationRepo) GetByID(companyID int64) (*domain.CompanyIntegration, error) {
 	var ci domain.CompanyIntegration
 	err := r.DB.QueryRow(
-		`SELECT company_id, codemagic_api_key, notification_bot_token, deploy_notification_chat_id, issues_notification_chat_id
+		`SELECT company_id,
+		        codemagic_api_key,
+		        notification_bot_token,
+		        deploy_notification_chat_id,
+		        issues_notification_chat_id,
+		        errors_notification_chat_id
          FROM company_integrations
          WHERE company_id = $1`,
 		companyID,
@@ -38,11 +43,11 @@ func (r *PostgresCompanyIntegrationRepo) GetByID(companyID int64) (*domain.Compa
 		&ci.NotificationBotToken,
 		&ci.DeployNotificationChatID,
 		&ci.IssuesNotificationChatID,
+		&ci.ErrorsNotificationChatID,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -53,19 +58,31 @@ func (r *PostgresCompanyIntegrationRepo) GetByID(companyID int64) (*domain.Compa
 func (r *PostgresCompanyIntegrationRepo) CreateOrUpdate(ci *domain.CompanyIntegration) (*domain.CompanyIntegration, error) {
 	row := r.DB.QueryRow(
 		`INSERT INTO company_integrations
-         (company_id, codemagic_api_key, notification_bot_token, deploy_notification_chat_id, issues_notification_chat_id)
-     VALUES ($1, $2, $3, $4, $5)
+         (company_id,
+          codemagic_api_key,
+          notification_bot_token,
+          deploy_notification_chat_id,
+          issues_notification_chat_id,
+          errors_notification_chat_id)
+     VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (company_id) DO UPDATE
        SET codemagic_api_key            = EXCLUDED.codemagic_api_key,
            notification_bot_token       = EXCLUDED.notification_bot_token,
            deploy_notification_chat_id  = EXCLUDED.deploy_notification_chat_id,
-           issues_notification_chat_id  = EXCLUDED.issues_notification_chat_id
-     RETURNING company_id, codemagic_api_key, notification_bot_token, deploy_notification_chat_id, issues_notification_chat_id`,
+           issues_notification_chat_id  = EXCLUDED.issues_notification_chat_id,
+           errors_notification_chat_id  = EXCLUDED.errors_notification_chat_id
+     RETURNING company_id,
+               codemagic_api_key,
+               notification_bot_token,
+               deploy_notification_chat_id,
+               issues_notification_chat_id,
+               errors_notification_chat_id`,
 		ci.CompanyID,
 		ci.CodemagicAPIKey,
 		ci.NotificationBotToken,
 		ci.DeployNotificationChatID,
 		ci.IssuesNotificationChatID,
+		ci.ErrorsNotificationChatID,
 	)
 
 	var updated domain.CompanyIntegration
@@ -75,6 +92,7 @@ func (r *PostgresCompanyIntegrationRepo) CreateOrUpdate(ci *domain.CompanyIntegr
 		&updated.NotificationBotToken,
 		&updated.DeployNotificationChatID,
 		&updated.IssuesNotificationChatID,
+		&updated.ErrorsNotificationChatID,
 	); err != nil {
 		return nil, err
 	}
