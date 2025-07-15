@@ -27,18 +27,20 @@ func (bot *Bot) buildIssueText(issue domain.GitlabWebhook) string {
 	issueIID := fmt.Sprintf("%d", obj.IID)
 
 	fmt.Fprintf(&b,
-		"<b><a href=\"%s\">%s</a> | <a href=\"%s\">#%s</a></b>\n\n",
+		"📋 <b><a href=\"%s\">%s</a> | <a href=\"%s\">#%s</a></b>\n",
 		projectURL, projectName, issueURL, issueIID,
 	)
 
-	fmt.Fprintf(&b,
-		"• Задача: <b>%s</b>\n",
-		bot.Escape(obj.Title),
-	)
-	fmt.Fprintf(&b,
-		"• Статус: <b>%s</b>\n\n",
-		bot.Escape(bot.ruIssueStatus(obj.State)),
-	)
+	meta := []string{
+		fmt.Sprintf("\n<b>• Задача:</b> %s", bot.Escape(obj.Title)),
+		fmt.Sprintf("<b>• Статус:</b> %s", bot.Escape(obj.State)),
+	}
+
+	for _, m := range meta {
+		b.WriteString(m + "\n")
+	}
+
+	b.WriteString("\n")
 
 	switch issue.ObjectKind {
 	case "issue":

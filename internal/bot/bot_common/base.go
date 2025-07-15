@@ -7,30 +7,30 @@ import (
 
 type BaseBot struct {
 	BotAPI *tgbotapi.BotAPI
-	logger logger.Logger
+	Logger logger.Logger
 }
 
 func NewBaseBot(api *tgbotapi.BotAPI, logger logger.Logger) *BaseBot {
 	return &BaseBot{
 		BotAPI: api,
-		logger: logger,
+		Logger: logger,
 	}
 }
 
 func (b *BaseBot) AnswerCallback(callback *tgbotapi.CallbackQuery, text string) {
 	answer := tgbotapi.NewCallback(callback.ID, text)
 	if _, err := b.BotAPI.Request(answer); err != nil {
-		b.logger.Errorf(err.Error())
+		b.Logger.Errorf(err.Error())
 	}
 }
 
 func (b *BaseBot) SendErrorMessage(chatID int64, err error) *tgbotapi.Message {
-	b.logger.ErrorDepth(3, err.Error())
+	b.Logger.ErrorDepth(3, err.Error())
 
 	msg, err := b.BotAPI.Send(b.NewMessage(chatID, err.Error()))
 
 	if err != nil {
-		b.logger.Errorf(err.Error())
+		b.Logger.Errorf(err.Error())
 		return nil
 	}
 
@@ -41,7 +41,7 @@ func (b *BaseBot) SendMessage(config tgbotapi.MessageConfig) *tgbotapi.Message {
 	msg, err := b.BotAPI.Send(config)
 
 	if err != nil {
-		b.logger.Errorf(err.Error())
+		b.Logger.Errorf(err.Error())
 		return nil
 	}
 
@@ -62,7 +62,7 @@ func (b *BaseBot) EditMessage(messageID int, config tgbotapi.MessageConfig) *tgb
 	msg, err := b.BotAPI.Send(editMsg)
 
 	if err != nil {
-		b.logger.Errorf(err.Error())
+		b.Logger.Errorf(err.Error())
 		return nil
 	}
 
@@ -72,7 +72,7 @@ func (b *BaseBot) EditMessage(messageID int, config tgbotapi.MessageConfig) *tgb
 func (b *BaseBot) DeleteMessage(chatID int64, messageID int) {
 	delMsg := tgbotapi.NewDeleteMessage(chatID, messageID)
 	if _, err := b.BotAPI.Request(delMsg); err != nil {
-		b.logger.Errorf(err.Error())
+		b.Logger.Errorf(err.Error())
 	}
 }
 

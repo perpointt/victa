@@ -1,9 +1,8 @@
 package webhook
 
 import (
-	"bytes"
-	"io"
 	"net/http"
+	"victa/internal/domain"
 
 	"github.com/gin-gonic/gin"
 	"victa/internal/bot/bot_common"
@@ -38,16 +37,12 @@ func (h *BugsnagWebhookHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	// Читаем и логируем тело запроса
-	bodyBytes, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		h.Logger.Errorf("Failed to read request body: %v", err)
-		h.SendNewResponse(c, http.StatusBadRequest, "invalid request body")
+	var payload domain.BugsnagWebhook
+
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		h.SendNewResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-
-	h.Logger.Info("Incoming Bugsnag payload: %s", string(bodyBytes))
 
 	// Получаем интеграцию для компании
 	integration, err := h.companySvc.GetCompanyIntegrationByID(companyID)
@@ -74,7 +69,7 @@ func (h *BugsnagWebhookHandler) Handle(c *gin.Context) {
 	}
 
 	// Отправляем уведомление
-	bot.SendBugsnagNotification(string(bodyBytes))
+	bot.SendBugsnagNotification(payload)
 
 	h.SendNewResponse(c, http.StatusOK, "OK")
 }

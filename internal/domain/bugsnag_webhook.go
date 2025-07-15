@@ -10,16 +10,16 @@ type BugsnagWebhook struct {
 	Trigger struct {
 		Type string `json:"type"`
 	} `json:"trigger"`
-	UserID        string     `json:"user_id"`
-	FirstReceived *time.Time `json:"firstReceived"`
-	ReceivedAt    *time.Time `json:"receivedAt"`
-	Severity      string     `json:"severity"`
-	Occurrences   int64      `json:"occurrences"`
-	Error         struct {
-		Message string `json:"message"`
-		Context string `json:"context"`
-		URL     string `json:"url"`
-		App     struct {
+	Error struct {
+		Message       string     `json:"message"`
+		URL           string     `json:"url"`
+		Status        string     `json:"status"`
+		Unhandled     bool       `json:"unhandled"`
+		Occurrences   int64      `json:"occurrences"`
+		FirstReceived *time.Time `json:"firstReceived"`
+		ReceivedAt    *time.Time `json:"receivedAt"`
+		UserID        string     `json:"userId"`
+		App           struct {
 			ID          string `json:"id"`
 			Version     string `json:"version"`
 			VersionCode string `json:"versionCode"`

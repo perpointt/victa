@@ -9,15 +9,19 @@ import (
 )
 
 var ruBuildStatus = map[string]string{
-	"failed":     "Ошибка при сборке",
-	"cancel":     "Сборка отменена",
-	"finished":   "Сборка завершена",
 	"publishing": "Сборка завершена",
+	"finished":   "Сборка завершена",
+	"success":    "Сборка завершена",
+	"cancel":     "Сборка отменена",
+	"canceled":   "Сборка отменена",
+	"failed":     "Ошибка при сборке",
 }
 
 var emojiByBuildStatus = map[string]string{
 	"publishing": "✅",
 	"finished":   "✅",
+	"success":    "✅",
+	"cancel":     "⚠️",
 	"canceled":   "⚠️",
 	"failed":     "❌",
 }
@@ -91,16 +95,16 @@ func (bot *Bot) buildDeployText(
 	}
 
 	meta := []string{
-		fmt.Sprintf("\n<b>Версия:</b> %s", bot.Escape(version)),
-		fmt.Sprintf("<b>Время сборки:</b> %s", bot.Escape(duration.String())),
+		fmt.Sprintf("\n<b>• Версия:</b> %s", bot.Escape(version)),
+		fmt.Sprintf("<b>• Время сборки:</b> %s", duration.String()),
 
-		fmt.Sprintf("\n<b>ID билда:</b> <code>%s</code>", bot.Escape(build.ID)),
-		fmt.Sprintf("<b>Платформы:</b> %s", bot.Escape(strings.Join(build.Config.BuildSettings.Platforms, ", "))),
-		fmt.Sprintf("<b>Версия Flutter:</b> %s", bot.Escape(build.Config.BuildSettings.FlutterVersion)),
+		fmt.Sprintf("<b>• ID билда:</b> <code>%s</code>", bot.Escape(build.ID)),
+		fmt.Sprintf("<b>• Платформы:</b> %s", bot.Escape(strings.Join(build.Config.BuildSettings.Platforms, ", "))),
+		fmt.Sprintf("<b>• Версия Flutter:</b> %s", bot.Escape(build.Config.BuildSettings.FlutterVersion)),
 
-		fmt.Sprintf("\n<b>Ветка:</b> %s", bot.Escape(build.Commit.Branch)),
-		fmt.Sprintf("<b>Коммит:</b> <code>%s</code>", bot.Escape(build.Commit.CommitMessage)),
-		fmt.Sprintf("<b>Автор коммита:</b> %s", bot.Escape(build.Commit.AuthorName)),
+		fmt.Sprintf("<b>• Ветка:</b> %s", bot.Escape(build.Commit.Branch)),
+		fmt.Sprintf("<b>• Коммит:</b> <code>%s</code>", bot.Escape(build.Commit.CommitMessage)),
+		fmt.Sprintf("<b>• Автор коммита:</b> %s", bot.Escape(build.Commit.AuthorName)),
 	}
 
 	for _, m := range meta {
@@ -108,11 +112,11 @@ func (bot *Bot) buildDeployText(
 	}
 
 	if strings.ToLower(build.Status) != "success" && build.Message != "" {
-		fmt.Fprintf(&b, "\n<pre>%s</pre>\n", bot.Escape(build.Message))
+		fmt.Fprintf(&b, "\n<i>️Текст ошибки:</i>\n<pre>%s</pre>\n", bot.Escape(build.Message))
 	}
 
 	if len(build.BuildActions) > 0 {
-		b.WriteString("\n<blockquote expandable>⚙️ <b>Шаги сборки</b>:\n")
+		b.WriteString("\n<i>Шаги сборки:</i><blockquote expandable>\n")
 		for _, act := range build.BuildActions {
 			fmt.Fprintf(
 				&b,
@@ -132,7 +136,7 @@ func (bot *Bot) buildDeployText(
 
 	fmt.Fprintf(
 		&b,
-		"\n\n\n🔗 <b><a href=\"%s\">Информация о сборке</a></b>\n",
+		"\n\n🔗 <b><a href=\"%s\">Информация о сборке</a></b>\n",
 		bot.Escape(buildURL),
 	)
 

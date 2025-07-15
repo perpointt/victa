@@ -45,8 +45,8 @@ func (h *GitlabIssueWebhookHandler) Handle(c *gin.Context) {
 
 	// Если исьюха закрыта, то игнорируем сообщения об обновлении, т.к. при закрытии исьюхи уже срабатывает обработчик уведомление дублируется
 	if payload.ObjectKind == "issue" && payload.ObjectAttributes.Action == "update" {
-		if (payload.Changes.ClosedAt.Previous == nil && payload.Changes.ClosedAt.Current != nil) ||
-			(payload.Changes.ClosedAt.Current == nil && payload.Changes.ClosedAt.Previous != nil) {
+		if payload.Changes.ClosedAt != nil && ((payload.Changes.ClosedAt.Previous == nil && payload.Changes.ClosedAt.Current != nil) ||
+			(payload.Changes.ClosedAt.Current == nil && payload.Changes.ClosedAt.Previous != nil)) {
 			h.SendNewResponse(c, http.StatusOK, "OK, but ignored")
 			return
 		}
