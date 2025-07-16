@@ -1,6 +1,7 @@
 package victa_bot
 
 import (
+	"context"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -16,23 +17,23 @@ func (b *Bot) HandleCreateCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	b.SendPendingMessage(b.NewKeyboardMessage(chatID, msgText, keyboard))
 }
 
-func (b *Bot) HandleCompanyNameCreated(message *tgbotapi.Message) {
+func (b *Bot) HandleCompanyNameCreated(ctx context.Context, message *tgbotapi.Message) {
 	chatID := message.Chat.ID
 	tgID := message.From.ID
 
-	user, err := b.UserSvc.GetByTgID(tgID)
+	user, err := b.UserSvc.GetByTgID(ctx, tgID)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
 	}
 
-	company, err := b.CompanySvc.Create(message.Text, user.ID)
+	company, err := b.CompanySvc.Create(ctx, message.Text, user.ID)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
 	}
 
-	config := b.BuildCompanyDetail(chatID, company, user)
+	config := b.BuildCompanyDetail(ctx, chatID, company, user)
 
 	b.ClearChatState(chatID)
 

@@ -1,6 +1,7 @@
 package victa_bot
 
 import (
+	"context"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -21,7 +22,7 @@ func (b *Bot) HandleDeleteUserCallback(callback *tgbotapi.CallbackQuery) {
 	b.SendPendingMessage(confirmMessage)
 }
 
-func (b *Bot) HandleConfirmDeleteUserCallback(callback *tgbotapi.CallbackQuery) {
+func (b *Bot) HandleConfirmDeleteUserCallback(ctx context.Context, callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	tgID := callback.From.ID
 	params, err := b.GetCallbackArgs(callback.Data)
@@ -30,19 +31,19 @@ func (b *Bot) HandleConfirmDeleteUserCallback(callback *tgbotapi.CallbackQuery) 
 		return
 	}
 
-	err = b.UserSvc.DeleteFromCompany(params.UserID, params.CompanyID)
+	err = b.UserSvc.DeleteFromCompany(ctx, params.UserID, params.CompanyID)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
 	}
 
-	company, err := b.CompanySvc.GetByID(params.CompanyID)
+	company, err := b.CompanySvc.GetByID(ctx, params.CompanyID)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
 	}
 
-	userList, err := b.BuildUserList(chatID, tgID, company)
+	userList, err := b.BuildUserList(ctx, chatID, tgID, company)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return

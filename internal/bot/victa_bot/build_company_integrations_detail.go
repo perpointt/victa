@@ -1,14 +1,17 @@
 package victa_bot
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"victa/internal/domain"
+	appErr "victa/internal/errors"
 )
 
-func (b *Bot) BuildCompanyIntegrationsDetail(chatID int64, company *domain.Company) (*tgbotapi.MessageConfig, error) {
-	ci, err := b.CompanySvc.GetCompanyIntegrationByID(company.ID)
-	if err != nil {
+func (b *Bot) BuildCompanyIntegrationsDetail(ctx context.Context, chatID int64, company *domain.Company) (*tgbotapi.MessageConfig, error) {
+	ci, err := b.CompanySvc.GetCompanyIntegrationByID(ctx, company.ID)
+	if err != nil && !errors.Is(err, appErr.ErrIntegrationNotFound) {
 		return nil, err
 	}
 

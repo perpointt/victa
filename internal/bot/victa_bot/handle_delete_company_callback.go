@@ -1,6 +1,7 @@
 package victa_bot
 
 import (
+	"context"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -21,7 +22,7 @@ func (b *Bot) HandleDeleteCompanyCallback(callback *tgbotapi.CallbackQuery) {
 	b.SendPendingMessage(confirmMessage)
 }
 
-func (b *Bot) HandleConfirmDeleteCompanyCallback(callback *tgbotapi.CallbackQuery) {
+func (b *Bot) HandleConfirmDeleteCompanyCallback(ctx context.Context, callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	tgID := callback.From.ID
 	params, err := b.GetCallbackArgs(callback.Data)
@@ -30,7 +31,7 @@ func (b *Bot) HandleConfirmDeleteCompanyCallback(callback *tgbotapi.CallbackQuer
 		return
 	}
 
-	user, err := b.UserSvc.GetByTgID(tgID)
+	user, err := b.UserSvc.GetByTgID(ctx, tgID)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
@@ -40,12 +41,12 @@ func (b *Bot) HandleConfirmDeleteCompanyCallback(callback *tgbotapi.CallbackQuer
 		return
 	}
 
-	if err := b.CompanySvc.Delete(params.CompanyID, user.ID); err != nil {
+	if err := b.CompanySvc.Delete(ctx, params.CompanyID, user.ID); err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
 	}
 
-	menu, err := b.BuildMainMenu(chatID, user)
+	menu, err := b.BuildMainMenu(ctx, chatID, user)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return

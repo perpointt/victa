@@ -20,17 +20,17 @@ func NewBaseBot(api *tgbotapi.BotAPI, logger logger.Logger) *BaseBot {
 func (b *BaseBot) AnswerCallback(callback *tgbotapi.CallbackQuery, text string) {
 	answer := tgbotapi.NewCallback(callback.ID, text)
 	if _, err := b.BotAPI.Request(answer); err != nil {
-		b.Logger.Errorf(err.Error())
+		b.Logger.Error(err.Error())
 	}
 }
 
 func (b *BaseBot) SendErrorMessage(chatID int64, err error) *tgbotapi.Message {
-	b.Logger.ErrorDepth(3, err.Error())
+	b.Logger.Error(err.Error())
 
 	msg, err := b.BotAPI.Send(b.NewMessage(chatID, err.Error()))
 
 	if err != nil {
-		b.Logger.Errorf(err.Error())
+		b.Logger.Error(err.Error())
 		return nil
 	}
 
@@ -41,7 +41,7 @@ func (b *BaseBot) SendMessage(config tgbotapi.MessageConfig) *tgbotapi.Message {
 	msg, err := b.BotAPI.Send(config)
 
 	if err != nil {
-		b.Logger.Errorf(err.Error())
+		b.Logger.Error(err.Error())
 		return nil
 	}
 
@@ -62,7 +62,7 @@ func (b *BaseBot) EditMessage(messageID int, config tgbotapi.MessageConfig) *tgb
 	msg, err := b.BotAPI.Send(editMsg)
 
 	if err != nil {
-		b.Logger.Errorf(err.Error())
+		b.Logger.Error(err.Error())
 		return nil
 	}
 
@@ -72,7 +72,7 @@ func (b *BaseBot) EditMessage(messageID int, config tgbotapi.MessageConfig) *tgb
 func (b *BaseBot) DeleteMessage(chatID int64, messageID int) {
 	delMsg := tgbotapi.NewDeleteMessage(chatID, messageID)
 	if _, err := b.BotAPI.Request(delMsg); err != nil {
-		b.Logger.Errorf(err.Error())
+		b.Logger.Error(err.Error())
 	}
 }
 

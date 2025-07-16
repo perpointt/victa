@@ -2,74 +2,76 @@ package logger
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
+	"sync/atomic"
+	"time"
 )
 
-// Logger — наш интерфейс для логирования.
+/* ---------- уровни ---------- */
+
+type Level uint8
+
+const (
+	LevelDebug Level = iota
+	LevelInfo
+	LevelWarn
+	LevelError
+	LevelOff
+)
+
+var levelNames = [...]string{"DEBUG", "INFO", "WARN", "ERROR"}
+
 type Logger interface {
-	Info(format string, args ...interface{})
-	Warn(format string, args ...interface{})
-	Errorf(format string, args ...interface{})
-	Debug(format string, args ...interface{})
+	Debug(msg string, args ...any)
+	Info(msg string, args ...any)
+	Warn(msg string, args ...any)
+	Error(msg string, args ...any)
 
-	InfoDepth(depth int, format string, args ...interface{})
-	WarnDepth(depth int, format string, args ...interface{})
-	ErrorDepth(depth int, format string, args ...interface{})
-	DebugDepth(depth int, format string, args ...interface{})
+	SetLevel(lvl Level)
+	Level() Level
 }
 
-// stdLogger — конкретная реализация на базе log.Logger.
 type stdLogger struct {
-	base *log.Logger
+	out   *log.Logger
+	level atomic.Uint32
 }
 
-// New создает Logger, выводящий дату, время и файл:строку.
-func New() Logger {
-	// логгер по умолчанию пишет в stderr, флаги будут устанавливаться вручную.
-	base := log.New(os.Stderr, "", 0)
-	// устанавливаем формат: дата+время + краткий файл/строка
-	base.SetFlags(log.LstdFlags) // yyyy/mm/dd hh:mm:ss
-	return &stdLogger{
-		base: base,
+// New возвращает потокобезопасный Logger.
+// writer — куда писать (nil = os.Stderr), lvl — минимальный уровень вывода.
+func New(writer io.Writer, lvl Level) Logger {
+	if writer == nil {
+		writer = os.Stderr
 	}
-}
-
-// общий вывод
-func (l *stdLogger) output(depth int, level, format string, args ...interface{}) {
-	_, file, line, ok := runtime.Caller(depth)
-	if !ok {
-		file = "???"
-		line = 0
+	l := &stdLogger{
+		out: log.New(writer, "", 0), // флаги не нужны, дату вставляем сами
 	}
-	prefix := fmt.Sprintf("%s:%d [%s] ", filepath.Base(file), line, level)
-	msg := fmt.Sprintf(format, args...)
-	// 0 тут значит — не добавлять ещё раз дату/время (они уже в base.Flags)
-	l.base.Output(0, prefix+msg)
+	l.level.Store(uint32(lvl))
+	return l
 }
 
-func (l *stdLogger) Info(format string, args ...interface{})   { l.output(2, "INFO", format, args...) }
-func (l *stdLogger) Errorf(format string, args ...interface{}) { l.output(2, "ERROR", format, args...) }
-func (l *stdLogger) Warn(format string, args ...interface{})   { l.output(2, "WARN", format, args...) }
-func (l *stdLogger) Debug(format string, args ...interface{})  { l.output(2, "DEBUG", format, args...) }
+func (l *stdLogger) Debug(f string, a ...any) { l.log(LevelDebug, f, a...) }
+func (l *stdLogger) Info(f string, a ...any)  { l.log(LevelInfo, f, a...) }
+func (l *stdLogger) Warn(f string, a ...any)  { l.log(LevelWarn, f, a...) }
+func (l *stdLogger) Error(f string, a ...any) { l.log(LevelError, f, a...) }
 
-func (l *stdLogger) InfoDepth(depth int, format string, args ...interface{}) {
-	l.output(depth, "INFO", format, args...)
-}
-func (l *stdLogger) WarnDepth(depth int, format string, args ...interface{}) {
-	l.output(depth, "WARN", format, args...)
-}
-func (l *stdLogger) ErrorDepth(depth int, format string, args ...interface{}) {
-	l.output(depth, "ERROR", format, args...)
-}
-func (l *stdLogger) DebugDepth(depth int, format string, args ...interface{}) {
-	l.output(depth, "DEBUG", format, args...)
-}
+func (l *stdLogger) SetLevel(lvl Level) { l.level.Store(uint32(lvl)) }
+func (l *stdLogger) Level() Level       { return Level(l.level.Load()) }
 
-// itoa — быстрый int→string
-func itoa(i int) string {
-	return strconv.FormatInt(int64(i), 10)
+func (l *stdLogger) log(lvl Level, format string, args ...any) {
+	if lvl < Level(l.level.Load()) {
+		return
+	}
+
+	_, file, line, _ := runtime.Caller(3) // 3 — Debug/Info → log → runtime
+	prefix := fmt.Sprintf("%s %s:%d [%s] ",
+		time.Now().UTC().Format(time.RFC3339),
+		filepath.Base(file), line,
+		levelNames[lvl],
+	)
+
+	l.out.Printf(prefix+format, args...)
 }

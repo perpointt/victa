@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,63 +13,94 @@ import (
 	"victa/internal/domain"
 )
 
-// CodemagicService умеет запрашивать данные о сборке по её ID.
-type CodemagicService struct {
-	client  *http.Client
-	baseURL string
+// HTTPDoer минимальный контракт *http.Client → удобно мокать в тестах.
+type HTTPDoer interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
-// NewCodemagicService создаёт сервис с указанным API-токеном.
-// baseURL обычно "https://api.codemagic.io".
+// CodemagicService инкапсулирует работу с REST‑API Codemagic.
+type CodemagicService struct {
+	client  HTTPDoer // внедряем зависимость → легко подменить в тестах
+	baseURL string
+	ttl     time.Duration // срок жизни публичной ссылки на артефакт
+}
+
+// NewCodemagicService возвращает сервис с:
+//   - базовым URL (без «/» в конце)
+//   - HTTP‑клиентом с таймаутом 10 s
+//   - TTL публичной ссылки 7 дней
 func NewCodemagicService(baseURL string) *CodemagicService {
 	return &CodemagicService{
 		client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
 		baseURL: strings.TrimRight(baseURL, "/"),
+		ttl:     7 * 24 * time.Hour,
 	}
 }
 
-// GetBuildByID запрашивает GET /builds/:id и разбирает JSON в CodemagicBuildResponse.
-func (s *CodemagicService) GetBuildByID(buildID, apiKey string) (*domain.CodemagicBuildResponse, error) {
+// WithHTTPClient позволяет подменить клиента (юнит‑тест либо кастомные опции).
+func (s *CodemagicService) WithHTTPClient(c HTTPDoer) *CodemagicService {
+	s.client = c
+	return s
+}
+
+// WithArtifactTTL меняет срок жизни ссылок на артефакты.
+func (s *CodemagicService) WithArtifactTTL(d time.Duration) *CodemagicService {
+	s.ttl = d
+	return s
+}
+
+// GetBuildByID делает GET /builds/{id} и возвращает распарсенный JSON.
+func (s *CodemagicService) GetBuildByID(
+	ctx context.Context,
+	buildID, apiKey string,
+) (*domain.CodemagicBuildResponse, error) {
+
 	url := fmt.Sprintf("%s/builds/%s", s.baseURL, buildID)
-	req, err := http.NewRequest("GET", url, nil)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("create request: %w", err)
 	}
-	// Codemagic ждёт заголовок x-auth-token
 	req.Header.Set("x-auth-token", apiKey)
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := s.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("codemagic API request failed: %w", err)
+		return nil, fmt.Errorf("execute request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("codemagic API returned %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("codemagic %d: %s", resp.StatusCode, body)
 	}
 
 	var out domain.CodemagicBuildResponse
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-		return nil, fmt.Errorf("failed to decode codemagic response: %w", err)
+		return nil, fmt.Errorf("decode response: %w", err)
 	}
 	return &out, nil
 }
 
-func (s *CodemagicService) GetArtifactPublicURL(path, apiKey string) (string, error) {
-	ttl := 7 * 24 * time.Hour
-	expires := time.Now().Add(ttl).Unix()
+// GetArtifactPublicURL запрашивает POST /artifacts/{path}/public-url
+// и возвращает одноразовую публичную ссылку.
+func (s *CodemagicService) GetArtifactPublicURL(
+	ctx context.Context,
+	path, apiKey string,
+) (string, error) {
 
+	expires := time.Now().Add(s.ttl).Unix()
 	payload, _ := json.Marshal(struct {
 		ExpiresAt int64 `json:"expiresAt"`
 	}{expires})
 
 	url := fmt.Sprintf("%s/artifacts/%s/public-url", s.baseURL, strings.TrimPrefix(path, "/"))
 
-	req, err := http.NewRequest("POST", url, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
 	if err != nil {
 		return "", fmt.Errorf("create request: %w", err)
 	}
@@ -78,9 +110,11 @@ func (s *CodemagicService) GetArtifactPublicURL(path, apiKey string) (string, er
 
 	resp, err := s.client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("codemagic request: %w", err)
+		return "", fmt.Errorf("execute request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)

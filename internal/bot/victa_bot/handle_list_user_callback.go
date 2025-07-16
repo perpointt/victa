@@ -1,10 +1,11 @@
 package victa_bot
 
 import (
+	"context"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func (b *Bot) HandleListUsersCallback(callback *tgbotapi.CallbackQuery) {
+func (b *Bot) HandleListUsersCallback(ctx context.Context, callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	messageID := callback.Message.MessageID
 	tgID := callback.From.ID
@@ -15,13 +16,13 @@ func (b *Bot) HandleListUsersCallback(callback *tgbotapi.CallbackQuery) {
 		return
 	}
 
-	company, err := b.CompanySvc.GetByID(params.CompanyID)
+	company, err := b.CompanySvc.GetByID(ctx, params.CompanyID)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
 	}
 
-	message, err := b.BuildUserList(chatID, tgID, company)
+	message, err := b.BuildUserList(ctx, chatID, tgID, company)
 	if err != nil {
 		b.SendMessage(b.NewMessage(chatID, err.Error()))
 		return

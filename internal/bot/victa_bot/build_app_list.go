@@ -1,18 +1,19 @@
 package victa_bot
 
 import (
+	"context"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"victa/internal/domain"
 )
 
-func (b *Bot) BuildAppList(chatID, tgID int64, company *domain.Company) (*tgbotapi.MessageConfig, error) {
-	apps, err := b.AppSvc.GetAllByCompanyID(company.ID)
+func (b *Bot) BuildAppList(ctx context.Context, chatID, tgID int64, company *domain.Company) (*tgbotapi.MessageConfig, error) {
+	apps, err := b.AppSvc.GetAllByCompanyID(ctx, company.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := b.UserSvc.GetByTgID(tgID)
+	user, err := b.UserSvc.GetByTgID(ctx, tgID)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +29,7 @@ func (b *Bot) BuildAppList(chatID, tgID int64, company *domain.Company) (*tgbota
 		)
 	}
 
-	err = b.CompanySvc.CheckAdmin(user.ID, company.ID)
+	err = b.CompanySvc.CheckAdmin(ctx, user.ID, company.ID)
 	if err == nil {
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("➕ Создать приложение", fmt.Sprintf("%v?company_id=%d", CallbackCreateApp, company.ID)),

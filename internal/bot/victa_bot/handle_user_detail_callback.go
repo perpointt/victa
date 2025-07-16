@@ -1,13 +1,14 @@
 package victa_bot
 
 import (
+	"context"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func (b *Bot) HandleDetailUserCallback(callback *tgbotapi.CallbackQuery) {
+func (b *Bot) HandleDetailUserCallback(ctx context.Context, callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 
-	message, err := b.CreateUserDetailMessage(callback)
+	message, err := b.CreateUserDetailMessage(ctx, callback)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
@@ -17,11 +18,11 @@ func (b *Bot) HandleDetailUserCallback(callback *tgbotapi.CallbackQuery) {
 	b.SendMessage(*message)
 }
 
-func (b *Bot) HandleBackToDetailUserCallback(callback *tgbotapi.CallbackQuery) {
+func (b *Bot) HandleBackToDetailUserCallback(ctx context.Context, callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	messageID := callback.Message.MessageID
 
-	message, err := b.CreateUserDetailMessage(callback)
+	message, err := b.CreateUserDetailMessage(ctx, callback)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
@@ -31,7 +32,7 @@ func (b *Bot) HandleBackToDetailUserCallback(callback *tgbotapi.CallbackQuery) {
 	b.EditMessage(messageID, *message)
 }
 
-func (b *Bot) CreateUserDetailMessage(callback *tgbotapi.CallbackQuery) (*tgbotapi.MessageConfig, error) {
+func (b *Bot) CreateUserDetailMessage(ctx context.Context, callback *tgbotapi.CallbackQuery) (*tgbotapi.MessageConfig, error) {
 	chatID := callback.Message.Chat.ID
 
 	params, err := b.GetCallbackArgs(callback.Data)
@@ -39,7 +40,7 @@ func (b *Bot) CreateUserDetailMessage(callback *tgbotapi.CallbackQuery) (*tgbota
 		return nil, err
 	}
 
-	detailUser, err := b.UserSvc.GetByCompanyAndUserID(params.CompanyID, params.UserID)
+	detailUser, err := b.UserSvc.GetByCompanyAndUserID(ctx, params.CompanyID, params.UserID)
 	if err != nil {
 		return nil, err
 	}

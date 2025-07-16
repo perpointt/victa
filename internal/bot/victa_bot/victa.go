@@ -1,8 +1,10 @@
 package victa_bot
 
 import (
+	"context"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"strings"
+	"time"
 	"victa/internal/bot/bot_common"
 	"victa/internal/service"
 )
@@ -29,9 +31,10 @@ type PendingAppData struct {
 	Slug string
 }
 
-// NewBot создаёт нового бота
-func NewBot(
+// New создаёт нового бота
+func New(
 	base *bot_common.BaseBot,
+	botTag string,
 	us *service.UserService,
 	cs *service.CompanyService,
 	is *service.InviteService,
@@ -40,6 +43,7 @@ func NewBot(
 ) *Bot {
 	return &Bot{
 		BaseBot:    base,
+		BotTag:     botTag,
 		UserSvc:    us,
 		CompanySvc: cs,
 		InviteSvc:  is,
@@ -53,58 +57,82 @@ func NewBot(
 	}
 }
 
-func (b *Bot) Run() {
-	updateConfig := tgbotapi.NewUpdate(0)
-	updateConfig.Timeout = 60
+const perUpdateTimeout = 10 * time.Second // в конфиг/const
 
-	updates := b.BotAPI.GetUpdatesChan(updateConfig)
-	for update := range updates {
-		if update.Message != nil {
-			go b.handleUpdate(update)
-		} else if update.CallbackQuery != nil {
-			go b.handleCallbackQuery(update.CallbackQuery)
+func (b *Bot) Run(ctx context.Context) error {
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 60
+
+	updates := b.BotAPI.GetUpdatesChan(u)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+
+		case upd, ok := <-updates:
+			if !ok {
+				return ctx.Err()
+			}
+
+			updCtx, cancel := context.WithTimeout(ctx, perUpdateTimeout)
+			b.dispatch(updCtx, upd)
+			cancel()
 		}
 	}
 }
 
-func (b *Bot) handleUpdate(update tgbotapi.Update) {
-	if update.Message.IsCommand() {
-		b.handleCommand(update.Message)
-	} else if update.Message.Text != "" {
-		b.handleText(update.Message)
+func (b *Bot) dispatch(ctx context.Context, upd tgbotapi.Update) {
+	switch {
+	case upd.Message != nil:
+		b.handleMessage(ctx, upd.Message)
+	case upd.CallbackQuery != nil:
+		b.handleCallback(ctx, upd.CallbackQuery)
 	}
 }
 
-func (b *Bot) handleText(message *tgbotapi.Message) {
+func (b *Bot) handleMessage(ctx context.Context, msg *tgbotapi.Message) {
+	if msg.IsCommand() {
+		b.handleCommand(ctx, msg)
+		return
+	}
+	if msg.Text == "" {
+		return
+	}
+
+	b.handleText(ctx, msg)
+}
+
+func (b *Bot) handleCommand(ctx context.Context, msg *tgbotapi.Message) {
+	switch msg.Command() {
+	case CommandStart:
+		b.HandleStartCommand(ctx, msg)
+	default:
+		b.SendMessage(b.NewMessage(msg.Chat.ID, "Неизвестная команда!"))
+	}
+}
+
+func (b *Bot) handleText(ctx context.Context, message *tgbotapi.Message) {
 	chatID := message.Chat.ID
 
 	if state, exists := b.states[chatID]; exists {
 		switch state {
 		case StateWaitingCreateCompanyName:
-			b.HandleCompanyNameCreated(message)
+			b.HandleCompanyNameCreated(ctx, message)
 		case StateWaitingUpdateCompanyName:
-			b.HandleCompanyNameUpdated(message)
+			b.HandleCompanyNameUpdated(ctx, message)
 		case StateWaitingUpdateCompanyIntegration:
-			b.HandleUpdateCompanyIntegration(message)
+			b.HandleUpdateCompanyIntegration(ctx, message)
 		case StateWaitingCreateAppName:
 			b.HandleAppNameCreated(message)
 		case StateWaitingCreateAppSlug:
-			b.HandleAppSlugCreated(message)
+			b.HandleAppSlugCreated(ctx, message)
 		case StateWaitingUpdateAppName:
 			b.HandleAppNameUpdated(message)
 		case StateWaitingUpdateAppSlug:
-			b.HandleAppSlugUpdated(message)
+			b.HandleAppSlugUpdated(ctx, message)
 		default:
 		}
-	}
-}
-
-func (b *Bot) handleCommand(message *tgbotapi.Message) {
-	switch message.Command() {
-	case CommandStart:
-		b.HandleStartCommand(message)
-	default:
-		b.SendMessage(b.NewMessage(message.Chat.ID, "Неизвестная команда!"))
 	}
 }
 
@@ -112,7 +140,7 @@ func (b *Bot) isCallbackWithPrefix(data, prefix string) bool {
 	return strings.HasPrefix(data, prefix)
 }
 
-func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
+func (b *Bot) handleCallback(ctx context.Context, callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	data := callback.Data
 
@@ -123,13 +151,13 @@ func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 		if state, exists := b.states[chatID]; exists {
 			switch state {
 			case StateWaitingConfirmDeleteCompany:
-				b.HandleConfirmDeleteCompanyCallback(callback)
+				b.HandleConfirmDeleteCompanyCallback(ctx, callback)
 				b.ClearChatState(chatID)
 			case StateWaitingConfirmDeleteUser:
-				b.HandleConfirmDeleteUserCallback(callback)
+				b.HandleConfirmDeleteUserCallback(ctx, callback)
 				b.ClearChatState(chatID)
 			case StateWaitingConfirmDeleteApp:
-				b.HandleConfirmDeleteAppCallback(callback)
+				b.HandleConfirmDeleteAppCallback(ctx, callback)
 				b.ClearChatState(chatID)
 			default:
 				b.AnswerCallback(callback, "Неизвестное действие.")
@@ -139,7 +167,7 @@ func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 		}
 	case b.isCallbackWithPrefix(data, CallbackMainMenu):
 		b.ClearChatState(chatID)
-		b.HandleMainMenuCallback(callback)
+		b.HandleMainMenuCallback(ctx, callback)
 
 	case b.isCallbackWithPrefix(data, CallbackClearState):
 		b.ClearChatState(chatID)
@@ -149,10 +177,10 @@ func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 
 	case b.isCallbackWithPrefix(data, CallbackListCompany):
 		b.ClearChatState(chatID)
-		b.HandleListCompaniesCallback(callback)
+		b.HandleListCompaniesCallback(ctx, callback)
 	case b.isCallbackWithPrefix(data, CallbackDetailCompany):
 		b.ClearChatState(chatID)
-		b.HandleDetailCompanyCallback(callback)
+		b.HandleDetailCompanyCallback(ctx, callback)
 	case b.isCallbackWithPrefix(data, CallbackCreateCompany):
 		b.ClearChatState(chatID)
 		b.HandleCreateCompanyCallback(callback)
@@ -164,37 +192,37 @@ func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 		b.HandleDeleteCompanyCallback(callback)
 	case b.isCallbackWithPrefix(data, CallbackBackToDetailCompany):
 		b.ClearChatState(chatID)
-		b.HandleBackToDetailCompanyCallback(callback)
+		b.HandleBackToDetailCompanyCallback(ctx, callback)
 
 	case b.isCallbackWithPrefix(data, CallbackCompanyIntegrations):
 		b.ClearChatState(chatID)
-		b.HandleCompanyIntegrationsCallback(callback)
+		b.HandleCompanyIntegrationsCallback(ctx, callback)
 	case b.isCallbackWithPrefix(data, CallbackCreateJwtToken):
 		b.ClearChatState(chatID)
 		b.HandleCreateJwtToken(callback)
 	case b.isCallbackWithPrefix(data, CallbackUpdateCompanyIntegrations):
 		b.ClearChatState(chatID)
-		b.HandleUpdateCompanyIntegrationCallback(callback)
+		b.HandleUpdateCompanyIntegrationCallback(ctx, callback)
 
 	case b.isCallbackWithPrefix(data, CallbackListUser):
 		b.ClearChatState(chatID)
-		b.HandleListUsersCallback(callback)
+		b.HandleListUsersCallback(ctx, callback)
 	case b.isCallbackWithPrefix(data, CallbackInviteUser):
 		b.ClearChatState(chatID)
-		b.HandleInviteUserCallback(callback)
+		b.HandleInviteUserCallback(ctx, callback)
 	case b.isCallbackWithPrefix(data, CallbackDetailUser):
 		b.ClearChatState(chatID)
-		b.HandleDetailUserCallback(callback)
+		b.HandleDetailUserCallback(ctx, callback)
 	case b.isCallbackWithPrefix(data, CallbackDeleteUser):
 		b.ClearChatState(chatID)
 		b.HandleDeleteUserCallback(callback)
 	case b.isCallbackWithPrefix(data, CallbackBackToDetailUser):
 		b.ClearChatState(chatID)
-		b.HandleBackToDetailUserCallback(callback)
+		b.HandleBackToDetailUserCallback(ctx, callback)
 
 	case b.isCallbackWithPrefix(data, CallbackListApp):
 		b.ClearChatState(chatID)
-		b.HandleListAppsCallback(callback)
+		b.HandleListAppsCallback(ctx, callback)
 	case b.isCallbackWithPrefix(data, CallbackCreateApp):
 		b.ClearChatState(chatID)
 		b.HandleCreateAppCallback(callback)
@@ -203,7 +231,7 @@ func (b *Bot) handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 		b.HandleUpdateAppCallback(callback)
 	case b.isCallbackWithPrefix(data, CallbackDetailApp):
 		b.ClearChatState(chatID)
-		b.HandleDetailAppCallback(callback)
+		b.HandleDetailAppCallback(ctx, callback)
 	case b.isCallbackWithPrefix(data, CallbackDeleteApp):
 		b.ClearChatState(chatID)
 		b.HandleDeleteAppCallback(callback)

@@ -1,6 +1,7 @@
 package victa_bot
 
 import (
+	"context"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -41,7 +42,7 @@ func (b *Bot) HandleAppNameCreated(message *tgbotapi.Message) {
 	b.SendPendingMessage(b.NewKeyboardMessage(chatID, msgText, keyboard))
 }
 
-func (b *Bot) HandleAppSlugCreated(message *tgbotapi.Message) {
+func (b *Bot) HandleAppSlugCreated(ctx context.Context, message *tgbotapi.Message) {
 	chatID := message.Chat.ID
 	companyID := b.pendingCompanyIDs[chatID]
 	tgID := message.From.ID
@@ -49,19 +50,19 @@ func (b *Bot) HandleAppSlugCreated(message *tgbotapi.Message) {
 	data := b.pendingAppData[chatID]
 	data.Slug = message.Text
 
-	user, err := b.UserSvc.GetByTgID(tgID)
+	user, err := b.UserSvc.GetByTgID(ctx, tgID)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
 	}
 
-	app, err := b.AppSvc.Create(companyID, data.Name, data.Slug)
+	app, err := b.AppSvc.Create(ctx, companyID, data.Name, data.Slug)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
 	}
 
-	config := b.BuildAppDetail(chatID, app, user)
+	config := b.BuildAppDetail(ctx, chatID, app, user)
 
 	b.ClearChatState(chatID)
 

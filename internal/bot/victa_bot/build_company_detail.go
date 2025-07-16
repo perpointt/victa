@@ -1,12 +1,13 @@
 package victa_bot
 
 import (
+	"context"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"victa/internal/domain"
 )
 
-func (b *Bot) BuildCompanyDetail(chatID int64, company *domain.Company, user *domain.User) tgbotapi.MessageConfig {
+func (b *Bot) BuildCompanyDetail(ctx context.Context, chatID int64, company *domain.Company, user *domain.User) tgbotapi.MessageConfig {
 	text := b.GetCompanyDetailMessage(company)
 
 	var rows [][]tgbotapi.InlineKeyboardButton
@@ -15,7 +16,7 @@ func (b *Bot) BuildCompanyDetail(chatID int64, company *domain.Company, user *do
 		tgbotapi.NewInlineKeyboardButtonData("📱 Приложения", fmt.Sprintf("%s?company_id=%v", CallbackListApp, company.ID)),
 	))
 
-	err := b.CompanySvc.CheckAdmin(user.ID, company.ID)
+	err := b.CompanySvc.CheckAdmin(ctx, user.ID, company.ID)
 
 	if err == nil {
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(

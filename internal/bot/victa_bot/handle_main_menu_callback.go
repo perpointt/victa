@@ -1,14 +1,15 @@
 package victa_bot
 
 import (
+	"context"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func (b *Bot) HandleMainMenuCallback(callback *tgbotapi.CallbackQuery) {
+func (b *Bot) HandleMainMenuCallback(ctx context.Context, callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	messageID := callback.Message.MessageID
 
-	user, err := b.UserSvc.GetByTgID(callback.From.ID)
+	user, err := b.UserSvc.GetByTgID(ctx, callback.From.ID)
 
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
@@ -20,7 +21,7 @@ func (b *Bot) HandleMainMenuCallback(callback *tgbotapi.CallbackQuery) {
 		return
 	}
 
-	menu, err := b.BuildMainMenu(chatID, user)
+	menu, err := b.BuildMainMenu(ctx, chatID, user)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return

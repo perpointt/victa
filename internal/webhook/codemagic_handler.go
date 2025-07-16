@@ -1,9 +1,11 @@
 package webhook
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+	"time"
 	"victa/internal/bot/notification_bot"
 	"victa/internal/logger"
 	"victa/internal/webhook/webhook_common"
@@ -34,6 +36,8 @@ func NewCodemagicWebhookHandler(
 }
 
 func (h *CodemagicWebhookHandler) Handle(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	companyID, err := h.Authorize(c)
 	if err != nil {
 		h.SendNewResponse(c, http.StatusUnauthorized, err.Error())
@@ -48,7 +52,7 @@ func (h *CodemagicWebhookHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	integration, err := h.companySvc.GetCompanyIntegrationByID(companyID)
+	integration, err := h.companySvc.GetCompanyIntegrationByID(ctx, companyID) // +ctx
 	if err != nil {
 		h.SendNewResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -58,21 +62,23 @@ func (h *CodemagicWebhookHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	buildResp, err := h.codemagicSvc.GetBuildByID(payload.BuildID, *integration.CodemagicAPIKey)
+	cmCtx, cancelCM := context.WithTimeout(ctx, 5*time.Second)
+	defer cancelCM()
+
+	build, err := h.codemagicSvc.GetBuildByID(cmCtx, payload.BuildID, *integration.CodemagicAPIKey) // +ctx
 	if err != nil {
 		h.SendNewResponse(c, http.StatusBadGateway, err.Error())
 		return
 	}
-	for idx, art := range buildResp.Build.Artefacts {
+
+	for i, art := range build.Build.Artefacts {
 		if strings.EqualFold(art.Type, "apk") {
-			publicURL, err := h.codemagicSvc.GetArtifactPublicURL(
-				art.Path, *integration.CodemagicAPIKey,
-			)
+			url, err := h.codemagicSvc.GetArtifactPublicURL(cmCtx, art.Path, *integration.CodemagicAPIKey)
 			if err != nil {
-				h.Logger.Errorf(err.Error())
+				h.Logger.Warn("codemagic public URL: %v", err)
 				break
 			}
-			buildResp.Build.Artefacts[idx].PublicURL = publicURL
+			build.Build.Artefacts[i].PublicURL = url
 			break
 		}
 	}
@@ -82,14 +88,13 @@ func (h *CodemagicWebhookHandler) Handle(c *gin.Context) {
 		h.SendNewResponse(c, http.StatusUnauthorized, err.Error())
 		return
 	}
-
 	bot, err := notification_bot.NewBot(baseBot, *integration.DeployNotificationChatID)
 	if err != nil {
 		h.SendNewResponse(c, http.StatusUnauthorized, err.Error())
 		return
 	}
 
-	bot.SendDeployNotification(buildResp.Application, buildResp.Build)
+	bot.SendDeployNotification(build.Application, build.Build)
 
 	h.SendNewResponse(c, http.StatusOK, "OK")
 }

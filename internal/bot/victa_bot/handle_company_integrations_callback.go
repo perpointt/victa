@@ -1,6 +1,7 @@
 package victa_bot
 
 import (
+	"context"
 	"encoding/json"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"reflect"
@@ -9,7 +10,7 @@ import (
 )
 
 // HandleCompanyIntegrationsCallback обрабатывает нажатие кнопки «Интеграции»
-func (b *Bot) HandleCompanyIntegrationsCallback(callback *tgbotapi.CallbackQuery) {
+func (b *Bot) HandleCompanyIntegrationsCallback(ctx context.Context, callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	messageID := callback.Message.MessageID
 
@@ -20,13 +21,13 @@ func (b *Bot) HandleCompanyIntegrationsCallback(callback *tgbotapi.CallbackQuery
 	}
 	companyID := params.CompanyID
 
-	company, err := b.CompanySvc.GetByID(companyID)
+	company, err := b.CompanySvc.GetByID(ctx, companyID)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
 	}
 
-	config, err := b.BuildCompanyIntegrationsDetail(chatID, company)
+	config, err := b.BuildCompanyIntegrationsDetail(ctx, chatID, company)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return

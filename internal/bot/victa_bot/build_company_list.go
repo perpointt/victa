@@ -1,13 +1,14 @@
 package victa_bot
 
 import (
+	"context"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"victa/internal/domain"
 )
 
-func (b *Bot) BuildCompanyList(chatID int64, user *domain.User) (*tgbotapi.MessageConfig, error) {
-	companies, err := b.CompanySvc.GetAllByUserID(user.ID)
+func (b *Bot) BuildCompanyList(ctx context.Context, chatID int64, user *domain.User) (*tgbotapi.MessageConfig, error) {
+	companies, err := b.CompanySvc.GetAllByUserID(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}

@@ -30,6 +30,8 @@ func NewGitlabWebhookHandler(
 }
 
 func (h *GitlabIssueWebhookHandler) Handle(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	companyID, err := h.Authorize(c)
 	if err != nil {
 		h.SendNewResponse(c, http.StatusUnauthorized, err.Error())
@@ -37,22 +39,22 @@ func (h *GitlabIssueWebhookHandler) Handle(c *gin.Context) {
 	}
 
 	var payload domain.GitlabWebhook
-
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		h.SendNewResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	// Если исьюха закрыта, то игнорируем сообщения об обновлении, т.к. при закрытии исьюхи уже срабатывает обработчик уведомление дублируется
-	if payload.ObjectKind == "issue" && payload.ObjectAttributes.Action == "update" {
-		if payload.Changes.ClosedAt != nil && ((payload.Changes.ClosedAt.Previous == nil && payload.Changes.ClosedAt.Current != nil) ||
+	if payload.ObjectKind == "issue" &&
+		payload.ObjectAttributes.Action == "update" &&
+		payload.Changes.ClosedAt != nil &&
+		((payload.Changes.ClosedAt.Previous == nil && payload.Changes.ClosedAt.Current != nil) ||
 			(payload.Changes.ClosedAt.Current == nil && payload.Changes.ClosedAt.Previous != nil)) {
-			h.SendNewResponse(c, http.StatusOK, "OK, but ignored")
-			return
-		}
+
+		h.SendNewResponse(c, http.StatusOK, "OK, but ignored")
+		return
 	}
 
-	integration, err := h.companySvc.GetCompanyIntegrationByID(companyID)
+	integration, err := h.companySvc.GetCompanyIntegrationByID(ctx, companyID)
 	if err != nil {
 		h.SendNewResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -67,7 +69,6 @@ func (h *GitlabIssueWebhookHandler) Handle(c *gin.Context) {
 		h.SendNewResponse(c, http.StatusUnauthorized, err.Error())
 		return
 	}
-
 	bot, err := notification_bot.NewBot(baseBot, *integration.IssuesNotificationChatID)
 	if err != nil {
 		h.SendNewResponse(c, http.StatusUnauthorized, err.Error())

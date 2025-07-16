@@ -29,8 +29,9 @@ func NewBugsnagWebhookHandler(
 		companySvc:  companySvc,
 	}
 }
-
 func (h *BugsnagWebhookHandler) Handle(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	companyID, err := h.Authorize(c)
 	if err != nil {
 		h.SendNewResponse(c, http.StatusUnauthorized, err.Error())
@@ -38,14 +39,12 @@ func (h *BugsnagWebhookHandler) Handle(c *gin.Context) {
 	}
 
 	var payload domain.BugsnagWebhook
-
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		h.SendNewResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	// Получаем интеграцию для компании
-	integration, err := h.companySvc.GetCompanyIntegrationByID(companyID)
+	integration, err := h.companySvc.GetCompanyIntegrationByID(ctx, companyID)
 	if err != nil {
 		h.SendNewResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -55,8 +54,10 @@ func (h *BugsnagWebhookHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	// Создаём бота для отправки уведомлений
-	baseBot, err := h.BotFactory.GetBaseBot(*integration.NotificationBotToken, h.Logger)
+	baseBot, err := h.BotFactory.GetBaseBot(
+		*integration.NotificationBotToken,
+		h.Logger,
+	)
 	if err != nil {
 		h.SendNewResponse(c, http.StatusUnauthorized, err.Error())
 		return
@@ -68,7 +69,6 @@ func (h *BugsnagWebhookHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	// Отправляем уведомление
 	bot.SendBugsnagNotification(payload)
 
 	h.SendNewResponse(c, http.StatusOK, "OK")

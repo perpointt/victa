@@ -1,6 +1,7 @@
 package victa_bot
 
 import (
+	"context"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -21,7 +22,7 @@ func (b *Bot) HandleDeleteAppCallback(callback *tgbotapi.CallbackQuery) {
 	b.SendPendingMessage(confirmMessage)
 }
 
-func (b *Bot) HandleConfirmDeleteAppCallback(callback *tgbotapi.CallbackQuery) {
+func (b *Bot) HandleConfirmDeleteAppCallback(ctx context.Context, callback *tgbotapi.CallbackQuery) {
 	chatID := callback.Message.Chat.ID
 	tgID := callback.From.ID
 
@@ -31,18 +32,18 @@ func (b *Bot) HandleConfirmDeleteAppCallback(callback *tgbotapi.CallbackQuery) {
 		return
 	}
 
-	company, err := b.CompanySvc.GetByID(params.CompanyID)
+	company, err := b.CompanySvc.GetByID(ctx, params.CompanyID)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
 	}
 
-	if err := b.AppSvc.Delete(params.AppID); err != nil {
+	if err := b.AppSvc.Delete(ctx, params.AppID); err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
 	}
 
-	config, err := b.BuildAppList(chatID, tgID, company)
+	config, err := b.BuildAppList(ctx, chatID, tgID, company)
 	if err != nil {
 		b.SendErrorMessage(chatID, err)
 		return
