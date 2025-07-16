@@ -1,89 +1,101 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"victa/internal/domain"
 	"victa/internal/repository"
 )
 
+// ErrNotCompanyAdmin возвращается, когда пользователь пытается
+// выполнить админ‑действие без нужных прав.
+var ErrNotCompanyAdmin = errors.New("operation allowed for company admin only")
+
+// ID роли «admin» в таблице roles. Нулевой элемент справочника.
+const adminRoleID int64 = 1
+
+// CompanyService инкапсулирует бизнес‑логику для сущности Company.
 type CompanyService struct {
-	CompanyRepo     repository.CompanyRepository
-	IntegrationRepo repository.CompanyIntegrationRepository
+	companyRepo     repository.CompanyRepository
+	integrationRepo repository.CompanyIntegrationRepository
 }
 
-// NewCompanyService создаёт новый экземпляр сервиса.
+// NewCompanyService создаёт экземпляр сервиса компаний.
 func NewCompanyService(
-	companyRepository repository.CompanyRepository,
+	companyRepo repository.CompanyRepository,
 	integrationRepo repository.CompanyIntegrationRepository,
 ) *CompanyService {
-	return &CompanyService{
-		CompanyRepo:     companyRepository,
-		IntegrationRepo: integrationRepo,
-	}
+	return &CompanyService{companyRepo: companyRepo, integrationRepo: integrationRepo}
 }
 
-func (s *CompanyService) GetAllByUserID(userID int64) ([]domain.Company, error) {
-	return s.CompanyRepo.GetAllByUserID(userID)
+// GetAllByUserID возвращает список компаний, к которым привязан пользователь.
+func (s *CompanyService) GetAllByUserID(ctx context.Context, userID int64) ([]domain.Company, error) {
+	return s.companyRepo.GetAllByUserID(ctx, userID)
 }
 
-func (s *CompanyService) GetByID(companyID int64) (*domain.Company, error) {
-	return s.CompanyRepo.GetByID(companyID)
+// GetByID возвращает одну компанию по ID (или ErrCompanyNotFound из repo).
+func (s *CompanyService) GetByID(ctx context.Context, companyID int64) (*domain.Company, error) {
+	return s.companyRepo.GetByID(ctx, companyID)
 }
 
-func (s *CompanyService) Create(name string, userID int64) (*domain.Company, error) {
-	return s.CompanyRepo.Create(domain.Company{Name: name}, userID)
+// Create создаёт новую компанию и сразу делает userID её администратором.
+func (s *CompanyService) Create(ctx context.Context, name string, adminUserID int64) (*domain.Company, error) {
+	return s.companyRepo.Create(ctx, domain.Company{Name: name}, adminUserID)
 }
 
-// Update изменяет название компании, только если userID — админ в ней.
-func (s *CompanyService) Update(companyID int64, name string, userID int64) (*domain.Company, error) {
-	if err := s.CheckAdmin(userID, companyID); err != nil {
+// Update изменяет название компании. Разрешено только админу.
+func (s *CompanyService) Update(ctx context.Context, companyID int64, name string, userID int64) (*domain.Company, error) {
+	if err := s.CheckAdmin(ctx, userID, companyID); err != nil {
 		return nil, err
 	}
-	return s.CompanyRepo.Update(domain.Company{ID: companyID, Name: name})
+	return s.companyRepo.Update(ctx, domain.Company{ID: companyID, Name: name})
 }
 
-func (s *CompanyService) Delete(companyID, userID int64) error {
-	if err := s.CheckAdmin(userID, companyID); err != nil {
+// Delete удаляет компанию целиком (каскадно), если вызван админом.
+func (s *CompanyService) Delete(ctx context.Context, companyID, userID int64) error {
+	if err := s.CheckAdmin(ctx, userID, companyID); err != nil {
 		return err
 	}
-	return s.CompanyRepo.Delete(companyID)
+	return s.companyRepo.Delete(ctx, companyID)
 }
 
-func (s *CompanyService) CheckAdmin(userID, companyID int64) error {
-	roleIDPtr, err := s.CompanyRepo.GetUserRole(userID, companyID)
-	if err != nil {
-		return err
-	}
-	// Если связи нет или роль не равна 1 (admin)
-	if roleIDPtr == nil || *roleIDPtr != 1 {
-		return errors.New("операция доступна только администратору компании")
-	}
-	return nil
+// AddUserToCompany добавляет пользователя в компанию с ролью developer.
+func (s *CompanyService) AddUserToCompany(ctx context.Context, userID, companyID int64) error {
+	return s.companyRepo.AddUserToCompany(ctx, userID, companyID, "developer")
 }
 
-func (s *CompanyService) AddUserToCompany(userID, companyID int64) error {
-	return s.CompanyRepo.AddUserToCompany(userID, companyID, "developer")
+// GetCompanyIntegrationByID возвращает текущие настройки интеграций компании.
+func (s *CompanyService) GetCompanyIntegrationByID(ctx context.Context, companyID int64) (*domain.CompanyIntegration, error) {
+	return s.integrationRepo.GetByID(ctx, companyID)
 }
 
-// GetCompanyIntegrationByID возвращает настройки интеграций для компании.
-func (s *CompanyService) GetCompanyIntegrationByID(companyID int64) (*domain.CompanyIntegration, error) {
-	return s.IntegrationRepo.GetByID(companyID)
-}
-
-// CreateOrUpdateCompanyIntegration парсит JSON-пayload и сохраняет интеграции.
-// Требует, чтобы userID был администратором компании.
+// CreateOrUpdateCompanyIntegration принимает JSON‑payload,
+// валидирует его и выполняет upsert настроек интеграций.
 func (s *CompanyService) CreateOrUpdateCompanyIntegration(
+	ctx context.Context,
 	companyID int64,
 	payload string,
 ) (*domain.CompanyIntegration, error) {
 	var ci domain.CompanyIntegration
 	if err := json.Unmarshal([]byte(payload), &ci); err != nil {
-		return nil, fmt.Errorf("неверный формат JSON интеграций: %w", err)
+		return nil, fmt.Errorf("invalid JSON: %w", err)
 	}
-
 	ci.CompanyID = companyID
+	return s.integrationRepo.CreateOrUpdate(ctx, &ci)
+}
 
-	return s.IntegrationRepo.CreateOrUpdate(&ci)
+// CheckAdmin проверяет, что userID имеет роль admin в заданной компании.
+// Возвращает ErrNotCompanyAdmin, если прав не хватает.
+func (s *CompanyService) CheckAdmin(ctx context.Context, userID, companyID int64) error {
+	roleIDPtr, err := s.companyRepo.GetUserRole(ctx, userID, companyID)
+	if err != nil {
+		return err
+	}
+	if roleIDPtr == nil || *roleIDPtr != adminRoleID {
+		return ErrNotCompanyAdmin
+	}
+	return nil
 }

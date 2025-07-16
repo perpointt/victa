@@ -1,52 +1,55 @@
 package service
 
 import (
+	"context"
+	"fmt"
+
 	"victa/internal/domain"
 	"victa/internal/repository"
 )
 
-// UserService содержит логику работы с пользователями
+// UserService содержит логику работы с пользователями.
 type UserService struct {
-	UserRepo          repository.UserRepository
-	UserCompaniesRepo repository.UserCompanyRepository
+	usersRepo     repository.UserRepository
+	companiesRepo repository.UserCompanyRepository
 }
 
-// NewUserService создаёт новый сервис пользователей
-func NewUserService(userRepo repository.UserRepository, userCompaniesRepo repository.UserCompanyRepository) *UserService {
-	return &UserService{UserRepo: userRepo, UserCompaniesRepo: userCompaniesRepo}
-}
-
-// Register регистрирует пользователя (создаёт или обновляет запись)
-func (s *UserService) Register(tgID string, name string) (*domain.User, error) {
-	u := &domain.User{TgID: tgID, Name: name}
-	user, err := s.UserRepo.Create(u)
-	if err != nil {
-		return nil, err
+// NewUserService создаёт новый сервис пользователей.
+func NewUserService(
+	userRepo repository.UserRepository,
+	userCompaniesRepo repository.UserCompanyRepository,
+) *UserService {
+	return &UserService{
+		usersRepo:     userRepo,
+		companiesRepo: userCompaniesRepo,
 	}
-	return user, nil
 }
 
-func (s *UserService) Update(userID int64, name string) (*domain.User, error) {
+// Register создаёт нового пользователя или возвращает существующего.
+func (s *UserService) Register(ctx context.Context, tgID int64, name string) (*domain.User, error) {
+	u := &domain.User{TgID: fmt.Sprintf("%d", tgID), Name: name}
+	return s.usersRepo.Create(ctx, u)
+}
+
+// Update меняет имя пользователя.
+func (s *UserService) Update(ctx context.Context, userID int64, name string) (*domain.User, error) {
 	u := &domain.User{ID: userID, Name: name}
-	user, err := s.UserRepo.Update(u)
+	return s.usersRepo.Update(ctx, u)
+}
+
+// GetByTgID ищет пользователя по Telegram‑ID.
+func (s *UserService) GetByTgID(ctx context.Context, tgID int64) (*domain.User, error) {
+	return s.usersRepo.GetByTgID(ctx, tgID)
+}
+
+// GetAllDetailByCompanyID возвращает сотрудников компании + их роли.
+func (s *UserService) GetAllDetailByCompanyID(ctx context.Context, companyID int64) ([]domain.UserDetail, error) {
+	users, err := s.usersRepo.GetAllByCompanyID(ctx, companyID)
 	if err != nil {
 		return nil, err
 	}
-	return user, nil
-}
 
-func (s *UserService) GetByTgID(tgID int64) (*domain.User, error) {
-	user, err := s.UserRepo.GetByTgID(tgID)
-	if err != nil {
-		return nil, err
-	}
-	return user, nil
-}
-
-func (s *UserService) GetAllDetailByCompanyID(companyID int64) ([]domain.UserDetail, error) {
-	users, err := s.UserRepo.GetAllByCompanyID(companyID)
-	companies, err := s.UserCompaniesRepo.GetAllByCompanyID(companyID)
-
+	relations, err := s.companiesRepo.GetAllByCompanyID(ctx, companyID)
 	if err != nil {
 		return nil, err
 	}
@@ -56,38 +59,37 @@ func (s *UserService) GetAllDetailByCompanyID(companyID int64) ([]domain.UserDet
 		userMap[u.ID] = u
 	}
 
-	var details []domain.UserDetail
-	for _, uc := range companies {
-		if u, ok := userMap[uc.UserID]; ok {
+	details := make([]domain.UserDetail, 0, len(relations))
+	for _, rel := range relations {
+		if u, ok := userMap[rel.UserID]; ok {
 			details = append(details, domain.UserDetail{
 				User:    u,
-				Company: uc,
+				Company: rel,
 			})
 		}
 	}
-
 	return details, nil
 }
 
-// GetByCompanyAndUserID возвращает детальную информацию по одному пользователю в рамках заданной компании.
-func (s *UserService) GetByCompanyAndUserID(companyID, userID int64) (*domain.UserDetail, error) {
-	user, err := s.UserRepo.GetByID(userID)
+// GetByCompanyAndUserID возвращает детальную инфу по сотруднику в компании.
+func (s *UserService) GetByCompanyAndUserID(ctx context.Context, companyID, userID int64) (*domain.UserDetail, error) {
+	user, err := s.usersRepo.GetByID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	uc, err := s.UserCompaniesRepo.GetByCompanyAndUserID(companyID, userID)
+	rel, err := s.companiesRepo.GetByCompanyAndUserID(ctx, companyID, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	detail := &domain.UserDetail{
+	return &domain.UserDetail{
 		User:    *user,
-		Company: *uc,
-	}
-	return detail, nil
+		Company: *rel,
+	}, nil
 }
 
-func (s *UserService) DeleteFromCompany(userID, companyID int64) error {
-	return s.UserCompaniesRepo.Delete(userID, companyID)
+// DeleteFromCompany удаляет сотрудника из компании.
+func (s *UserService) DeleteFromCompany(ctx context.Context, userID, companyID int64) error {
+	return s.companiesRepo.Delete(ctx, userID, companyID)
 }
