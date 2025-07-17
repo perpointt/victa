@@ -21,7 +21,7 @@ type UserRepo struct {
 	stGetAllByCompanyID *sql.Stmt
 }
 
-// NewUserRepo подготавливает все выражения
+// NewUserRepo инициализирует репозиторий.
 func NewUserRepo(db *sql.DB) (*UserRepo, error) {
 	r := &UserRepo{db: db}
 
@@ -65,6 +65,24 @@ func NewUserRepo(db *sql.DB) (*UserRepo, error) {
 	}
 
 	return r, nil
+}
+
+// Close освобождает ресурсы prepared-statement.
+func (r *UserRepo) Close() error {
+	if r == nil {
+		return nil
+	}
+	for _, st := range []*sql.Stmt{
+		r.stCreate, r.stUpdate, r.stGetByID,
+		r.stUpdate, r.stGetAllByCompanyID,
+	} {
+		if st != nil {
+			if err := st.Close(); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // Create сохраняет нового пользователя

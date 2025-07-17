@@ -26,7 +26,7 @@ type CompanyRepo struct {
 	stGetUserRole    *sql.Stmt
 }
 
-// NewCompanyRepo подготавливает SQL; при ошибке вернёт её сразу.
+// NewCompanyRepo инициализирует репозиторий.
 func NewCompanyRepo(db *sql.DB) (*CompanyRepo, error) {
 	r := &CompanyRepo{db: db}
 	var err error

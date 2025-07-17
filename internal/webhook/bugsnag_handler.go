@@ -1,8 +1,10 @@
 package webhook
 
 import (
+	"errors"
 	"net/http"
 	"victa/internal/domain"
+	appErr "victa/internal/errors"
 
 	"github.com/gin-gonic/gin"
 	"victa/internal/bot/bot_common"
@@ -44,18 +46,28 @@ func (h *BugsnagWebhookHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	integration, err := h.companySvc.GetCompanyIntegrationByID(ctx, companyID)
-	if err != nil {
+	botToken, err := h.companySvc.GetCompanySecret(ctx, companyID, domain.SecretNotificationBotToken)
+	if err != nil && !errors.Is(err, appErr.ErrSecretNotFound) {
 		h.SendNewResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	if integration == nil {
-		h.SendNewResponse(c, http.StatusBadRequest, "company not found")
+	if botToken == nil {
+		h.SendNewResponse(c, http.StatusBadRequest, "notification bot token not found")
+		return
+	}
+
+	chatID, err := h.companySvc.GetCompanySecret(ctx, companyID, domain.SecretErrorsNotificationChatID)
+	if err != nil && !errors.Is(err, appErr.ErrSecretNotFound) {
+		h.SendNewResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if chatID == nil {
+		h.SendNewResponse(c, http.StatusBadRequest, "notification chat id not found")
 		return
 	}
 
 	baseBot, err := h.BotFactory.GetBaseBot(
-		*integration.NotificationBotToken,
+		string(botToken),
 		h.Logger,
 	)
 	if err != nil {
@@ -63,7 +75,7 @@ func (h *BugsnagWebhookHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	bot, err := notification_bot.NewBot(baseBot, *integration.ErrorsNotificationChatID)
+	bot, err := notification_bot.NewBot(baseBot, string(chatID))
 	if err != nil {
 		h.SendNewResponse(c, http.StatusUnauthorized, err.Error())
 		return

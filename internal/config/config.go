@@ -20,6 +20,7 @@ type Config struct {
 	DBPort           string
 	APIPort          string
 	CodemagicAPIHost string
+	AppStoreAPIHost  string
 	ENV              string
 }
 
@@ -50,6 +51,7 @@ func Load() (*Config, error) {
 		DBPort:           mustEnv("DB_PORT"),
 		APIPort:          mustEnv("API_PORT"),
 		CodemagicAPIHost: mustEnv("CODEMAGIC_API_HOST"),
+		AppStoreAPIHost:  mustEnv("APP_STORE_API_HOST"),
 		ENV:              mustEnv("ENV"),
 	}
 

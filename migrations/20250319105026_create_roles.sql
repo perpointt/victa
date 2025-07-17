@@ -2,8 +2,8 @@
 -- +goose StatementBegin
 CREATE TABLE roles
 (
-    id         BIGSERIAL PRIMARY KEY,
-    slug         TEXT UNIQUE
+    id   BIGSERIAL PRIMARY KEY,
+    slug TEXT UNIQUE
 );
 -- +goose StatementEnd
 

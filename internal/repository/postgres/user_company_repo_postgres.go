@@ -17,7 +17,7 @@ type UserCompanyRepo struct {
 	stDelete                *sql.Stmt
 }
 
-// NewUserCompanyRepo подготавливает выражения
+// NewUserCompanyRepo инициализирует репозиторий.
 func NewUserCompanyRepo(db *sql.DB) (*UserCompanyRepo, error) {
 	r := &UserCompanyRepo{db: db}
 

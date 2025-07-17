@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+	"victa/internal/crypto"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/sync/errgroup"
@@ -54,7 +56,59 @@ func run(logg logger.Logger) error {
 	if err != nil {
 		return err
 	}
-	services := initServices(cfg, repos)
+
+	utils, err := initUtils()
+	if err != nil {
+		return err
+	}
+
+	services := initServices(cfg, repos, utils)
+
+	//creds, err := os.ReadFile("pc-api-4681420226366194060-658-ad4de3d61ccc.json")
+	//if err != nil {
+	//	log.Fatalf("read credentials file: %v", err)
+	//}
+	//
+	//// 2. Инициализируем PlayStoreService, передаём содержимое JSON.
+	//playSvc, err := service.NewPlayStoreService(ctx, creds)
+	//if err != nil {
+	//	log.Fatalf("init PlayStoreService: %v", err)
+	//}
+	//
+	//pkgInfo, err := playSvc.GetProductionRelease(ctx, "stun.apps.mirror")
+	//if err != nil {
+	//	log.Fatalf("GetProductionRelease: %v", err)
+	//}
+	//logg.Info("pkgInfo: %v", pkgInfo.Version.Code)
+	//logg.Info("pkgInfo: %v", pkgInfo.Version.Semantic)
+	//logg.Info("pkgInfo: %v", pkgInfo.PackageName)
+
+	creds, err := os.ReadFile("AuthKey_9X7C787G6P.p8")
+	if err != nil {
+		log.Fatalf("read credentials file: %v", err)
+	}
+
+	appstoreConfig := service.AppStoreConfig{
+		KeyID:      "9X7C787G6P",
+		IssuerID:   "f4c08bb6-7921-43f2-96c8-eed8635f48f4",
+		PrivatePEM: creds,
+		BaseURL:    cfg.AppStoreAPIHost,
+	}
+
+	asc, _ := service.NewAppStoreService(appstoreConfig)
+
+	rel, err := asc.GetLatestRelease(ctx, "6740744282")
+	if err != nil {
+		log.Fatalf("GetProductionRelease: %v", err)
+	}
+	reviews, err := asc.ListReviewsSince(ctx, "6740744282", "")
+	if err != nil {
+		log.Fatalf("GetProductionRelease: %v", err)
+	}
+
+	logg.Info("pkgInfo: %v", rel.Version.Code)
+	logg.Info("pkgInfo: %v", rel.Version.Semantic)
+	logg.Info("pkgInfo: %v", reviews)
 
 	botBase, err := bot_common.NewBotFactory().GetBaseBot(cfg.TelegramToken, logg)
 	if err != nil {
@@ -120,12 +174,34 @@ func initDB(ctx context.Context, dsn string) (*sql.DB, error) {
 	return conn, nil
 }
 
+type Utils struct {
+	Encryptor *crypto.Encryptor
+}
+
+func initUtils() (Utils, error) {
+	must := func(v any, err error) (any, error) {
+		if err != nil {
+			return nil, err
+		}
+		return v, nil
+	}
+
+	encryptor, err := must(crypto.NewEncryptor("master.key"))
+	if err != nil {
+		return Utils{}, err
+	}
+
+	return Utils{
+		Encryptor: encryptor.(*crypto.Encryptor),
+	}, nil
+}
+
 type Repos struct {
-	User        *postgres.UserRepo
-	Company     *postgres.CompanyRepo
-	UserCompany *postgres.UserCompanyRepo
-	Integration *postgres.CompanyIntegrationRepo
-	App         *postgres.AppRepo
+	User          *postgres.UserRepo
+	Company       *postgres.CompanyRepo
+	UserCompany   *postgres.UserCompanyRepo
+	CompanySecret *postgres.CompanySecretRepo
+	App           *postgres.AppRepo
 }
 
 func initRepos(conn *sql.DB) (Repos, error) {
@@ -148,7 +224,7 @@ func initRepos(conn *sql.DB) (Repos, error) {
 	if err != nil {
 		return Repos{}, err
 	}
-	integration, err := must(postgres.NewCompanyIntegrationRepo(conn))
+	secret, err := must(postgres.NewCompanySecretRepo(conn))
 	if err != nil {
 		return Repos{}, err
 	}
@@ -158,11 +234,11 @@ func initRepos(conn *sql.DB) (Repos, error) {
 	}
 
 	return Repos{
-		User:        user.(*postgres.UserRepo),
-		Company:     company.(*postgres.CompanyRepo),
-		UserCompany: userCompany.(*postgres.UserCompanyRepo),
-		Integration: integration.(*postgres.CompanyIntegrationRepo),
-		App:         app.(*postgres.AppRepo),
+		User:          user.(*postgres.UserRepo),
+		Company:       company.(*postgres.CompanyRepo),
+		UserCompany:   userCompany.(*postgres.UserCompanyRepo),
+		CompanySecret: secret.(*postgres.CompanySecretRepo),
+		App:           app.(*postgres.AppRepo),
 	}, nil
 }
 
@@ -175,10 +251,10 @@ type Services struct {
 	Codemagic *service.CodemagicService
 }
 
-func initServices(cfg *config.Config, r Repos) Services {
+func initServices(cfg *config.Config, r Repos, u Utils) Services {
 	return Services{
 		User:      service.NewUserService(r.User, r.UserCompany),
-		Company:   service.NewCompanyService(r.Company, r.Integration),
+		Company:   service.NewCompanyService(r.Company, r.CompanySecret, *u.Encryptor),
 		Invite:    service.NewInviteService([]byte(cfg.InviteSecret), 48*time.Hour),
 		App:       service.NewAppService(r.App),
 		JWT:       service.NewJWTService(cfg.JwtSecret),

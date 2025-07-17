@@ -1,22 +1,13 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
+	appErr "victa/internal/errors"
 )
-
-// ErrUnexpectedMethod — токен подписан не HS256.
-var ErrUnexpectedMethod = errors.New("unexpected signing method")
-
-// ErrInvalidToken — подпись битая или формат не распознан.
-var ErrInvalidToken = errors.New("invalid token")
-
-// ErrClaimMissing — нет обязательного claim‑а company_id.
-var ErrClaimMissing = errors.New("company_id claim missing")
 
 // JWTService генерирует и валидирует JWT для компаний (без exp по‑умолчанию).
 type JWTService struct {
@@ -64,27 +55,27 @@ ParseToken
 func (s *JWTService) ParseToken(tokenStr string) (int64, error) {
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
 		if t.Method != jwt.SigningMethodHS256 {
-			return nil, ErrUnexpectedMethod
+			return nil, appErr.ErrUnexpectedMethod
 		}
 		return s.secret, nil
 	})
 	if err != nil || !token.Valid {
-		return 0, ErrInvalidToken
+		return 0, appErr.ErrInvalidToken
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return 0, ErrInvalidToken
+		return 0, appErr.ErrInvalidToken
 	}
 
 	coStr, ok := claims["company_id"].(string)
 	if !ok {
-		return 0, ErrClaimMissing
+		return 0, appErr.ErrClaimMissing
 	}
 
 	companyID, err := strconv.ParseInt(coStr, 10, 64)
 	if err != nil || companyID <= 0 {
-		return 0, ErrInvalidToken
+		return 0, appErr.ErrInvalidToken
 	}
 	return companyID, nil
 }

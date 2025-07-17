@@ -21,7 +21,7 @@ type AppRepo struct {
 	stDelete            *sql.Stmt
 }
 
-// NewAppRepo подготавливает выражения; при ошибке сразу вернёт её.
+// NewAppRepo инициализирует репозиторий.
 func NewAppRepo(db *sql.DB) (*AppRepo, error) {
 	r := &AppRepo{db: db}
 	var err error

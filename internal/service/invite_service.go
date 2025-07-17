@@ -4,20 +4,11 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"strconv"
 	"strings"
 	"time"
+	appErr "victa/internal/errors"
 )
-
-// ErrBadFormat — токен повреждён: длина, base‑36, либо companyID ≤ 0.
-var ErrBadFormat = errors.New("token format is invalid")
-
-// ErrExpired — токен просрочен по полю expiry.
-var ErrExpired = errors.New("token expired")
-
-// ErrBadSignature — HMAC‑подпись не совпала с ожидаемой.
-var ErrBadSignature = errors.New("token signature mismatch")
 
 const (
 	expiryLen = 6 // 6 символов base‑36 = «YYMMDD» до 2058 г.
@@ -49,7 +40,7 @@ CreateToken
 */
 func (s *InviteService) CreateToken(companyID int64) (string, error) {
 	if companyID <= 0 {
-		return "", ErrBadFormat
+		return "", appErr.ErrBadFormat
 	}
 
 	cmp36 := strconv.FormatInt(companyID, 36)
@@ -74,7 +65,7 @@ ValidateToken
 */
 func (s *InviteService) ValidateToken(token string) (int64, error) {
 	if len(token) < expiryLen+sigLen+1 { // хотя бы 1 символ на companyID
-		return 0, ErrBadFormat
+		return 0, appErr.ErrBadFormat
 	}
 
 	// Разбиваем на cmp / exp / sig.
@@ -88,22 +79,22 @@ func (s *InviteService) ValidateToken(token string) (int64, error) {
 	// Expiry.
 	expUnix, err := strconv.ParseInt(exp36, 36, 64)
 	if err != nil {
-		return 0, ErrBadFormat
+		return 0, appErr.ErrBadFormat
 	}
 	if now().Unix() > expUnix {
-		return 0, ErrExpired
+		return 0, appErr.ErrExpired
 	}
 
 	// Signature.
 	expected := firstNHex(hmacSHA256(s.secret, cmp36+exp36), sigLen)
 	if !hmac.Equal([]byte(sig), []byte(expected)) {
-		return 0, ErrBadSignature
+		return 0, appErr.ErrBadSignature
 	}
 
 	// companyID.
 	companyID, err := strconv.ParseInt(cmp36, 36, 64)
 	if err != nil || companyID <= 0 {
-		return 0, ErrBadFormat
+		return 0, appErr.ErrBadFormat
 	}
 	return companyID, nil
 }

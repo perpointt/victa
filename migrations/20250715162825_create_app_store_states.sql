@@ -2,8 +2,8 @@
 -- +goose StatementBegin
 CREATE TABLE app_store_states
 (
-    app_id         BIGINT      NOT NULL REFERENCES apps (id) ON DELETE CASCADE,
-    store_id       BIGINT      NOT NULL REFERENCES stores (id) ON DELETE CASCADE,
+    app_id         BIGINT NOT NULL REFERENCES apps (id) ON DELETE CASCADE,
+    store_id       BIGINT NOT NULL REFERENCES stores (id) ON DELETE CASCADE,
     last_version   BIGINT NULL,
     last_review_id BIGINT NULL,
     updated_at     TIMESTAMP NOT NULL DEFAULT now(),

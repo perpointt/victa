@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
@@ -26,6 +26,7 @@ services:
       - "${API_PORT}:3000"
     volumes:
       - ./.env:/app/.env:ro
+      - ./master.key:/app/master.key:ro
 
 volumes:
   db:

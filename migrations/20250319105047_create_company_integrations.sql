@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE company_integrations
 (
-    company_id BIGINT NOT NULL REFERENCES companies (id) ON DELETE CASCADE,
+    company_id           BIGINT NOT NULL REFERENCES companies (id) ON DELETE CASCADE,
     codemagic_api_key    TEXT,
     notification_bot_token TEXT,
     notification_chat_id TEXT,

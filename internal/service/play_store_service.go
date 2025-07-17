@@ -20,7 +20,7 @@ type PlayStoreService struct {
 	edits    *androidpublisher.EditsService
 	reviews  *androidpublisher.ReviewsService
 	tracks   *androidpublisher.EditsTracksService
-	reNameRe *regexp.Regexp // для парса "x.y.z+n"
+	reNameRe *regexp.Regexp // n (x.y.z)
 }
 
 // NewPlayStoreService инициализирует клиент.
@@ -37,7 +37,7 @@ func NewPlayStoreService(ctx context.Context, credentialsJSON []byte) (*PlayStor
 		edits:    svc.Edits,
 		reviews:  svc.Reviews,
 		tracks:   svc.Edits.Tracks,
-		reNameRe: regexp.MustCompile(`^(\d+\.\d+\.\d+)\+(\d+)$`),
+		reNameRe: regexp.MustCompile(`^(\d+)\s+\((\d+\.\d+\.\d+)\)$`),
 	}, nil
 }
 
@@ -74,13 +74,10 @@ func (p *PlayStoreService) GetProductionRelease(
 		}
 	}
 
-	// 4. Парсим release name вида "1.2.3+45"
-	match := p.reNameRe.FindStringSubmatch(rel.Name)
-	if match == nil {
-		return nil, fmt.Errorf("release name %q doesn't look like x.y.z+n", rel.Name)
-	}
-	sem := match[1]
-	codeFromName, _ := strconv.ParseInt(match[2], 10, 64)
+	// 4. Парсим release name вида "45 (1.2.3)"
+	m := p.reNameRe.FindStringSubmatch(rel.Name)
+	codeFromName, _ := strconv.ParseInt(m[1], 10, 64)
+	sem := m[2]
 
 	// 5. Подстраховка: доверяем versionCode из имени, если он совпал с maxCode
 	if codeFromName != maxCode {
@@ -100,13 +97,10 @@ func (p *PlayStoreService) GetProductionRelease(
 // Результат отсортирован от самых старых к самым новым.
 func (p *PlayStoreService) ListReviewsSince(
 	ctx context.Context,
-	pkg, lang, lastSeenID string, // lastSeenID == "" → вернёт всё за 7 дней
-	max int64, // лимит Google ≤ 100
+	pkg, lastSeenID string, // lastSeenID == "" → вернёт всё за 7 дней
 ) ([]domain.PlayReview, error) {
 
-	call := p.reviews.List(pkg).
-		MaxResults(max).
-		TranslationLanguage(lang)
+	call := p.reviews.List(pkg)
 
 	resp, err := call.Context(ctx).Do()
 	if err != nil {
