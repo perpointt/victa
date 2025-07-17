@@ -5,7 +5,7 @@ CREATE TABLE company_secrets
     company_id  BIGINT    NOT NULL REFERENCES companies (id) ON DELETE CASCADE,
     secret_type TEXT      NOT NULL,
     cipher      BYTEA     NOT NULL,
-    created_at  TIMESTAMP          DEFAULT now(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMP NOT NULL DEFAULT NOW(),
     PRIMARY KEY (company_id, secret_type)
 );
