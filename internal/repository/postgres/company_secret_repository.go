@@ -6,35 +6,36 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	"victa/internal/domain"
 
+	"victa/internal/domain"
 	appErr "victa/internal/errors"
 )
 
-// CompanySecretRepo реализует хранение company_secrets.
 type CompanySecretRepo struct {
 	db        *sql.DB
-	stSave    *sql.Stmt
+	stCreate  *sql.Stmt
 	stLoad    *sql.Stmt
 	stLoadAll *sql.Stmt
 }
 
-// NewCompanySecretRepo подготавливает выражения.
 func NewCompanySecretRepo(db *sql.DB) (*CompanySecretRepo, error) {
 	r := &CompanySecretRepo{db: db}
 	var err error
 
-	if r.stSave, err = db.Prepare(`
-		INSERT INTO company_secrets (company_id, secret_type, cipher, created_at)
-		     VALUES ($1, $2, $3, now())
+	// INSERT + UPSERT: created_at фиксируем при первой вставке, updated_at меняем всегда
+	if r.stCreate, err = db.Prepare(`
+		INSERT INTO company_secrets (company_id, secret_type, cipher, created_at, updated_at)
+		     VALUES ($1, $2, $3, now(), now())
 		ON CONFLICT (company_id, secret_type)
-		DO UPDATE SET cipher = EXCLUDED.cipher,
-		              created_at = now()`); err != nil {
-		return nil, fmt.Errorf("prepare save secret: %w", err)
+		DO UPDATE SET cipher     = EXCLUDED.cipher,
+		              updated_at = now()
+		RETURNING company_id, secret_type, cipher, created_at, updated_at
+	`); err != nil {
+		return nil, fmt.Errorf("prepare create secret: %w", err)
 	}
 
 	if r.stLoad, err = db.Prepare(`
-		SELECT cipher, created_at
+		SELECT cipher, created_at, updated_at
 		  FROM company_secrets
 		 WHERE company_id = $1
 		   AND secret_type = $2`); err != nil {
@@ -42,17 +43,17 @@ func NewCompanySecretRepo(db *sql.DB) (*CompanySecretRepo, error) {
 	}
 
 	if r.stLoadAll, err = db.Prepare(`
-		SELECT secret_type, cipher, created_at
+		SELECT secret_type, cipher, created_at, updated_at
 		  FROM company_secrets
 		 WHERE company_id = $1`); err != nil {
-		return nil, fmt.Errorf("prepare load‑all secrets: %w", err)
+		return nil, fmt.Errorf("prepare load-all secrets: %w", err)
 	}
+
 	return r, nil
 }
 
-// Close освобождает prepared statements.
 func (r *CompanySecretRepo) Close() error {
-	for _, st := range []*sql.Stmt{r.stSave, r.stLoad, r.stLoadAll} {
+	for _, st := range []*sql.Stmt{r.stCreate, r.stLoad, r.stLoadAll} {
 		if st != nil {
 			if err := st.Close(); err != nil {
 				return err
@@ -62,18 +63,32 @@ func (r *CompanySecretRepo) Close() error {
 	return nil
 }
 
-// Create кладёт / обновляет секрет.
-func (r *CompanySecretRepo) Create(ctx context.Context, sec *domain.CompanySecret) error {
-	_, err := r.stSave.ExecContext(
+// Create вставляет или обновляет секрет и возвращает фактические значения из БД.
+func (r *CompanySecretRepo) Create(
+	ctx context.Context,
+	sec *domain.CompanySecret,
+) (*domain.CompanySecret, error) {
+
+	var out domain.CompanySecret
+	err := r.stCreate.QueryRowContext(
 		ctx,
 		sec.CompanyID,
 		sec.Type,
 		sec.Cipher,
+	).Scan(
+		&out.CompanyID,
+		&out.Type,
+		&out.Cipher,
+		&out.CreatedAt,
+		&out.UpdatedAt,
 	)
-	return err
+	if err != nil {
+		return nil, fmt.Errorf("create secret: %w", err)
+	}
+	return &out, nil
 }
 
-// GetByCompanyIDAndType возвращает один секрет.
+// GetByCompanyIDAndType один секрет
 func (r *CompanySecretRepo) GetByCompanyIDAndType(
 	ctx context.Context,
 	companyID int64,
@@ -81,13 +96,12 @@ func (r *CompanySecretRepo) GetByCompanyIDAndType(
 ) (*domain.CompanySecret, error) {
 
 	var (
-		cipher    []byte
-		createdAt time.Time
+		cipher               []byte
+		createdAt, updatedAt time.Time
 	)
 
-	// используем подготовленный statement без SQL‑текста
 	err := r.stLoad.QueryRowContext(ctx, companyID, secretType).
-		Scan(&cipher, &createdAt)
+		Scan(&cipher, &createdAt, &updatedAt)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, appErr.ErrSecretNotFound
@@ -101,28 +115,29 @@ func (r *CompanySecretRepo) GetByCompanyIDAndType(
 		Type:      secretType,
 		Cipher:    cipher,
 		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
 	}, nil
 }
 
-// GetAllByCompanyID возвращает все секреты компании.
+// GetAllByCompanyID все секреты компании
 func (r *CompanySecretRepo) GetAllByCompanyID(
 	ctx context.Context,
 	companyID int64,
 ) ([]domain.CompanySecret, error) {
+
 	rows, err := r.stLoadAll.QueryContext(ctx, companyID)
 	if err != nil {
 		return nil, fmt.Errorf("query secrets: %w", err)
 	}
-	defer func() {
-		_ = rows.Close()
-	}()
+	defer rows.Close()
 
 	list := make([]domain.CompanySecret, 0, 4)
 	for rows.Next() {
 		var s domain.CompanySecret
-		if err := rows.Scan(&s.Type, &s.Cipher); err != nil {
+		if err := rows.Scan(&s.Type, &s.Cipher, &s.CreatedAt, &s.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan secret: %w", err)
 		}
+		s.CompanyID = companyID
 		list = append(list, s)
 	}
 	if err := rows.Err(); err != nil {

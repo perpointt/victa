@@ -3,70 +3,101 @@ package victa_bot
 import (
 	"context"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"strings"
+	"victa/internal/domain"
 )
 
-func (b *Bot) HandleUpdateCompanyIntegrationCallback(ctx context.Context, callback *tgbotapi.CallbackQuery) {
-	//chatID := callback.Message.Chat.ID
-	//
-	//params, err := b.GetCallbackArgs(callback.Data)
-	//if err != nil {
-	//	b.SendMessage(b.NewMessage(chatID, "Неверные параметры."))
-	//	return
-	//}
-	//companyID := params.CompanyID
+func (b *Bot) HandleUpdateCompanyIntegrationCallback(callback *tgbotapi.CallbackQuery) {
+	chatID := callback.Message.Chat.ID
 
-	//ci, err := b.CompanySvc.GetCompanyIntegrationByID(ctx, companyID)
-	//if err != nil && !errors.Is(err, appErr.ErrIntegrationNotFound) {
-	//	b.SendErrorMessage(chatID, err)
-	//	return
-	//}
-	//
-	//tmpl, err := b.BuildIntegrationTemplate(ci)
-	//if err != nil {
-	//	b.SendErrorMessage(chatID, err)
-	//	return
-	//}
-	//
-	//msgText := fmt.Sprintf(
-	//	"Отправьте обновленный JSON с данными для интеграции:\n\n```json\n%s\n```",
-	//	tmpl,
-	//)
-	//
-	//keyboard := tgbotapi.NewInlineKeyboardMarkup(
-	//	tgbotapi.NewInlineKeyboardRow(
-	//		b.BuildCancelButton(),
-	//	),
-	//)
-	//
-	//b.AddChatState(chatID, StateWaitingUpdateCompanyIntegration)
-	//b.AddPendingCompanyID(chatID, params.CompanyID)
-	//
-	//b.SendPendingMessage(b.NewKeyboardMessage(chatID, msgText, keyboard))
+	params, err := b.GetCallbackArgs(callback.Data)
+	if err != nil {
+		b.SendMessage(b.NewMessage(chatID, "Неверные параметры."))
+		return
+	}
+
+	// helper: убираем «notification» из SecretType → короче callback_data
+	shortType := func(st domain.SecretType) string {
+		return strings.ReplaceAll(string(st), "notification", "")
+	}
+
+	switch string(params.SecretType) {
+	case string(domain.SecretCodemagicApiKey):
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				b.BuildCancelButton(),
+			),
+		)
+
+		b.AddChatState(chatID, StateWaitingUpdateCodemagicApiKey)
+		b.AddPendingCompanyID(chatID, params.CompanyID)
+		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте Codemagic API Key", keyboard))
+	case shortType(domain.SecretNotificationBotToken):
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				b.BuildCancelButton(),
+			),
+		)
+
+		b.AddChatState(chatID, StateWaitingUpdateNotificationBotToken)
+		b.AddPendingCompanyID(chatID, params.CompanyID)
+		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте Notification Bot Token", keyboard))
+	case shortType(domain.SecretDeployNotificationChatID):
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				b.BuildCancelButton(),
+			),
+		)
+
+		b.AddChatState(chatID, StateWaitingUpdateDeployNotificationChatID)
+		b.AddPendingCompanyID(chatID, params.CompanyID)
+		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте Deploy Notification Chat ID", keyboard))
+	case shortType(domain.SecretIssuesNotificationChatID):
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				b.BuildCancelButton(),
+			),
+		)
+
+		b.AddChatState(chatID, StateWaitingUpdateIssueNotificationChatID)
+		b.AddPendingCompanyID(chatID, params.CompanyID)
+		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте Issue Notification Chat ID", keyboard))
+	case shortType(domain.SecretErrorsNotificationChatID):
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				b.BuildCancelButton(),
+			),
+		)
+
+		b.AddChatState(chatID, StateWaitingUpdateErrorNotificationChatID)
+		b.AddPendingCompanyID(chatID, params.CompanyID)
+		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте Error Notification Chat ID", keyboard))
+	}
 }
 
-func (b *Bot) HandleUpdateCompanyIntegration(ctx context.Context, message *tgbotapi.Message) {
-	//chatID := message.Chat.ID
-	//companyID := b.pendingCompanyIDs[chatID]
-	//
-	//company, err := b.CompanySvc.GetByID(ctx, companyID)
-	//if err != nil {
-	//	b.SendErrorMessage(chatID, err)
-	//	return
-	//}
-	//
-	//_, err = b.CompanySvc.CreateOrUpdateCompanyIntegration(ctx, company.ID, message.Text)
-	//if err != nil {
-	//	b.SendErrorMessage(chatID, err)
-	//	return
-	//}
-	//
-	//config, err := b.BuildCompanyIntegrationsDetail(ctx, chatID, company)
-	//if err != nil {
-	//	b.SendErrorMessage(chatID, err)
-	//	return
-	//}
-	//
-	//b.ClearChatState(chatID)
-	//
-	//b.SendMessage(*config)
+func (b *Bot) HandleUpdateCompanyIntegration(ctx context.Context, message *tgbotapi.Message, secretType domain.SecretType) {
+	chatID := message.Chat.ID
+	companyID := b.pendingCompanyIDs[chatID]
+
+	company, err := b.CompanySvc.GetByID(ctx, companyID)
+	if err != nil {
+		b.SendErrorMessage(chatID, err)
+		return
+	}
+
+	_, err = b.CompanySvc.CreateTextSecret(ctx, company.ID, secretType, message.Text)
+	if err != nil {
+		b.SendErrorMessage(chatID, err)
+		return
+	}
+
+	config, err := b.BuildCompanyIntegrationsDetail(ctx, chatID, company)
+	if err != nil {
+		b.SendErrorMessage(chatID, err)
+		return
+	}
+
+	b.DeleteMessage(chatID, message.MessageID)
+	b.ClearChatState(chatID)
+	b.SendMessage(*config)
 }

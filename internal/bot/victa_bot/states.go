@@ -8,9 +8,13 @@ const (
 	StateWaitingConfirmDeleteCompany
 	StateWaitingConfirmDeleteUser
 	StateWaitingConfirmDeleteApp
-	StateWaitingUpdateCompanyIntegration
 	StateWaitingCreateAppName
 	StateWaitingCreateAppSlug
 	StateWaitingUpdateAppName
 	StateWaitingUpdateAppSlug
+	StateWaitingUpdateCodemagicApiKey
+	StateWaitingUpdateNotificationBotToken
+	StateWaitingUpdateDeployNotificationChatID
+	StateWaitingUpdateErrorNotificationChatID
+	StateWaitingUpdateIssueNotificationChatID
 )

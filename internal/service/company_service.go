@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"victa/internal/crypto"
 	"victa/internal/domain"
 	appErr "victa/internal/errors"
@@ -67,8 +68,8 @@ func (s *CompanyService) AddUserToCompany(ctx context.Context, userID, companyID
 	return s.companyRepo.AddUserToCompany(ctx, userID, companyID, "developer")
 }
 
-// GetCompanySecret возвращает нужный секрет компании.
-func (s *CompanyService) GetCompanySecret(ctx context.Context, companyID int64, secretType domain.SecretType) ([]byte, error) {
+// GetSecret возвращает нужный секрет компании.
+func (s *CompanyService) GetSecret(ctx context.Context, companyID int64, secretType domain.SecretType) ([]byte, error) {
 	sec, err := s.companySecretRepo.GetByCompanyIDAndType(ctx, companyID, secretType)
 	if err != nil {
 		return nil, err
@@ -80,20 +81,40 @@ func (s *CompanyService) GetCompanySecret(ctx context.Context, companyID int64, 
 	return plain, nil
 }
 
-//// CreateOrUpdateCompanyIntegration принимает JSON‑payload,
-//// валидирует его и выполняет upsert настроек интеграций.
-//func (s *CompanyService) CreateOrUpdateCompanyIntegration(
-//	ctx context.Context,
-//	companyID int64,
-//	payload string,
-//) (*domain.CompanyIntegration, error) {
-//	var ci domain.CompanyIntegration
-//	if err := json.Unmarshal([]byte(payload), &ci); err != nil {
-//		return nil, fmt.Errorf("invalid JSON: %w", err)
-//	}
-//	ci.CompanyID = companyID
-//	return s.integrationRepo.CreateOrUpdate(ctx, &ci)
-//}
+// GetAllSecretsByCompanyID возвращает нужный секрет компании.
+func (s *CompanyService) GetAllSecretsByCompanyID(ctx context.Context, companyID int64) ([]domain.CompanySecret, error) {
+	secrets, err := s.companySecretRepo.GetAllByCompanyID(ctx, companyID)
+	if err != nil {
+		return nil, err
+	}
+
+	return secrets, nil
+}
+
+// CreateTextSecret шифрует произвольный текст и сохраняет как секрет компании.
+func (s *CompanyService) CreateTextSecret(
+	ctx context.Context,
+	companyID int64,
+	secretType domain.SecretType,
+	text string,
+) (*domain.CompanySecret, error) {
+	cipher, err := s.encryptor.Seal(ctx, []byte(text))
+	if err != nil {
+		return nil, fmt.Errorf("encrypt secret: %w", err)
+	}
+
+	sec := &domain.CompanySecret{
+		CompanyID: companyID,
+		Type:      secretType,
+		Cipher:    cipher,
+	}
+
+	created, err := s.companySecretRepo.Create(ctx, sec)
+	if err != nil {
+		return nil, fmt.Errorf("store secret: %w", err)
+	}
+	return created, nil
+}
 
 // CheckAdmin проверяет, что userID имеет роль admin в заданной компании.
 // Возвращает ErrNotCompanyAdmin, если прав не хватает.

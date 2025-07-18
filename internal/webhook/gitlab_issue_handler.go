@@ -56,7 +56,7 @@ func (h *GitlabIssueWebhookHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	botToken, err := h.companySvc.GetCompanySecret(ctx, companyID, domain.SecretNotificationBotToken)
+	botToken, err := h.companySvc.GetSecret(ctx, companyID, domain.SecretNotificationBotToken)
 	if err != nil && !errors.Is(err, appErr.ErrSecretNotFound) {
 		h.SendNewResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -66,7 +66,7 @@ func (h *GitlabIssueWebhookHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	chatID, err := h.companySvc.GetCompanySecret(ctx, companyID, domain.SecretIssuesNotificationChatID)
+	chatID, err := h.companySvc.GetSecret(ctx, companyID, domain.SecretIssuesNotificationChatID)
 	if err != nil && !errors.Is(err, appErr.ErrSecretNotFound) {
 		h.SendNewResponse(c, http.StatusInternalServerError, err.Error())
 		return

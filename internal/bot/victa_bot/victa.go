@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 	"victa/internal/bot/bot_common"
+	"victa/internal/domain"
 	"victa/internal/service"
 )
 
@@ -121,8 +122,18 @@ func (b *Bot) handleText(ctx context.Context, message *tgbotapi.Message) {
 			b.HandleCompanyNameCreated(ctx, message)
 		case StateWaitingUpdateCompanyName:
 			b.HandleCompanyNameUpdated(ctx, message)
-		case StateWaitingUpdateCompanyIntegration:
-			b.HandleUpdateCompanyIntegration(ctx, message)
+
+		case StateWaitingUpdateCodemagicApiKey:
+			b.HandleUpdateCompanyIntegration(ctx, message, domain.SecretCodemagicApiKey)
+		case StateWaitingUpdateNotificationBotToken:
+			b.HandleUpdateCompanyIntegration(ctx, message, domain.SecretNotificationBotToken)
+		case StateWaitingUpdateDeployNotificationChatID:
+			b.HandleUpdateCompanyIntegration(ctx, message, domain.SecretDeployNotificationChatID)
+		case StateWaitingUpdateIssueNotificationChatID:
+			b.HandleUpdateCompanyIntegration(ctx, message, domain.SecretIssuesNotificationChatID)
+		case StateWaitingUpdateErrorNotificationChatID:
+			b.HandleUpdateCompanyIntegration(ctx, message, domain.SecretErrorsNotificationChatID)
+
 		case StateWaitingCreateAppName:
 			b.HandleAppNameCreated(message)
 		case StateWaitingCreateAppSlug:
@@ -200,9 +211,10 @@ func (b *Bot) handleCallback(ctx context.Context, callback *tgbotapi.CallbackQue
 	case b.isCallbackWithPrefix(data, CallbackCreateJwtToken):
 		b.ClearChatState(chatID)
 		b.HandleCreateJwtToken(callback)
+
 	case b.isCallbackWithPrefix(data, CallbackUpdateCompanyIntegrations):
 		b.ClearChatState(chatID)
-		b.HandleUpdateCompanyIntegrationCallback(ctx, callback)
+		b.HandleUpdateCompanyIntegrationCallback(callback)
 
 	case b.isCallbackWithPrefix(data, CallbackListUser):
 		b.ClearChatState(chatID)

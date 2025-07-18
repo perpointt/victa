@@ -72,9 +72,10 @@ func (b *Bot) GetRoleTitle(roleID int64) string {
 }
 
 type CallbackParams struct {
-	UserID    int64 `schema:"user_id"`
-	CompanyID int64 `schema:"company_id"`
-	AppID     int64 `schema:"app_id"`
+	UserID     int64             `schema:"user_id"`
+	CompanyID  int64             `schema:"company_id"`
+	AppID      int64             `schema:"app_id"`
+	SecretType domain.SecretType `schema:"secret_type"`
 }
 
 var schemaDecoder = func() *schema.Decoder {

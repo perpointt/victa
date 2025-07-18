@@ -27,7 +27,7 @@ func NewUserCompanyRepo(db *sql.DB) (*UserCompanyRepo, error) {
 		FROM user_companies
 		WHERE company_id = $1
 		ORDER BY role_id, user_id`); err != nil {
-		return nil, fmt.Errorf("prepare GetAllByCompanyID: %w", err)
+		return nil, fmt.Errorf("prepare GetAllSecretsByCompanyID: %w", err)
 	}
 
 	if r.stGetByCompanyAndUserID, err = db.Prepare(`
@@ -64,7 +64,7 @@ func (r *UserCompanyRepo) Close() error {
 func (r *UserCompanyRepo) GetAllByCompanyID(ctx context.Context, companyID int64) ([]domain.UserCompany, error) {
 	rows, err := r.stGetAllByCompanyID.QueryContext(ctx, companyID)
 	if err != nil {
-		return nil, fmt.Errorf("query GetAllByCompanyID: %w", err)
+		return nil, fmt.Errorf("query GetAllSecretsByCompanyID: %w", err)
 	}
 
 	defer func() {
