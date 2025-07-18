@@ -116,6 +116,28 @@ func (s *CompanyService) CreateTextSecret(
 	return created, nil
 }
 
+func (s *CompanyService) CreateBinarySecret(
+	ctx context.Context,
+	companyID int64,
+	secretType domain.SecretType,
+	data []byte,
+) (*domain.CompanySecret, error) {
+
+	if len(data) == 0 {
+		return nil, appErr.ErrInvalidInput
+	}
+	cipher, err := s.encryptor.Seal(ctx, data)
+	if err != nil {
+		return nil, fmt.Errorf("encrypt: %w", err)
+	}
+	sec := &domain.CompanySecret{
+		CompanyID: companyID,
+		Type:      secretType,
+		Cipher:    cipher,
+	}
+	return s.companySecretRepo.Create(ctx, sec)
+}
+
 // CheckAdmin проверяет, что userID имеет роль admin в заданной компании.
 // Возвращает ErrNotCompanyAdmin, если прав не хватает.
 func (s *CompanyService) CheckAdmin(ctx context.Context, userID, companyID int64) error {

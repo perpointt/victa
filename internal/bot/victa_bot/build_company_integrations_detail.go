@@ -89,6 +89,26 @@ func (b *Bot) BuildCompanyIntegrationsDetail(
 	))
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(
+			fmt.Sprintf("%s Apple P8", mark(has[domain.SecretAppleP8])),
+			fmt.Sprintf("%s?company_id=%d&secret_type=%s",
+				CallbackUpdateCompanyIntegrations,
+				company.ID,
+				shortType(domain.SecretAppleP8)),
+		),
+	))
+
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(
+			fmt.Sprintf("%s Google JSON", mark(has[domain.SecretGoogleJSON])),
+			fmt.Sprintf("%s?company_id=%d&secret_type=%s",
+				CallbackUpdateCompanyIntegrations,
+				company.ID,
+				shortType(domain.SecretGoogleJSON)),
+		),
+	))
+
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData("🔒 Сгенерировать API токен",
 			fmt.Sprintf("%v?company_id=%d", CallbackCreateJwtToken, company.ID)),
 	))

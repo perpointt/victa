@@ -97,11 +97,18 @@ func (b *Bot) handleMessage(ctx context.Context, msg *tgbotapi.Message) {
 		b.handleCommand(ctx, msg)
 		return
 	}
-	if msg.Text == "" {
+
+	if msg.Document != nil {
+		b.handleDocument(ctx, msg)
 		return
 	}
 
-	b.handleText(ctx, msg)
+	if msg.Text != "" {
+		b.handleText(ctx, msg)
+		return
+	}
+
+	// Остальные типы (фото, стикеры) игнорируем
 }
 
 func (b *Bot) handleCommand(ctx context.Context, msg *tgbotapi.Message) {
@@ -110,6 +117,26 @@ func (b *Bot) handleCommand(ctx context.Context, msg *tgbotapi.Message) {
 		b.HandleStartCommand(ctx, msg)
 	default:
 		b.SendMessage(b.NewMessage(msg.Chat.ID, "Неизвестная команда!"))
+	}
+}
+
+func (b *Bot) handleDocument(ctx context.Context, message *tgbotapi.Message) {
+	chatID := message.Chat.ID
+
+	if state, exists := b.states[chatID]; exists {
+		doc := message.Document
+		if doc.FileID == "" {
+			b.SendMessage(b.NewMessage(chatID, "Пустой файл"))
+			return
+		}
+
+		switch state {
+		case StateWaitingUploadGoogleJSON:
+			b.HandleUpdateCompanySecret(ctx, message, domain.SecretGoogleJSON)
+		case StateWaitingUploadAppleP8:
+			b.HandleUpdateCompanySecret(ctx, message, domain.SecretAppleP8)
+		default:
+		}
 	}
 }
 
@@ -124,15 +151,19 @@ func (b *Bot) handleText(ctx context.Context, message *tgbotapi.Message) {
 			b.HandleCompanyNameUpdated(ctx, message)
 
 		case StateWaitingUpdateCodemagicApiKey:
-			b.HandleUpdateCompanyIntegration(ctx, message, domain.SecretCodemagicApiKey)
+			b.HandleUpdateCompanySecret(ctx, message, domain.SecretCodemagicApiKey)
 		case StateWaitingUpdateNotificationBotToken:
-			b.HandleUpdateCompanyIntegration(ctx, message, domain.SecretNotificationBotToken)
+			b.HandleUpdateCompanySecret(ctx, message, domain.SecretNotificationBotToken)
 		case StateWaitingUpdateDeployNotificationChatID:
-			b.HandleUpdateCompanyIntegration(ctx, message, domain.SecretDeployNotificationChatID)
+			b.HandleUpdateCompanySecret(ctx, message, domain.SecretDeployNotificationChatID)
 		case StateWaitingUpdateIssueNotificationChatID:
-			b.HandleUpdateCompanyIntegration(ctx, message, domain.SecretIssuesNotificationChatID)
+			b.HandleUpdateCompanySecret(ctx, message, domain.SecretIssuesNotificationChatID)
 		case StateWaitingUpdateErrorNotificationChatID:
-			b.HandleUpdateCompanyIntegration(ctx, message, domain.SecretErrorsNotificationChatID)
+			b.HandleUpdateCompanySecret(ctx, message, domain.SecretErrorsNotificationChatID)
+		case StateWaitingUploadGoogleJSON:
+			b.DeleteMessage(chatID, message.MessageID)
+		case StateWaitingUploadAppleP8:
+			b.DeleteMessage(chatID, message.MessageID)
 
 		case StateWaitingCreateAppName:
 			b.HandleAppNameCreated(message)

@@ -72,10 +72,30 @@ func (b *Bot) HandleUpdateCompanyIntegrationCallback(callback *tgbotapi.Callback
 		b.AddChatState(chatID, StateWaitingUpdateErrorNotificationChatID)
 		b.AddPendingCompanyID(chatID, params.CompanyID)
 		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте Error Notification Chat ID", keyboard))
+	case shortType(domain.SecretAppleP8):
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				b.BuildCancelButton(),
+			),
+		)
+
+		b.AddChatState(chatID, StateWaitingUploadAppleP8)
+		b.AddPendingCompanyID(chatID, params.CompanyID)
+		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте AppleP8", keyboard))
+	case shortType(domain.SecretGoogleJSON):
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				b.BuildCancelButton(),
+			),
+		)
+
+		b.AddChatState(chatID, StateWaitingUploadGoogleJSON)
+		b.AddPendingCompanyID(chatID, params.CompanyID)
+		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте Google JSON", keyboard))
 	}
 }
 
-func (b *Bot) HandleUpdateCompanyIntegration(ctx context.Context, message *tgbotapi.Message, secretType domain.SecretType) {
+func (b *Bot) HandleUpdateCompanySecret(ctx context.Context, message *tgbotapi.Message, secretType domain.SecretType) {
 	chatID := message.Chat.ID
 	companyID := b.pendingCompanyIDs[chatID]
 
@@ -85,10 +105,21 @@ func (b *Bot) HandleUpdateCompanyIntegration(ctx context.Context, message *tgbot
 		return
 	}
 
-	_, err = b.CompanySvc.CreateTextSecret(ctx, company.ID, secretType, message.Text)
-	if err != nil {
-		b.SendErrorMessage(chatID, err)
-		return
+	// helper: убираем «notification» из SecretType → короче callback_data
+	shortType := func(st domain.SecretType) string {
+		return strings.ReplaceAll(string(st), "notification", "")
+	}
+
+	switch string(secretType) {
+	case shortType(domain.SecretAppleP8),
+		shortType(domain.SecretGoogleJSON):
+		// TODO
+	default:
+		_, err = b.CompanySvc.CreateTextSecret(ctx, company.ID, secretType, message.Text)
+		if err != nil {
+			b.SendErrorMessage(chatID, err)
+			return
+		}
 	}
 
 	config, err := b.BuildCompanyIntegrationsDetail(ctx, chatID, company)

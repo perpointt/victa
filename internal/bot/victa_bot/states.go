@@ -17,4 +17,6 @@ const (
 	StateWaitingUpdateDeployNotificationChatID
 	StateWaitingUpdateErrorNotificationChatID
 	StateWaitingUpdateIssueNotificationChatID
+	StateWaitingUploadGoogleJSON
+	StateWaitingUploadAppleP8
 )
