@@ -90,11 +90,51 @@ func (b *Bot) BuildCompanyIntegrationsDetail(
 
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData(
+			fmt.Sprintf("%s Versions Notification Chat ID", mark(has[domain.SecretVersionsNotificationChatID])),
+			fmt.Sprintf("%s?company_id=%d&secret_type=%s",
+				CallbackUpdateCompanyIntegrations,
+				company.ID,
+				shortType(domain.SecretVersionsNotificationChatID)),
+		),
+	))
+
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(
+			fmt.Sprintf("%s Reviews Notification Chat ID", mark(has[domain.SecretReviewsNotificationChatID])),
+			fmt.Sprintf("%s?company_id=%d&secret_type=%s",
+				CallbackUpdateCompanyIntegrations,
+				company.ID,
+				shortType(domain.SecretReviewsNotificationChatID)),
+		),
+	))
+
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(
 			fmt.Sprintf("%s Apple P8", mark(has[domain.SecretAppleP8])),
 			fmt.Sprintf("%s?company_id=%d&secret_type=%s",
 				CallbackUpdateCompanyIntegrations,
 				company.ID,
 				shortType(domain.SecretAppleP8)),
+		),
+	))
+
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(
+			fmt.Sprintf("%s Apple Key ID", mark(has[domain.SecretAppleKeyID])),
+			fmt.Sprintf("%s?company_id=%d&secret_type=%s",
+				CallbackUpdateCompanyIntegrations,
+				company.ID,
+				shortType(domain.SecretAppleKeyID)),
+		),
+	))
+
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(
+			fmt.Sprintf("%s Apple Issuer ID", mark(has[domain.SecretAppleIssuerID])),
+			fmt.Sprintf("%s?company_id=%d&secret_type=%s",
+				CallbackUpdateCompanyIntegrations,
+				company.ID,
+				shortType(domain.SecretAppleIssuerID)),
 		),
 	))
 

@@ -12,11 +12,19 @@ const (
 	StateWaitingCreateAppSlug
 	StateWaitingUpdateAppName
 	StateWaitingUpdateAppSlug
+	StateWaitingUpdateAppStoreURL
+	StateWaitingUpdatePlayStoreURL
+	StateWaitingUpdateRuStoreURL
+	StateWaitingUpdateAppGalleryURL
 	StateWaitingUpdateCodemagicApiKey
 	StateWaitingUpdateNotificationBotToken
 	StateWaitingUpdateDeployNotificationChatID
 	StateWaitingUpdateErrorNotificationChatID
 	StateWaitingUpdateIssueNotificationChatID
+	StateWaitingUpdateVersionNotificationChatID
+	StateWaitingUpdateReviewsNotificationChatID
 	StateWaitingUploadGoogleJSON
 	StateWaitingUploadAppleP8
+	StateWaitingUpdateAppleKeyID
+	StateWaitingUpdateAppleIssuerID
 )

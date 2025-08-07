@@ -72,6 +72,26 @@ func (b *Bot) HandleUpdateCompanyIntegrationCallback(callback *tgbotapi.Callback
 		b.AddChatState(chatID, StateWaitingUpdateErrorNotificationChatID)
 		b.AddPendingCompanyID(chatID, params.CompanyID)
 		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте Error Notification Chat ID", keyboard))
+	case shortType(domain.SecretVersionsNotificationChatID):
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				b.BuildCancelButton(),
+			),
+		)
+
+		b.AddChatState(chatID, StateWaitingUpdateVersionNotificationChatID)
+		b.AddPendingCompanyID(chatID, params.CompanyID)
+		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте Versions Notification Chat ID", keyboard))
+	case shortType(domain.SecretReviewsNotificationChatID):
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				b.BuildCancelButton(),
+			),
+		)
+
+		b.AddChatState(chatID, StateWaitingUpdateReviewsNotificationChatID)
+		b.AddPendingCompanyID(chatID, params.CompanyID)
+		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте Reviews Notification Chat ID", keyboard))
 	case shortType(domain.SecretAppleP8):
 		keyboard := tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
@@ -82,14 +102,33 @@ func (b *Bot) HandleUpdateCompanyIntegrationCallback(callback *tgbotapi.Callback
 		b.AddChatState(chatID, StateWaitingUploadAppleP8)
 		b.AddPendingCompanyID(chatID, params.CompanyID)
 		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте AppleP8", keyboard))
-	case shortType(domain.SecretGoogleJSON):
+	case shortType(domain.SecretAppleKeyID):
 		keyboard := tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				b.BuildCancelButton(),
 			),
 		)
 
-		b.AddChatState(chatID, StateWaitingUploadGoogleJSON)
+		b.AddChatState(chatID, StateWaitingUpdateAppleKeyID)
+		b.AddPendingCompanyID(chatID, params.CompanyID)
+		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте Apple Key ID", keyboard))
+	case shortType(domain.SecretAppleIssuerID):
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				b.BuildCancelButton(),
+			),
+		)
+
+		b.AddChatState(chatID, StateWaitingUpdateAppleIssuerID)
+		b.AddPendingCompanyID(chatID, params.CompanyID)
+		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте Apple Issuer ID", keyboard))
+	case shortType(domain.SecretGoogleJSON):
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				b.BuildCancelButton(),
+			),
+		)
+		b.AddChatState(chatID, StateWaitingUpdateAppleKeyID)
 		b.AddPendingCompanyID(chatID, params.CompanyID)
 		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте Google JSON", keyboard))
 	}

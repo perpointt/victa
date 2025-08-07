@@ -23,6 +23,7 @@ type Bot struct {
 	states            map[int64]ChatState
 	pendingMessages   map[int64][]int
 	pendingCompanyIDs map[int64]int64
+	pendingAppIDs     map[int64]int64
 	pendingAppData    map[int64]PendingAppData
 }
 
@@ -54,6 +55,7 @@ func New(
 		states:            make(map[int64]ChatState),
 		pendingMessages:   make(map[int64][]int),
 		pendingCompanyIDs: make(map[int64]int64),
+		pendingAppIDs:     make(map[int64]int64),
 		pendingAppData:    make(map[int64]PendingAppData),
 	}
 }
@@ -152,6 +154,10 @@ func (b *Bot) handleText(ctx context.Context, message *tgbotapi.Message) {
 
 		case StateWaitingUpdateCodemagicApiKey:
 			b.HandleUpdateCompanySecret(ctx, message, domain.SecretCodemagicApiKey)
+		case StateWaitingUpdateAppleKeyID:
+			b.HandleUpdateCompanySecret(ctx, message, domain.SecretAppleKeyID)
+		case StateWaitingUpdateAppleIssuerID:
+			b.HandleUpdateCompanySecret(ctx, message, domain.SecretAppleIssuerID)
 		case StateWaitingUpdateNotificationBotToken:
 			b.HandleUpdateCompanySecret(ctx, message, domain.SecretNotificationBotToken)
 		case StateWaitingUpdateDeployNotificationChatID:
@@ -160,6 +166,11 @@ func (b *Bot) handleText(ctx context.Context, message *tgbotapi.Message) {
 			b.HandleUpdateCompanySecret(ctx, message, domain.SecretIssuesNotificationChatID)
 		case StateWaitingUpdateErrorNotificationChatID:
 			b.HandleUpdateCompanySecret(ctx, message, domain.SecretErrorsNotificationChatID)
+		case StateWaitingUpdateVersionNotificationChatID:
+			b.HandleUpdateCompanySecret(ctx, message, domain.SecretVersionsNotificationChatID)
+		case StateWaitingUpdateReviewsNotificationChatID:
+			b.HandleUpdateCompanySecret(ctx, message, domain.SecretReviewsNotificationChatID)
+
 		case StateWaitingUploadGoogleJSON:
 			b.DeleteMessage(chatID, message.MessageID)
 		case StateWaitingUploadAppleP8:
@@ -169,10 +180,19 @@ func (b *Bot) handleText(ctx context.Context, message *tgbotapi.Message) {
 			b.HandleAppNameCreated(message)
 		case StateWaitingCreateAppSlug:
 			b.HandleAppSlugCreated(ctx, message)
+
 		case StateWaitingUpdateAppName:
-			b.HandleAppNameUpdated(message)
+			b.HandleUpdateApp(ctx, message, domain.AppUpdateName)
 		case StateWaitingUpdateAppSlug:
-			b.HandleAppSlugUpdated(ctx, message)
+			b.HandleUpdateApp(ctx, message, domain.AppUpdateSlug)
+		case StateWaitingUpdateAppStoreURL:
+			b.HandleUpdateApp(ctx, message, domain.AppUpdateAppStoreURL)
+		case StateWaitingUpdatePlayStoreURL:
+			b.HandleUpdateApp(ctx, message, domain.AppUpdatePlayStoreURL)
+		case StateWaitingUpdateRuStoreURL:
+			b.HandleUpdateApp(ctx, message, domain.AppUpdateRuStoreURL)
+		case StateWaitingUpdateAppGalleryURL:
+			b.HandleUpdateApp(ctx, message, domain.AppUpdateAppGalleryURL)
 		default:
 		}
 	}

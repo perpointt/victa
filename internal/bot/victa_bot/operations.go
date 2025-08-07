@@ -30,15 +30,43 @@ func (b *Bot) DeletePendingCompanyID(chatID int64) {
 	}
 }
 
+func (b *Bot) AddPendingAppID(chatID int64, appID int64) {
+	b.pendingAppIDs[chatID] = appID
+}
+
+func (b *Bot) DeletePendingAppID(chatID int64) {
+	if _, ok := b.pendingAppIDs[chatID]; ok {
+		delete(b.pendingAppIDs, chatID)
+	}
+}
+
 func (b *Bot) GetAppDetailMessage(app *domain.App) string {
-	return fmt.Sprintf(
-		"📱 *%s | %s* \n\n*ID приложения*: `%d`\n*Создано*: %s\n*Обновлено*: %s",
-		app.Name,
-		app.Slug,
-		app.ID,
-		app.CreatedAt.Format("02.01.2006 15:04:05"),
-		app.UpdatedAt.Format("02.01.2006 15:04:05"),
-	)
+	const dt = "02.01.2006 15:04:05"
+
+	lines := []string{
+		fmt.Sprintf("📱 *%s | %s*", app.Name, app.Slug),
+		"",
+		fmt.Sprintf("*ID приложения*: `%d`", app.ID),
+		fmt.Sprintf("*Создано*: %s", app.CreatedAt.Format(dt)),
+		fmt.Sprintf("*Обновлено*: %s", app.UpdatedAt.Format(dt)),
+		"",
+	}
+
+	// helper: формирует строку «• *Store* — ссылка / нет данных»
+	add := func(title string, link *string) {
+		if link != nil && *link != "" {
+			lines = append(lines, fmt.Sprintf("• *%s* — [%s](%s)", title, "ссылка", *link))
+		} else {
+			lines = append(lines, fmt.Sprintf("• *%s* — нет данных", title))
+		}
+	}
+
+	add("App Store", app.AppStoreURL)
+	add("Google Play", app.PlayStoreURL)
+	add("RuStore", app.RuStoreURL)
+	add("Huawei App Gallery", app.AppGalleryURL)
+
+	return strings.Join(lines, "\n")
 }
 
 func (b *Bot) GetUserDetailMessage(user *domain.User) string {
@@ -72,10 +100,11 @@ func (b *Bot) GetRoleTitle(roleID int64) string {
 }
 
 type CallbackParams struct {
-	UserID     int64             `schema:"user_id"`
-	CompanyID  int64             `schema:"company_id"`
-	AppID      int64             `schema:"app_id"`
-	SecretType domain.SecretType `schema:"secret_type"`
+	UserID        int64                `schema:"user_id"`
+	CompanyID     int64                `schema:"company_id"`
+	AppID         int64                `schema:"app_id"`
+	SecretType    domain.SecretType    `schema:"secret_type"`
+	AppUpdateType domain.AppUpdateType `schema:"app_update_type"`
 }
 
 var schemaDecoder = func() *schema.Decoder {

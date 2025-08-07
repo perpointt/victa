@@ -44,16 +44,7 @@ func (s *AppService) Create(ctx context.Context, companyID int64, name, slug str
 }
 
 // Update изменяет имя и slug приложения.
-func (s *AppService) Update(ctx context.Context, appID int64, name, slug string) (*domain.App, error) {
-	if strings.TrimSpace(name) == "" || strings.TrimSpace(slug) == "" {
-		return nil, appErr.ErrInvalidInput
-	}
-
-	app := &domain.App{
-		ID:   appID,
-		Name: name,
-		Slug: slug,
-	}
+func (s *AppService) Update(ctx context.Context, app *domain.App) (*domain.App, error) {
 	return s.appRepo.Update(ctx, app)
 }
 

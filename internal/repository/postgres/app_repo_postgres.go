@@ -27,34 +27,49 @@ func NewAppRepo(db *sql.DB) (*AppRepo, error) {
 	var err error
 
 	if r.stGetByID, err = db.Prepare(`
-		SELECT id, company_id, name, slug, created_at, updated_at
-		  FROM apps
-		 WHERE id = $1`); err != nil {
+	SELECT id, company_id, name, slug,
+	       app_store_url, play_store_url, ru_store_url, app_gallery_url,
+	       created_at, updated_at
+	FROM apps
+	WHERE id = $1`); err != nil {
 		return nil, fmt.Errorf("prepare getByID: %w", err)
 	}
 
 	if r.stGetAllByCompanyID, err = db.Prepare(`
-		SELECT id, company_id, name, slug, created_at, updated_at
-		  FROM apps
-		 WHERE company_id = $1
-		 ORDER BY created_at DESC`); err != nil {
+	SELECT id, company_id, name, slug,
+	       app_store_url, play_store_url, ru_store_url, app_gallery_url,
+	       created_at, updated_at
+	FROM apps
+	WHERE company_id = $1
+	ORDER BY created_at DESC`); err != nil {
 		return nil, fmt.Errorf("prepare getAllByCompanyID: %w", err)
 	}
 
 	if r.stCreate, err = db.Prepare(`
-		INSERT INTO apps (company_id, name, slug, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $4)
-		RETURNING id, company_id, name, slug, created_at, updated_at`); err != nil {
+	INSERT INTO apps (
+		company_id, name, slug,
+		app_store_url, play_store_url, ru_store_url, app_gallery_url,
+		created_at, updated_at
+	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+	RETURNING id, company_id, name, slug,
+	          app_store_url, play_store_url, ru_store_url, app_gallery_url,
+	          created_at, updated_at`); err != nil {
 		return nil, fmt.Errorf("prepare create: %w", err)
 	}
 
 	if r.stUpdate, err = db.Prepare(`
-		UPDATE apps
-		   SET name = $1,
-		       slug = $2,
-		       updated_at = $3
-		 WHERE id = $4
-		RETURNING id, company_id, name, slug, created_at, updated_at`); err != nil {
+	UPDATE apps
+	SET name = $1,
+	    slug = $2,
+	    app_store_url = $3,
+	    play_store_url = $4,
+	    ru_store_url = $5,
+	    app_gallery_url = $6,
+	    updated_at = $7
+	WHERE id = $8
+	RETURNING id, company_id, name, slug,
+	          app_store_url, play_store_url, ru_store_url, app_gallery_url,
+	          created_at, updated_at`); err != nil {
 		return nil, fmt.Errorf("prepare update: %w", err)
 	}
 
@@ -83,7 +98,11 @@ func (r *AppRepo) Close() error {
 func (r *AppRepo) GetByID(ctx context.Context, appID int64) (*domain.App, error) {
 	var a domain.App
 	err := r.stGetByID.QueryRowContext(ctx, appID).
-		Scan(&a.ID, &a.CompanyID, &a.Name, &a.Slug, &a.CreatedAt, &a.UpdatedAt)
+		Scan(
+			&a.ID, &a.CompanyID, &a.Name, &a.Slug,
+			&a.AppStoreURL, &a.PlayStoreURL, &a.RuStoreURL, &a.AppGalleryURL,
+			&a.CreatedAt, &a.UpdatedAt,
+		)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, appErr.ErrAppNotFound
@@ -108,7 +127,11 @@ func (r *AppRepo) GetAllByCompanyID(ctx context.Context, companyID int64) ([]dom
 	list := make([]domain.App, 0, 8)
 	for rows.Next() {
 		var a domain.App
-		if err := rows.Scan(&a.ID, &a.CompanyID, &a.Name, &a.Slug, &a.CreatedAt, &a.UpdatedAt); err != nil {
+		if err := rows.Scan(
+			&a.ID, &a.CompanyID, &a.Name, &a.Slug,
+			&a.AppStoreURL, &a.PlayStoreURL, &a.RuStoreURL, &a.AppGalleryURL,
+			&a.CreatedAt, &a.UpdatedAt,
+		); err != nil {
 			return nil, fmt.Errorf("scan app: %w", err)
 		}
 		list = append(list, a)
@@ -124,8 +147,12 @@ func (r *AppRepo) Create(ctx context.Context, app *domain.App) (*domain.App, err
 	now := time.Now().UTC()
 	var a domain.App
 	err := r.stCreate.QueryRowContext(ctx,
-		app.CompanyID, app.Name, app.Slug, now).
-		Scan(&a.ID, &a.CompanyID, &a.Name, &a.Slug, &a.CreatedAt, &a.UpdatedAt)
+		app.CompanyID, app.Name, app.Slug,
+		app.AppStoreURL, app.PlayStoreURL, app.RuStoreURL, app.AppGalleryURL,
+		now).
+		Scan(&a.ID, &a.CompanyID, &a.Name, &a.Slug,
+			&a.AppStoreURL, &a.PlayStoreURL, &a.RuStoreURL, &a.AppGalleryURL,
+			&a.CreatedAt, &a.UpdatedAt)
 
 	if err != nil {
 		return nil, fmt.Errorf("create app: %w", err)
@@ -138,8 +165,12 @@ func (r *AppRepo) Update(ctx context.Context, app *domain.App) (*domain.App, err
 	now := time.Now().UTC()
 	var a domain.App
 	err := r.stUpdate.QueryRowContext(ctx,
-		app.Name, app.Slug, now, app.ID).
-		Scan(&a.ID, &a.CompanyID, &a.Name, &a.Slug, &a.CreatedAt, &a.UpdatedAt)
+		app.Name, app.Slug,
+		app.AppStoreURL, app.PlayStoreURL, app.RuStoreURL, app.AppGalleryURL,
+		now, app.ID).
+		Scan(&a.ID, &a.CompanyID, &a.Name, &a.Slug,
+			&a.AppStoreURL, &a.PlayStoreURL, &a.RuStoreURL, &a.AppGalleryURL,
+			&a.CreatedAt, &a.UpdatedAt)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, appErr.ErrCompanyNotFound

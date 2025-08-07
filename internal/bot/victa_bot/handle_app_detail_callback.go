@@ -41,7 +41,7 @@ func (b *Bot) CreateAppDetailMessage(ctx context.Context, callback *tgbotapi.Cal
 		return nil, err
 	}
 
-	company, err := b.AppSvc.GetByID(ctx, params.AppID)
+	app, err := b.AppSvc.GetByID(ctx, params.AppID)
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +51,6 @@ func (b *Bot) CreateAppDetailMessage(ctx context.Context, callback *tgbotapi.Cal
 		return nil, err
 	}
 
-	detail := b.BuildAppDetail(ctx, chatID, company, user)
+	detail := b.BuildAppDetail(ctx, chatID, app, user)
 	return &detail, nil
 }
