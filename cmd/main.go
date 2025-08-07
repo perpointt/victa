@@ -162,7 +162,9 @@ func run(logg logger.Logger) error {
 		return nil
 	})
 
-	versionCron := releasecron.NewVersionCron(services.Company, services.App, logg, cfg.AppStoreAPIHost)
+	botFactory := bot_common.NewBotFactory()
+
+	versionCron := releasecron.NewVersionCron(services.Company, services.App, logg, botFactory, cfg.AppStoreAPIHost)
 
 	versionCron.Run(botCtx)
 
