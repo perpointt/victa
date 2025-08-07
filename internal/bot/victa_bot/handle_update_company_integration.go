@@ -2,7 +2,11 @@ package victa_bot
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"io"
+	"net/http"
 	"strings"
 	"victa/internal/domain"
 )
@@ -128,13 +132,17 @@ func (b *Bot) HandleUpdateCompanyIntegrationCallback(callback *tgbotapi.Callback
 				b.BuildCancelButton(),
 			),
 		)
-		b.AddChatState(chatID, StateWaitingUpdateAppleKeyID)
+		b.AddChatState(chatID, StateWaitingUploadGoogleJSON)
 		b.AddPendingCompanyID(chatID, params.CompanyID)
 		b.SendPendingMessage(b.NewKeyboardMessage(chatID, "Отправьте Google JSON", keyboard))
 	}
 }
 
-func (b *Bot) HandleUpdateCompanySecret(ctx context.Context, message *tgbotapi.Message, secretType domain.SecretType) {
+func (b *Bot) HandleUpdateCompanySecret(
+	ctx context.Context,
+	message *tgbotapi.Message,
+	secretType domain.SecretType,
+) {
 	chatID := message.Chat.ID
 	companyID := b.pendingCompanyIDs[chatID]
 
@@ -144,18 +152,41 @@ func (b *Bot) HandleUpdateCompanySecret(ctx context.Context, message *tgbotapi.M
 		return
 	}
 
-	// helper: убираем «notification» из SecretType → короче callback_data
-	shortType := func(st domain.SecretType) string {
+	short := func(st domain.SecretType) string {
 		return strings.ReplaceAll(string(st), "notification", "")
 	}
 
 	switch string(secretType) {
-	case shortType(domain.SecretAppleP8),
-		shortType(domain.SecretGoogleJSON):
-		// TODO
-	default:
-		_, err = b.CompanySvc.CreateTextSecret(ctx, company.ID, secretType, message.Text)
+
+	case short(domain.SecretAppleP8), short(domain.SecretGoogleJSON):
+		if message.Document == nil {
+			b.SendErrorMessage(chatID, fmt.Errorf("пришлите файл документом"))
+			return
+		}
+
+		data, err := b.downloadFile(message.Document.FileID)
 		if err != nil {
+			b.SendErrorMessage(chatID, fmt.Errorf("скачивание файла: %v", err))
+			return
+		}
+
+		if secretType == domain.SecretGoogleJSON && !json.Valid(data) {
+			b.SendErrorMessage(chatID, fmt.Errorf("файл не похож на валидный JSON"))
+			return
+		}
+		if secretType == domain.SecretAppleP8 && !strings.HasPrefix(string(data), "-----BEGIN PRIVATE KEY-----") {
+			b.SendErrorMessage(chatID, fmt.Errorf("ожидается .p8-файл (BEGIN PRIVATE KEY)"))
+			return
+		}
+
+		if _, err := b.CompanySvc.CreateBinarySecret(ctx, company.ID, secretType, data); err != nil {
+			b.SendErrorMessage(chatID, err)
+			return
+		}
+
+	default:
+		if _, err :=
+			b.CompanySvc.CreateTextSecret(ctx, company.ID, secretType, message.Text); err != nil {
 			b.SendErrorMessage(chatID, err)
 			return
 		}
@@ -170,4 +201,32 @@ func (b *Bot) HandleUpdateCompanySecret(ctx context.Context, message *tgbotapi.M
 	b.DeleteMessage(chatID, message.MessageID)
 	b.ClearChatState(chatID)
 	b.SendMessage(*config)
+}
+
+func (b *Bot) downloadFile(fileID string) ([]byte, error) {
+	file, err := b.BotAPI.GetFile(tgbotapi.FileConfig{FileID: fileID})
+	if err != nil {
+		return nil, fmt.Errorf("getFile: %w", err)
+	}
+
+	url := file.Link(b.BotAPI.Token)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("download: %w", err)
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	const maxSize = 5 << 20
+	limited := io.LimitReader(resp.Body, maxSize+1)
+	data, err := io.ReadAll(limited)
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > maxSize {
+		return nil, fmt.Errorf("файл больше %d MB", maxSize>>20)
+	}
+	return data, nil
 }
