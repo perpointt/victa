@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"victa/internal/domain"
@@ -19,76 +18,96 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// AppStoreConfig настраивает AppStoreService.
 type AppStoreConfig struct {
-	KeyID      string // 10‑символьный, начинается с "2"
-	IssuerID   string // GUID от App Store Connect
-	PrivatePEM []byte // содержимое AuthKey_XXXX.p8
+	KeyID      string // 10-символьный, начинается с "2"
+	IssuerID   string // GUID из App Store Connect
+	PrivatePEM []byte // содержимое .p8
 	BaseURL    string
-	HTTP       *http.Client // необязательно; если nil — &http.Client{Timeout:10s}
+	HTTPClient *http.Client // если nil — будет создан с таймаутом 10s
 }
 
+// AppStoreService реализует StoreService для App Store.
 type AppStoreService struct {
 	cfg     AppStoreConfig
 	signKey *ecdsa.PrivateKey
 }
 
+// NewAppStoreService создаёт AppStoreService.
 func NewAppStoreService(cfg AppStoreConfig) (*AppStoreService, error) {
-	if cfg.HTTP == nil {
-		cfg.HTTP = &http.Client{Timeout: 10 * time.Second}
+	if cfg.HTTPClient == nil {
+		cfg.HTTPClient = &http.Client{Timeout: 10 * time.Second}
 	}
 	block, _ := pem.Decode(cfg.PrivatePEM)
-	k, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if block == nil {
+		return nil, fmt.Errorf("invalid PEM")
+	}
+	key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, fmt.Errorf("parse p8: %w", err)
 	}
-	return &AppStoreService{
-		cfg:     cfg,
-		signKey: k.(*ecdsa.PrivateKey),
-	}, nil
+	ecdsaKey, ok := key.(*ecdsa.PrivateKey)
+	if !ok {
+		return nil, fmt.Errorf("not ECDSA key")
+	}
+	return &AppStoreService{cfg: cfg, signKey: ecdsaKey}, nil
 }
 
-func (a *AppStoreService) jwtToken() (string, error) {
+// jwtToken генерирует Bearer-токен для запросов.
+func (s *AppStoreService) jwtToken() (string, error) {
 	claims := jwt.MapClaims{
-		"iss": a.cfg.IssuerID,
+		"iss": s.cfg.IssuerID,
 		"exp": time.Now().Add(15 * time.Minute).Unix(),
 		"aud": "appstoreconnect-v1",
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
-	token.Header["kid"] = a.cfg.KeyID
-	return token.SignedString(a.signKey)
+	t := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	t.Header["kid"] = s.cfg.KeyID
+	return t.SignedString(s.signKey)
 }
 
-func (a *AppStoreService) GetLatestRelease(
-	ctx context.Context,
-	appID string, // 10‑значный numeric
-) (*domain.AppStoreReleaseInfo, error) {
-
-	j, _ := a.jwtToken()
-	url := fmt.Sprintf(
-		"%s/v1/apps/%s/appStoreVersions?filter[platform]=IOS&limit=20&include=build",
-		a.cfg.BaseURL, appID)
-
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	req.Header.Set("Authorization", "Bearer "+j)
-	resp, err := a.cfg.HTTP.Do(req)
+// GetRelease возвращает последний production-релиз из App Store.
+func (s *AppStoreService) GetRelease(
+	ctx context.Context, appID string,
+) (*domain.ReleaseInfo, error) {
+	// 1. подготовить запрос
+	token, err := s.jwtToken()
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	url := fmt.Sprintf(
+		"%s/v1/apps/%s/appStoreVersions?filter[platform]=IOS&limit=1&include=build",
+		s.cfg.BaseURL, appID,
+	)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
 
-	if resp.StatusCode != 200 {
-		b, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("asc %d: %s", resp.StatusCode, b)
+	// 2. выполнить
+	resp, err := s.cfg.HTTPClient.Do(req)
+
+	if err != nil {
+		return nil, err
 	}
 
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != 200 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("asc %d: %s", resp.StatusCode, body)
+	}
+
+	// 3. разобрать JSON
 	var raw struct {
 		Data []struct {
-			ID         string `json:"id"`
 			Attributes struct {
-				VersionString string `json:"versionString"` // "1.2.0"
-			} `json:"attributes"`
+				VersionString string `json:"versionString"`
+			}
 			Relationships struct {
-				Build struct { // <‑‑ singular
+				Build struct {
 					Data struct {
 						ID string `json:"id"`
 					} `json:"data"`
@@ -97,9 +116,9 @@ func (a *AppStoreService) GetLatestRelease(
 		} `json:"data"`
 		Included []struct {
 			ID         string `json:"id"`
-			Type       string `json:"type"` // "builds"
+			Type       string `json:"type"`
 			Attributes struct {
-				Version string `json:"version"` // build number "30"
+				Version string `json:"version"`
 			} `json:"attributes"`
 		} `json:"included"`
 	}
@@ -110,98 +129,67 @@ func (a *AppStoreService) GetLatestRelease(
 		return nil, fmt.Errorf("no appStoreVersions")
 	}
 
-	// берём последнюю по VersionString
-	latest := raw.Data[0]
-	for _, d := range raw.Data[1:] {
-		if versionLT(latest.Attributes.VersionString, d.Attributes.VersionString) {
-			latest = d
-		}
-	}
-	semVer := latest.Attributes.VersionString
+	ver := raw.Data[0].Attributes.VersionString
+	buildID := raw.Data[0].Relationships.Build.Data.ID
 
-	// ищем build в included
-	buildID := latest.Relationships.Build.Data.ID
-	var buildNumStr string
+	// 4. найти build в included
+	var code int64
 	for _, inc := range raw.Included {
-		if inc.ID == buildID && inc.Type == "builds" {
-			buildNumStr = inc.Attributes.Version
+		if inc.ID == buildID && inc.Type == "appStoreVersionBuilds" || inc.Type == "builds" {
+			code, _ = strconv.ParseInt(inc.Attributes.Version, 10, 64)
 			break
 		}
 	}
-	buildNum, _ := strconv.ParseInt(buildNumStr, 10, 64)
 
-	return &domain.AppStoreReleaseInfo{
-		AppID: appID,
-		Version: domain.PlayVersion{
-			Semantic: semVer,
-			Code:     buildNum,
-		},
+	// 5. вернуть unified модель
+	return &domain.ReleaseInfo{
+		Store:    domain.StoreAppStore,
+		AppID:    appID,
+		BundleID: "", // здесь можно доп. запросом получить bundle ID
+		Semantic: ver,
+		Code:     code,
 	}, nil
 }
 
-// versionLT reports whether a < b for strings like "1.2.3".
-// Если какая‑то часть отсутствует, считаем её 0: "1.2" == "1.2.0".
-func versionLT(a, b string) bool {
-	pa := strings.Split(a, ".")
-	pb := strings.Split(b, ".")
-	max := len(pa)
-	if len(pb) > max {
-		max = len(pb)
-	}
-
-	for i := 0; i < max; i++ {
-		var ai, bi int64
-		if i < len(pa) {
-			ai, _ = strconv.ParseInt(pa[i], 10, 64)
-		}
-		if i < len(pb) {
-			bi, _ = strconv.ParseInt(pb[i], 10, 64)
-		}
-		if ai < bi {
-			return true
-		}
-		if ai > bi {
-			return false
-		}
-	}
-	return false // равны
-}
-
-// -----------------------------------------------------------------------------
-// Reviews
-// -----------------------------------------------------------------------------
-
-func (a *AppStoreService) ListReviewsSince(
-	ctx context.Context,
-	appID, lastSeenID string, // "" => всё, иначе отфильтруем
-) ([]domain.PlayReview, error) {
-
-	limit := 200
-	j, _ := a.jwtToken()
-	url := fmt.Sprintf("%s/v1/apps/%s/customerReviews?sort=-createdDate&limit=%d",
-		a.cfg.BaseURL, appID, limit)
-
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	req.Header.Set("Authorization", "Bearer "+j)
-	resp, err := a.cfg.HTTP.Do(req)
+// ListReviews возвращает отзывы из App Store.
+func (s *AppStoreService) ListReviews(
+	ctx context.Context, appID, lastSeenID string,
+) ([]domain.Review, error) {
+	token, err := s.jwtToken()
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	url := fmt.Sprintf(
+		"%s/v1/apps/%s/customerReviews?sort=-createdDate&limit=200",
+		s.cfg.BaseURL, appID,
+	)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := s.cfg.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != 200 {
-		b, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("asc %d: %s", resp.StatusCode, b)
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("asc %d: %s", resp.StatusCode, body)
 	}
 
 	var raw struct {
 		Data []struct {
 			ID         string `json:"id"`
 			Attributes struct {
-				Rating       int64  `json:"rating"`
-				UserName     string `json:"userName"`
-				Body         string `json:"body"`
-				LastModified string `json:"lastModifiedDate"` // ISO8601
+				Rating           int64  `json:"rating"`
+				UserName         string `json:"userName"`
+				Body             string `json:"body"`
+				LastModifiedDate string `json:"lastModifiedDate"`
 			} `json:"attributes"`
 		} `json:"data"`
 	}
@@ -209,22 +197,24 @@ func (a *AppStoreService) ListReviewsSince(
 		return nil, err
 	}
 
-	out := make([]domain.PlayReview, 0, len(raw.Data))
+	out := make([]domain.Review, 0, len(raw.Data))
 	for _, r := range raw.Data {
 		if r.ID == lastSeenID {
 			break
 		}
-		t, _ := time.Parse(time.RFC3339, r.Attributes.LastModified)
-		out = append(out, domain.PlayReview{
+		t, _ := time.Parse(time.RFC3339, r.Attributes.LastModifiedDate)
+		out = append(out, domain.Review{
+			Store:        domain.StoreAppStore,
+			AppID:        appID,
 			ReviewID:     r.ID,
 			AuthorName:   r.Attributes.UserName,
-			Rating:       r.Attributes.Rating,
+			Rating:       int(r.Attributes.Rating),
 			Text:         r.Attributes.Body,
 			LastModified: t,
 		})
 	}
 
-	// сортируем от старых к новым
+	// от старых к новым
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].LastModified.Before(out[j].LastModified)
 	})

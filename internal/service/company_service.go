@@ -150,3 +150,6 @@ func (s *CompanyService) CheckAdmin(ctx context.Context, userID, companyID int64
 	}
 	return nil
 }
+func (s *CompanyService) GetAll(ctx context.Context) ([]domain.Company, error) {
+	return s.companyRepo.GetAll(ctx)
+}

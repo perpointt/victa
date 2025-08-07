@@ -15,4 +15,6 @@ type CompanyRepository interface {
 
 	GetUserRole(ctx context.Context, userID, companyID int64) (*int64, error)
 	AddUserToCompany(ctx context.Context, userID, companyID int64, roleSlug string) error
+
+	GetAll(ctx context.Context) ([]domain.Company, error)
 }

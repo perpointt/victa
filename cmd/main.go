@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+	releasecron "victa/internal/cron/release"
 	"victa/internal/crypto"
 
 	"github.com/gin-gonic/gin"
@@ -68,47 +68,49 @@ func run(logg logger.Logger) error {
 	//if err != nil {
 	//	log.Fatalf("read credentials file: %v", err)
 	//}
-	//
-	//// 2. Инициализируем PlayStoreService, передаём содержимое JSON.
+
+	////// 2. Инициализируем PlayStoreService, передаём содержимое JSON.
 	//playSvc, err := service.NewPlayStoreService(ctx, creds)
 	//if err != nil {
 	//	log.Fatalf("init PlayStoreService: %v", err)
 	//}
 	//
-	//pkgInfo, err := playSvc.GetProductionRelease(ctx, "stun.apps.mirror")
+	//rel, err := playSvc.GetRelease(ctx, "stun.apps.mirror")
 	//if err != nil {
 	//	log.Fatalf("GetProductionRelease: %v", err)
 	//}
-	//logg.Info("pkgInfo: %v", pkgInfo.Version.Code)
-	//logg.Info("pkgInfo: %v", pkgInfo.Version.Semantic)
-	//logg.Info("pkgInfo: %v", pkgInfo.PackageName)
+	//
+	//reviews, err := playSvc.ListReviews(ctx, "stun.apps.ruler", "34545")
+	//if err != nil {
+	//	log.Fatalf("GetProductionRelease: %v", err)
+	//}
 
-	creds, err := os.ReadFile("AuthKey_9X7C787G6P.p8")
-	if err != nil {
-		log.Fatalf("read credentials file: %v", err)
-	}
-
-	appstoreConfig := service.AppStoreConfig{
-		KeyID:      "9X7C787G6P",
-		IssuerID:   "f4c08bb6-7921-43f2-96c8-eed8635f48f4",
-		PrivatePEM: creds,
-		BaseURL:    cfg.AppStoreAPIHost,
-	}
-
-	asc, _ := service.NewAppStoreService(appstoreConfig)
-
-	rel, err := asc.GetLatestRelease(ctx, "6740744282")
-	if err != nil {
-		log.Fatalf("GetProductionRelease: %v", err)
-	}
-	reviews, err := asc.ListReviewsSince(ctx, "6740744282", "")
-	if err != nil {
-		log.Fatalf("GetProductionRelease: %v", err)
-	}
-
-	logg.Info("pkgInfo: %v", rel.Version.Code)
-	logg.Info("pkgInfo: %v", rel.Version.Semantic)
-	logg.Info("pkgInfo: %v", reviews)
+	//creds, err := os.ReadFile("AuthKey_9X7C787G6P.p8")
+	//if err != nil {
+	//	log.Fatalf("read credentials file: %v", err)
+	//}
+	//
+	//appstoreConfig := service.AppStoreConfig{
+	//	KeyID:      "9X7C787G6P",
+	//	IssuerID:   "f4c08bb6-7921-43f2-96c8-eed8635f48f4",
+	//	PrivatePEM: creds,
+	//	BaseURL:    cfg.AppStoreAPIHost,
+	//}
+	//
+	//asc, _ := service.NewAppStoreService(appstoreConfig)
+	//
+	//rel, err := asc.GetRelease(ctx, "6740744282")
+	//if err != nil {
+	//	log.Fatalf("GetProductionRelease: %v", err)
+	//}
+	//reviews, err := asc.ListReviews(ctx, "6740744282", "")
+	//if err != nil {
+	//	log.Fatalf("GetProductionRelease: %v", err)
+	//}
+	//
+	//logg.Info("pkgInfo: %v", rel.Code)
+	//logg.Info("pkgInfo: %v", rel.Semantic)
+	//logg.Info("pkgInfo: %v", reviews)
 
 	botBase, err := bot_common.NewBotFactory().GetBaseBot(cfg.TelegramToken, logg)
 	if err != nil {
@@ -158,6 +160,14 @@ func run(logg logger.Logger) error {
 		_ = srv.Shutdown(shutdownCtx)
 		cancelBot()
 		return nil
+	})
+
+	versionCron := releasecron.NewVersionCron(services.Company, services.App, logg, cfg.AppStoreAPIHost)
+
+	versionCron.Run(botCtx)
+
+	g.Go(func() error {
+		return versionCron.Start(botCtx)
 	})
 
 	return g.Wait()

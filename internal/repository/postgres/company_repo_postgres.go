@@ -24,6 +24,7 @@ type CompanyRepo struct {
 	stGetAllByUserID *sql.Stmt
 	stGetByID        *sql.Stmt
 	stGetUserRole    *sql.Stmt
+	stGetAll         *sql.Stmt
 }
 
 // NewCompanyRepo инициализирует репозиторий.
@@ -77,6 +78,13 @@ func NewCompanyRepo(db *sql.DB) (*CompanyRepo, error) {
 		JOIN roles r ON uc.role_id = r.id
 		WHERE uc.user_id = $1 AND uc.company_id = $2`); err != nil {
 		return nil, fmt.Errorf("prepare get user role: %w", err)
+	}
+	if r.stGetAll, err = db.Prepare(`
+		SELECT id, name, created_at, updated_at
+		  FROM companies
+		 ORDER BY created_at DESC
+	`); err != nil {
+		return nil, fmt.Errorf("prepare get all companies: %w", err)
 	}
 
 	return r, nil
@@ -231,4 +239,28 @@ func (r *CompanyRepo) AddUserToCompany(ctx context.Context, userID, companyID in
 		return appErr.ErrRoleNotFound
 	}
 	return nil
+}
+
+func (r *CompanyRepo) GetAll(ctx context.Context) ([]domain.Company, error) {
+	rows, err := r.stGetAll.QueryContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("query all companies: %w", err)
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	var list []domain.Company
+	for rows.Next() {
+		var c domain.Company
+		if err := rows.Scan(&c.ID, &c.Name, &c.CreatedAt, &c.UpdatedAt); err != nil {
+			return nil, fmt.Errorf("scan company: %w", err)
+		}
+		list = append(list, c)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %w", err)
+	}
+
+	return list, nil
 }
