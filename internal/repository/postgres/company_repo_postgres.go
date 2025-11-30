@@ -12,7 +12,6 @@ import (
 	appErr "victa/internal/errors"
 )
 
-// CompanyRepo реализует CompanyRepository через prepared-statements.
 type CompanyRepo struct {
 	db *sql.DB
 
@@ -27,7 +26,6 @@ type CompanyRepo struct {
 	stGetAll         *sql.Stmt
 }
 
-// NewCompanyRepo инициализирует репозиторий.
 func NewCompanyRepo(db *sql.DB) (*CompanyRepo, error) {
 	r := &CompanyRepo{db: db}
 	var err error
@@ -90,7 +88,6 @@ func NewCompanyRepo(db *sql.DB) (*CompanyRepo, error) {
 	return r, nil
 }
 
-// Close освобождает ресурсы prepared-statement.
 func (r *CompanyRepo) Close() error {
 	if r == nil {
 		return nil
@@ -109,7 +106,6 @@ func (r *CompanyRepo) Close() error {
 	return nil
 }
 
-// Create создаёт компанию + делает userID админом в одной транзакции.
 func (r *CompanyRepo) Create(ctx context.Context, company domain.Company, userID int64) (*domain.Company, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -140,7 +136,6 @@ func (r *CompanyRepo) Create(ctx context.Context, company domain.Company, userID
 	return created, nil
 }
 
-// Update меняет название компании.
 func (r *CompanyRepo) Update(ctx context.Context, company domain.Company) (*domain.Company, error) {
 	updated := new(domain.Company)
 	err := r.stUpdate.QueryRowContext(ctx, company.Name, time.Now().UTC(), company.ID).
@@ -155,7 +150,6 @@ func (r *CompanyRepo) Update(ctx context.Context, company domain.Company) (*doma
 	return updated, nil
 }
 
-// Delete удаляет компанию; каскад гарантирован на уровне FK.
 func (r *CompanyRepo) Delete(ctx context.Context, companyID int64) error {
 	res, err := r.stDelete.ExecContext(ctx, companyID)
 	if err != nil {
@@ -171,7 +165,6 @@ func (r *CompanyRepo) Delete(ctx context.Context, companyID int64) error {
 	return nil
 }
 
-// GetAllByUserID возвращает компании пользователя.
 func (r *CompanyRepo) GetAllByUserID(ctx context.Context, userID int64) ([]domain.Company, error) {
 	rows, err := r.stGetAllByUserID.QueryContext(ctx, userID)
 	if err != nil {
@@ -196,7 +189,6 @@ func (r *CompanyRepo) GetAllByUserID(ctx context.Context, userID int64) ([]domai
 	return list, nil
 }
 
-// GetByID возвращает компанию или ErrCompanyNotFound.
 func (r *CompanyRepo) GetByID(ctx context.Context, companyID int64) (*domain.Company, error) {
 	var c domain.Company
 	err := r.stGetByID.QueryRowContext(ctx, companyID).
@@ -211,7 +203,6 @@ func (r *CompanyRepo) GetByID(ctx context.Context, companyID int64) (*domain.Com
 	return &c, nil
 }
 
-// GetUserRole возвращает роль пользователя в компании.
 func (r *CompanyRepo) GetUserRole(ctx context.Context, userID, companyID int64) (*int64, error) {
 	var roleID int64
 	err := r.stGetUserRole.QueryRowContext(ctx, userID, companyID).Scan(&roleID)
@@ -225,7 +216,6 @@ func (r *CompanyRepo) GetUserRole(ctx context.Context, userID, companyID int64) 
 	return &roleID, nil
 }
 
-// AddUserToCompany даёт пользователю роль по слагу.
 func (r *CompanyRepo) AddUserToCompany(ctx context.Context, userID, companyID int64, roleSlug string) error {
 	res, err := r.stAddUser.ExecContext(ctx, userID, companyID, roleSlug)
 	if err != nil {

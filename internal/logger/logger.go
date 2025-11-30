@@ -11,8 +11,6 @@ import (
 	"time"
 )
 
-/* ---------- уровни ---------- */
-
 type Level uint8
 
 const (
@@ -40,14 +38,12 @@ type stdLogger struct {
 	level atomic.Uint32
 }
 
-// New возвращает потокобезопасный Logger.
-// writer — куда писать (nil = os.Stderr), lvl — минимальный уровень вывода.
 func New(writer io.Writer, lvl Level) Logger {
 	if writer == nil {
 		writer = os.Stderr
 	}
 	l := &stdLogger{
-		out: log.New(writer, "", 0), // флаги не нужны, дату вставляем сами
+		out: log.New(writer, "", 0),
 	}
 	l.level.Store(uint32(lvl))
 	return l
@@ -66,7 +62,7 @@ func (l *stdLogger) log(lvl Level, format string, args ...any) {
 		return
 	}
 
-	_, file, line, _ := runtime.Caller(3) // 3 — Debug/Info → log → runtime
+	_, file, line, _ := runtime.Caller(3)
 	prefix := fmt.Sprintf("%s %s:%d [%s] ",
 		time.Now().UTC().Format(time.RFC3339),
 		filepath.Base(file), line,

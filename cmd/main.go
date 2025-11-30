@@ -164,7 +164,7 @@ func run(logg logger.Logger) error {
 
 	botFactory := bot_common.NewBotFactory()
 
-	versionCron := releasecron.NewVersionCron(services.Company, services.App, logg, botFactory, cfg.AppStoreAPIHost)
+	versionCron := releasecron.NewVersionCron(services.Company, services.App, repos.AppMarketStateRepo, logg, botFactory, cfg.AppStoreAPIHost)
 
 	versionCron.Run(botCtx)
 
@@ -209,11 +209,12 @@ func initUtils() (Utils, error) {
 }
 
 type Repos struct {
-	User          *postgres.UserRepo
-	Company       *postgres.CompanyRepo
-	UserCompany   *postgres.UserCompanyRepo
-	CompanySecret *postgres.CompanySecretRepo
-	App           *postgres.AppRepo
+	User               *postgres.UserRepo
+	Company            *postgres.CompanyRepo
+	UserCompany        *postgres.UserCompanyRepo
+	CompanySecret      *postgres.CompanySecretRepo
+	App                *postgres.AppRepo
+	AppMarketStateRepo *postgres.AppMarketStateRepo
 }
 
 func initRepos(conn *sql.DB) (Repos, error) {
@@ -244,13 +245,18 @@ func initRepos(conn *sql.DB) (Repos, error) {
 	if err != nil {
 		return Repos{}, err
 	}
+	appMarketStat, err := must(postgres.NewAppMarketStateRepo(conn))
+	if err != nil {
+		return Repos{}, err
+	}
 
 	return Repos{
-		User:          user.(*postgres.UserRepo),
-		Company:       company.(*postgres.CompanyRepo),
-		UserCompany:   userCompany.(*postgres.UserCompanyRepo),
-		CompanySecret: secret.(*postgres.CompanySecretRepo),
-		App:           app.(*postgres.AppRepo),
+		User:               user.(*postgres.UserRepo),
+		Company:            company.(*postgres.CompanyRepo),
+		UserCompany:        userCompany.(*postgres.UserCompanyRepo),
+		CompanySecret:      secret.(*postgres.CompanySecretRepo),
+		App:                app.(*postgres.AppRepo),
+		AppMarketStateRepo: appMarketStat.(*postgres.AppMarketStateRepo),
 	}, nil
 }
 

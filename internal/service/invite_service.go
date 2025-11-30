@@ -11,33 +11,21 @@ import (
 )
 
 const (
-	expiryLen = 6 // 6 символов base‑36 = «YYMMDD» до 2058 г.
-	sigLen    = 6 // 6 hex‑символов = 24 бит HMAC‑защиты
+	expiryLen = 6
+	sigLen    = 6
 )
 
-// now переопределяется в юнит‑тестах → детерминированные результаты.
 var now = time.Now
 
-// InviteService генерирует и валидирует короткие инвайт‑токены
-// формата <companyID base36><expiry base36 6><sig 6 hex>.
 type InviteService struct {
-	secret []byte        // HMAC‑ключ
-	ttl    time.Duration // срок жизни токена
+	secret []byte
+	ttl    time.Duration
 }
 
-// NewInviteService создаёт сервис с заданным TTL (обычно 48 h).
 func NewInviteService(secret []byte, ttl time.Duration) *InviteService {
 	return &InviteService{secret: secret, ttl: ttl}
 }
 
-/*
-CreateToken
-
-Возвращает строку‑токен для companyID:
- 1. companyID → base‑36 без лидирующих нулей.
- 2. expiry    → (now + ttl) в base‑36, слева паддинг до 6 симв.
- 3. sig       → первые 6 hex‑симв. HMAC‑SHA256(companyID+expiry).
-*/
 func (s *InviteService) CreateToken(companyID int64) (string, error) {
 	if companyID <= 0 {
 		return "", appErr.ErrBadFormat
@@ -54,21 +42,11 @@ func (s *InviteService) CreateToken(companyID int64) (string, error) {
 	return msg + sig, nil
 }
 
-/*
-ValidateToken
-
-Пошагово проверяет токен и возвращает companyID:
- 1. Формат и минимальную длину.
- 2. Читаем expiry → не истёк ли?
- 3. Сверяем HMAC‑подпись.
- 4. Парсим companyID.
-*/
 func (s *InviteService) ValidateToken(token string) (int64, error) {
 	if len(token) < expiryLen+sigLen+1 { // хотя бы 1 символ на companyID
 		return 0, appErr.ErrBadFormat
 	}
 
-	// Разбиваем на cmp / exp / sig.
 	msgEnd := len(token) - sigLen
 	expStart := msgEnd - expiryLen
 
@@ -76,7 +54,6 @@ func (s *InviteService) ValidateToken(token string) (int64, error) {
 	exp36 := token[expStart:msgEnd]
 	cmp36 := token[:expStart]
 
-	// Expiry.
 	expUnix, err := strconv.ParseInt(exp36, 36, 64)
 	if err != nil {
 		return 0, appErr.ErrBadFormat
@@ -85,13 +62,11 @@ func (s *InviteService) ValidateToken(token string) (int64, error) {
 		return 0, appErr.ErrExpired
 	}
 
-	// Signature.
 	expected := firstNHex(hmacSHA256(s.secret, cmp36+exp36), sigLen)
 	if !hmac.Equal([]byte(sig), []byte(expected)) {
 		return 0, appErr.ErrBadSignature
 	}
 
-	// companyID.
 	companyID, err := strconv.ParseInt(cmp36, 36, 64)
 	if err != nil || companyID <= 0 {
 		return 0, appErr.ErrBadFormat

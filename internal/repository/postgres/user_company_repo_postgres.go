@@ -17,7 +17,6 @@ type UserCompanyRepo struct {
 	stDelete                *sql.Stmt
 }
 
-// NewUserCompanyRepo инициализирует репозиторий.
 func NewUserCompanyRepo(db *sql.DB) (*UserCompanyRepo, error) {
 	r := &UserCompanyRepo{db: db}
 
@@ -46,7 +45,6 @@ func NewUserCompanyRepo(db *sql.DB) (*UserCompanyRepo, error) {
 	return r, nil
 }
 
-// Close освобождает prepared-statements
 func (r *UserCompanyRepo) Close() error {
 	if r == nil {
 		return nil
@@ -60,7 +58,6 @@ func (r *UserCompanyRepo) Close() error {
 	return r.stDelete.Close()
 }
 
-// GetAllByCompanyID возвращает все связи пользователей с компанией
 func (r *UserCompanyRepo) GetAllByCompanyID(ctx context.Context, companyID int64) ([]domain.UserCompany, error) {
 	rows, err := r.stGetAllByCompanyID.QueryContext(ctx, companyID)
 	if err != nil {
@@ -85,7 +82,6 @@ func (r *UserCompanyRepo) GetAllByCompanyID(ctx context.Context, companyID int64
 	return list, nil
 }
 
-// GetByCompanyAndUserID возвращает одну связь или ErrUserCompanyNotFound
 func (r *UserCompanyRepo) GetByCompanyAndUserID(ctx context.Context, companyID, userID int64) (*domain.UserCompany, error) {
 	var uc domain.UserCompany
 	err := r.stGetByCompanyAndUserID.QueryRowContext(ctx, companyID, userID).
@@ -100,7 +96,6 @@ func (r *UserCompanyRepo) GetByCompanyAndUserID(ctx context.Context, companyID, 
 	return &uc, nil
 }
 
-// Delete удаляет связь или возвращает ErrUserCompanyNotFound
 func (r *UserCompanyRepo) Delete(ctx context.Context, userID, companyID int64) error {
 	res, err := r.stDelete.ExecContext(ctx, userID, companyID)
 	if err != nil {

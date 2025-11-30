@@ -22,7 +22,6 @@ func NewCompanySecretRepo(db *sql.DB) (*CompanySecretRepo, error) {
 	r := &CompanySecretRepo{db: db}
 	var err error
 
-	// INSERT + UPSERT: created_at фиксируем при первой вставке, updated_at меняем всегда
 	if r.stCreate, err = db.Prepare(`
 		INSERT INTO company_secrets (company_id, secret_type, cipher, created_at, updated_at)
 		     VALUES ($1, $2, $3, now(), now())
@@ -63,7 +62,6 @@ func (r *CompanySecretRepo) Close() error {
 	return nil
 }
 
-// Create вставляет или обновляет секрет и возвращает фактические значения из БД.
 func (r *CompanySecretRepo) Create(
 	ctx context.Context,
 	sec *domain.CompanySecret,
@@ -88,7 +86,6 @@ func (r *CompanySecretRepo) Create(
 	return &out, nil
 }
 
-// GetByCompanyIDAndType один секрет
 func (r *CompanySecretRepo) GetByCompanyIDAndType(
 	ctx context.Context,
 	companyID int64,
@@ -119,7 +116,6 @@ func (r *CompanySecretRepo) GetByCompanyIDAndType(
 	}, nil
 }
 
-// GetAllByCompanyID все секреты компании
 func (r *CompanySecretRepo) GetAllByCompanyID(
 	ctx context.Context,
 	companyID int64,

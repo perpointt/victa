@@ -11,7 +11,6 @@ import (
 	appErr "victa/internal/errors"
 )
 
-// UserRepo реализует UserRepository через database/sql + prepared statements
 type UserRepo struct {
 	db                  *sql.DB
 	stCreate            *sql.Stmt
@@ -21,7 +20,6 @@ type UserRepo struct {
 	stGetAllByCompanyID *sql.Stmt
 }
 
-// NewUserRepo инициализирует репозиторий.
 func NewUserRepo(db *sql.DB) (*UserRepo, error) {
 	r := &UserRepo{db: db}
 
@@ -67,7 +65,6 @@ func NewUserRepo(db *sql.DB) (*UserRepo, error) {
 	return r, nil
 }
 
-// Close освобождает ресурсы prepared-statement.
 func (r *UserRepo) Close() error {
 	if r == nil {
 		return nil
@@ -85,7 +82,6 @@ func (r *UserRepo) Close() error {
 	return nil
 }
 
-// Create сохраняет нового пользователя
 func (r *UserRepo) Create(ctx context.Context, user *domain.User) (*domain.User, error) {
 	now := time.Now().UTC()
 	result := new(domain.User)
@@ -97,7 +93,6 @@ func (r *UserRepo) Create(ctx context.Context, user *domain.User) (*domain.User,
 	return result, nil
 }
 
-// Update изменяет имя пользователя
 func (r *UserRepo) Update(ctx context.Context, user *domain.User) (*domain.User, error) {
 	updated := new(domain.User)
 	err := r.stUpdate.QueryRowContext(ctx, user.Name, time.Now().UTC(), user.ID).
@@ -112,7 +107,6 @@ func (r *UserRepo) Update(ctx context.Context, user *domain.User) (*domain.User,
 	return updated, nil
 }
 
-// GetByID возвращает пользователя по внутреннему ID
 func (r *UserRepo) GetByID(ctx context.Context, id int64) (*domain.User, error) {
 	u := new(domain.User)
 	err := r.stGetByID.QueryRowContext(ctx, id).
@@ -127,7 +121,6 @@ func (r *UserRepo) GetByID(ctx context.Context, id int64) (*domain.User, error) 
 	return u, nil
 }
 
-// GetByTgID возвращает пользователя по Telegram ID
 func (r *UserRepo) GetByTgID(ctx context.Context, tgID int64) (*domain.User, error) {
 	u := new(domain.User)
 	err := r.stGetByTgID.QueryRowContext(ctx, tgID).
@@ -142,7 +135,6 @@ func (r *UserRepo) GetByTgID(ctx context.Context, tgID int64) (*domain.User, err
 	return u, nil
 }
 
-// GetAllByCompanyID список сотрудников компании, новые сверху
 func (r *UserRepo) GetAllByCompanyID(ctx context.Context, companyID int64) ([]domain.User, error) {
 	rows, err := r.stGetAllByCompanyID.QueryContext(ctx, companyID)
 	if err != nil {
@@ -153,7 +145,7 @@ func (r *UserRepo) GetAllByCompanyID(ctx context.Context, companyID int64) ([]do
 		_ = rows.Close()
 	}()
 
-	users := make([]domain.User, 0, 16) // средний отдел ≈ 10–15 чел.
+	users := make([]domain.User, 0, 16)
 	for rows.Next() {
 		var u domain.User
 		if err := rows.Scan(&u.ID, &u.TgID, &u.Name, &u.CreatedAt, &u.UpdatedAt); err != nil {

@@ -5,7 +5,6 @@ import (
 	"victa/internal/domain"
 )
 
-// UserRepository описывает операции хранения пользователей.
 type UserRepository interface {
 	Create(ctx context.Context, user *domain.User) (*domain.User, error)
 	Update(ctx context.Context, user *domain.User) (*domain.User, error)
